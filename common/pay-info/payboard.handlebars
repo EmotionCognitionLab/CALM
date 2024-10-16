@@ -1,0 +1,31 @@
+{{#*inline "earnings-row"}}
+    <tr class="pay-info-row">
+        <td class="pay-info-study-activity">{{this.day}}</td>
+        <td>${{#if this.visits}}{{this.visits}}{{else}}0{{/if}}</td>
+        <td>${{#if this.sessions}}{{this.sessions}}{{else}}0{{/if}}</td>
+        <td>${{#if this.bonuses}}{{this.bonuses}}{{else}}0{{/if}}</td>
+        <td>${{this.total}}</td>
+    </tr>
+{{/inline}}
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Lab Visits</th>
+            <th>Breathing Sessions</th>
+            <th>Bonuses</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+       {{#each earnings}}
+            {{> earnings-row this}}
+       {{/each}}
+       <td>Total</td><td></td><td></td><td></td><td>${{overallTotal}}</td>
+    </tbody>
+</table>
+<br/>
+<div>
+    Earnings may not include activity from the past two days.
+</div>

@@ -1,0 +1,8 @@
+
+{{#each users}}
+<tr data-user-id="{{this.userId}}" {{#if this.inactive}}data-inactive="true" class="hidden"{{/if}}>
+    <td><div class="username">{{this.name}}</div></td>
+    <td class="status">Loading...</td>
+</tr>
+
+{{/each}}

@@ -1,0 +1,3 @@
+SESSIONS_TABLE=sessions
+EARNINGS_TABLE=earnings
+DATA_BUCKET=user-data
