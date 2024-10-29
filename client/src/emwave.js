@@ -144,7 +144,9 @@ export default {
             }
         });
     
-        client.connect(20480, '127.0.0.1', function() {
+        client.connect(20480, '127.0.0.1', async function() {
+            // give the renderer a moment to set up the emwave-status handler
+            await new Promise(r => setTimeout(r, 1000))
             win.webContents.send('emwave-status', 'Connected');
         });	
     
