@@ -14,28 +14,26 @@ import semverSort from 'semver/functions/sort';
 import gt from 'semver/functions/gt';
 
 let db;
-let insertKeyValueStmt, getKeyValueStmt;
+let insertKeyValueStmt, getKeyValueStmt, insertCognitiveResultsStmt;
 
-function breathDbPath() {
-   return path.join(breathDbDir(), 'fd-breath-study.sqlite');
+function dbPath() {
+   return path.join(dbDir(), 'calm-study.sqlite');
 }
 
-function breathDbDir() {
-    let breathDbDir;
+function dbDir() {
+    let dbDir;
 
     const userHome = app.getPath('home');
     if (process.platform === 'darwin') {
-        breathDbDir = userHome +  '/Documents/fd-breath-study/';
+        dbDir = userHome +  '/Documents/calm-study/';
     } else if (process.platform === 'win32') {
-        breathDbDir = userHome + '\\Documents\\fd-breath-study';
+        dbDir = userHome + '\\Documents\\calm-study';
     } else {
         throw `The '${process.platform}' operating system is not supported. Please use either Macintosh OS X or Windows.`;
     }
 
-    return breathDbDir;
-
+    return dbDir;
 }
-
 
 async function downloadDatabase(dest, session) {
     const resp = await s3utils.downloadFile(session, dest);
@@ -69,7 +67,8 @@ function checkVersion() {
 // (as shown in client/version.json) and the value should be an array of DDL
 // strings.
 const dbUpdates = {
-    '0.1.0': ['ALTER TABLE emwave_sessions ADD weighted_avg_coherence FLOAT NOT NULL DEFAULT 0.0']
+    // example
+    // '0.1.0': ['ALTER TABLE emwave_sessions ADD weighted_avg_coherence FLOAT NOT NULL DEFAULT 0.0']
 }
 
 /**
@@ -160,21 +159,30 @@ function getEmWaveWeightedAvgCoherencesForStage(stage) {
     return result.map(rowToObject);
 }
 
+function saveCognitiveResults(experiment, isRelevant, stage, results) {
+    if (stage != 1 && stage != 4) {
+        throw new Error(`Expected stage to be 1 or 4, but got ${stage}`);
+    }
+    const dateTime = (new Date()).toISOString();
+    const relevant = isRelevant ? 1 : 0;
+    insertCognitiveResultsStmt.run(experiment, relevant, dateTime, JSON.stringify(results), stage);
+}
+
 // import this module into itself so that we can mock
 // certain calls in test
 // https://stackoverflow.com/questions/51269431/jest-mock-inner-function
-import * as testable from "./breath-data.js";
-async function initBreathDb(serializedSession) {
+import * as testable from "./local-data.js";
+async function initDb(serializedSession) {
     try {
-        statSync(testable.breathDbPath());
+        statSync(testable.dbPath());
     } catch (err) {
         if (err.code !== 'ENOENT') throw(err);
         // create directory (call is ok if dir already exists)
-        await mkdir(testable.breathDbDir(), { recursive: true });
+        await mkdir(testable.dbDir(), { recursive: true });
 
         // we have no local db file; try downloading it
         const session = SessionStore.buildSession(serializedSession);
-        await testable.forTesting.downloadDatabase(testable.breathDbPath(), session);
+        await testable.forTesting.downloadDatabase(testable.dbPath(), session);
     }
 
     try {
@@ -183,15 +191,19 @@ async function initBreathDb(serializedSession) {
         // lost all their data :-(
         // either way, we can let sqlite create the database
         // if necessary
-        db = new Database(testable.breathDbPath());
+        db = new Database(testable.dbPath());
 
         const createKeyValueTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS key_value_store(name TEXT PRIMARY KEY, value TEXT NOT NULL)');
         createKeyValueTableStmt.run();
         insertKeyValueStmt = db.prepare('REPLACE INTO key_value_store(name, value) VALUES(?, ?)');
         getKeyValueStmt = db.prepare('SELECT value FROM key_value_store where name = ?');
 
-        const createSessionTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS emwave_sessions(emwave_session_id TEXT PRIMARY KEY, avg_coherence FLOAT NOT NULL, pulse_start_time INTEGER NOT NULL, valid_status INTEGER NOT NULL, duration_seconds INTEGER NOT NULL, stage INTEGER NOT NULL, emo_pic_name TEXT)');
+        const createSessionTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS emwave_sessions(emwave_session_id TEXT PRIMARY KEY, avg_coherence FLOAT NOT NULL, weighted_avg_coherence FLOAT NOT NULL DEFAULT 0.0, pulse_start_time INTEGER NOT NULL, valid_status INTEGER NOT NULL, duration_seconds INTEGER NOT NULL, stage INTEGER NOT NULL, emo_pic_name TEXT)');
         createSessionTableStmt.run();
+
+        const createCogDataTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS cognitive_results(id INTEGER NOT NULL PRIMARY KEY, experiment TEXT NOT NULL, is_relevant INTEGER NOT NULL, date_time TEXT NOT NULL, results TEXT NOT NULL, stage INTEGER NOT NULL)')
+        createCogDataTableStmt.run();
+        insertCognitiveResultsStmt = db.prepare('INSERT INTO cognitive_results(experiment, is_relevant, date_time, results, stage) VALUES(?, ? , ?, ?, ?)')
 
         const createVersionTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS version(version TEXT PRIMARY KEY, date_time TEXT NOT NULL)');
         createVersionTableStmt.run();
@@ -208,17 +220,17 @@ async function initBreathDb(serializedSession) {
 }
 
 ipcMain.handle('login-succeeded', async (_event, session) => {
-    if (!db) await initBreathDb(session);
+    if (!db) await initDb(session);
 });
 
-function closeBreathDb() {
+function closeDb() {
     if (db) db.close();
 }
 
 export {
-    closeBreathDb,
-    breathDbDir,
-    breathDbPath,
+    closeDb,
+    dbDir,
+    dbPath,
     getKeyValue,
     setKeyValue,
     getNextEmoPic,
@@ -226,6 +238,6 @@ export {
     getEmWaveSessionsForStage,
     getEmWaveSessionMinutesForDayAndStage,
     getEmWaveWeightedAvgCoherencesForStage,
-    deleteAllData
+    saveCognitiveResults
 }
-export const forTesting = { initBreathDb, downloadDatabase }
+export const forTesting = { initDb, downloadDatabase }

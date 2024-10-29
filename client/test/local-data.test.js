@@ -1,5 +1,5 @@
 import { emoPics } from '../src/utils.js';
-import * as bd from "../src/breath-data";
+import * as ld from "../src/local-data.js";
 import { maxSessionMinutes } from '../../common/types/types.js';
 
 jest.mock('fs/promises', () => ({
@@ -26,11 +26,11 @@ function rowCount(tableName) {
 describe("Breathing data functions", () => {
     
     beforeAll(async () => {
-        jest.spyOn(bd, "breathDbPath").mockImplementation(() => ":memory:");
-        jest.spyOn(bd, "breathDbDir").mockImplementation(() => "/dev/null");
-        const downloadSpy = jest.spyOn(bd.forTesting, "downloadDatabase");
+        jest.spyOn(ld, "dbPath").mockImplementation(() => ":memory:");
+        jest.spyOn(ld, "dbDir").mockImplementation(() => "/dev/null");
+        const downloadSpy = jest.spyOn(ld.forTesting, "downloadDatabase");
         downloadSpy.mockImplementation(() => {});
-        db = await bd.forTesting.initBreathDb({
+        db = await ld.forTesting.initDb({
             tokenScopes: {
 
             },
@@ -48,7 +48,7 @@ describe("Breathing data functions", () => {
     });
 
     afterAll(() => {
-        bd.closeBreathDb();
+        ld.closeDb();
     });
 
     beforeEach(() => {
@@ -59,15 +59,15 @@ describe("Breathing data functions", () => {
     });
 
     it("should use an in-memory database in test", () => {
-        const path = bd.breathDbPath();
+        const path = ld.dbPath();
         expect(path).toBe(":memory:");
     });
 
     it("getNextEmoPic should return the emotional picture with the fewest views", () => {
         for (let i=1; i<emoPics.length; i++) {
-            bd.saveEmWaveSessionData(`a${i}`, 1.19, 17136543, 1, 900, 2, emoPics[i]);
+            ld.saveEmWaveSessionData(`a${i}`, 1.19, 17136543, 1, 900, 2, emoPics[i]);
         }
-        const nextPic = bd.getNextEmoPic();
+        const nextPic = ld.getNextEmoPic();
         expect(nextPic).toBe(emoPics[0]);
     });
 
@@ -75,9 +75,9 @@ describe("Breathing data functions", () => {
         const startIdx = 3;
         expect(startIdx).toBeLessThan(emoPics.length);
         for (let i=startIdx; i<emoPics.length; i++) {
-            bd.saveEmWaveSessionData(`a${i}`, 1.19, 17136543, 1, 900, 2, emoPics[i]);
+            ld.saveEmWaveSessionData(`a${i}`, 1.19, 17136543, 1, 900, 2, emoPics[i]);
         }
-        const nextPic = bd.getNextEmoPic();
+        const nextPic = ld.getNextEmoPic();
         const expectedPossiblePics = emoPics.slice(0, startIdx);
         expect(expectedPossiblePics).toContain(nextPic);
     });
@@ -87,9 +87,9 @@ describe("Breathing data functions", () => {
         const durationMin = 9;
         const durationSec = durationMin * 60;
         const stage = 2
-        bd.saveEmWaveSessionData('b1', avgCoh, Date.now(), 1, durationSec, stage);
+        ld.saveEmWaveSessionData('b1', avgCoh, Date.now(), 1, durationSec, stage);
 
-        const wac = bd.getEmWaveWeightedAvgCoherencesForStage(stage);
+        const wac = ld.getEmWaveWeightedAvgCoherencesForStage(stage);
         expect(wac.length).toBe(1);
         const expectedWeightedCoherence = (durationMin / maxSessionMinutes) * avgCoh;
         expect(wac[0].weightedAvgCoherence).toBe(expectedWeightedCoherence);
@@ -104,7 +104,7 @@ describe("Breathing data functions", () => {
                 {sessId: 'a1', avgCoh: 4.2, pulseStart: stage1Sess1Date, valid: 1, durationSec: 60 * 15, stage: 1},
                 {sessId: 'b1', avgCoh: 3.6, pulseStart: stage2Sess1Date, valid: 1, durationSec: 60 * 18, stage: 2},
             ];
-            testData.forEach(d => bd.saveEmWaveSessionData(d.sessId, d.avgCoh, Math.floor(d.pulseStart.getTime() / 1000), d.valid, d.durationSec, d.stage));
+            testData.forEach(d => ld.saveEmWaveSessionData(d.sessId, d.avgCoh, Math.floor(d.pulseStart.getTime() / 1000), d.valid, d.durationSec, d.stage));
 
             testGetEmWaveSessionMinutes(2, stage2Sess1Date, testData);
         });
@@ -116,13 +116,13 @@ describe("Breathing data functions", () => {
                 {sessId: 'b1', avgCoh: 3.6, pulseStart: stage2Sess1Date, valid: 1, durationSec: 60 * 18, stage: 2},
                 {sessId: 'b2', avgCoh: 3.6, pulseStart: stage2Sess2Date, valid: 1, durationSec: 60 * 20, stage: 2},
             ];
-            testData.forEach(d => bd.saveEmWaveSessionData(d.sessId, d.avgCoh, Math.floor(d.pulseStart.getTime() / 1000), d.valid, d.durationSec, d.stage));
+            testData.forEach(d => ld.saveEmWaveSessionData(d.sessId, d.avgCoh, Math.floor(d.pulseStart.getTime() / 1000), d.valid, d.durationSec, d.stage));
             
             testGetEmWaveSessionMinutes(2, stage2Sess2Date, testData);
         });
 
         it("should return 0 if there are no results", () => {
-            const res = bd.getEmWaveSessionMinutesForDayAndStage(new Date(1990, 0, 1), 2);
+            const res = ld.getEmWaveSessionMinutesForDayAndStage(new Date(1990, 0, 1), 2);
             expect(res).toBe(0);
         });
     });
@@ -146,6 +146,6 @@ function testGetEmWaveSessionMinutes(targetStage, targetDate, testData) {
     const expectedRes = testData.filter(d => d.stage == targetStage && dateRange[0] <= date2Sec(d.pulseStart) && dateRange[1] >= date2Sec(d.pulseStart));
     expect(expectedRes.length).toBe(1);
     const expectedSessionMinutes = Math.round(expectedRes[0].durationSec / 60);
-    const res = bd.getEmWaveSessionMinutesForDayAndStage(targetDate, 2);
+    const res = ld.getEmWaveSessionMinutesForDayAndStage(targetDate, 2);
     expect(res).toBe(expectedSessionMinutes);
 }

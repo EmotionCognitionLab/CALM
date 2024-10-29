@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('mainAPI', {
     saveEmWaveSessionData: (emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, emoPic) => ipcRenderer.invoke('save-emwave-session', emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, emoPic),
     getEmWaveSessionsForStage: async (stage) => await ipcRenderer.invoke('get-emwave-sessions-for-stage', stage),
     getEmWaveSessionMinutesForDayAndStage: async(date, stage) => await ipcRenderer.invoke('get-emwave-session-minutes-for-day-and-stage', date, stage),
+    saveCognitiveResults: (experiment, isRelevant, stage, data) => ipcRenderer.invoke('save-cognitive-results', experiment, isRelevant, stage, data),
     getNextEmoPic: async () => await ipcRenderer.invoke('get-next-emo-pic'),
     getKeyValue: async (key) => await ipcRenderer.invoke('get-key-value', key),
     setKeyValue: (key, value) => ipcRenderer.send('set-key-value', key, value),

@@ -8,7 +8,7 @@ import { ipcMain } from 'electron';
 const Logger = require('logger');
 import emwave from './emwave';
 import { emWaveDbPath, deleteShortSessions as deleteShortEmwaveSessions, extractSessionData, getDataForSessions } from './emwave-data';
-import { breathDbPath, closeBreathDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getNextEmoPic, getEmWaveSessionMinutesForDayAndStage } from './breath-data';
+import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getNextEmoPic, getEmWaveSessionMinutesForDayAndStage, saveCognitiveResults } from './local-data';
 import version from "../version.json";
 import packageInfo from "../package.json"
 import { SessionStore } from './session-store'
@@ -193,7 +193,7 @@ ipcMain.on('current-user', (_event, user) => {
 
 app.on('before-quit', () => {
   emwave.stopEmWave()
-  closeBreathDb()
+  closeDb()
 })
 
 ipcMain.on('pulse-start', () => {
@@ -279,6 +279,10 @@ ipcMain.handle('get-emwave-session-minutes-for-day-and-stage', (event, date, sta
   return getEmWaveSessionMinutesForDayAndStage(date, stage);
 })
 
+ipcMain.handle('save-cognitive-results', (event, experiment, isRelevant, stage, results) => {
+  saveCognitiveResults(experiment, isRelevant, stage, results);
+})
+
 ipcMain.handle('get-next-emo-pic', (event) => {
   return getNextEmoPic();
 });
@@ -301,10 +305,10 @@ ipcMain.handle('upload-emwave-data', async (event, session) => {
 });
 
 ipcMain.handle('upload-breath-data', async (event, session) => {
-  closeBreathDb();
-  const breathDb = breathDbPath();
+  closeDb();
+  const localDb = dbPath();
   const fullSession = SessionStore.buildSession(session);
-  await s3utils.uploadFile(fullSession, breathDb)
+  await s3utils.uploadFile(fullSession, localDb)
   .catch(err => {
     console.error(err);
     return (err.message);
