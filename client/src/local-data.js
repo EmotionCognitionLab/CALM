@@ -159,6 +159,12 @@ function getEmWaveWeightedAvgCoherencesForStage(stage) {
     return result.map(rowToObject);
 }
 
+function hasDoneCognitiveExperiment(experiment) {
+    const stmt = db.prepare('SELECT COUNT(id) as count from cognitive_results WHERE experiment = ? and is_relevant = 1');
+    const result = stmt.all(experiment);
+    return result[0]['count'] > 0;
+}
+
 function saveCognitiveResults(experiment, isRelevant, stage, results) {
     if (stage != 1 && stage != 4) {
         throw new Error(`Expected stage to be 1 or 4, but got ${stage}`);
@@ -238,6 +244,7 @@ export {
     getEmWaveSessionsForStage,
     getEmWaveSessionMinutesForDayAndStage,
     getEmWaveWeightedAvgCoherencesForStage,
+    hasDoneCognitiveExperiment,
     saveCognitiveResults
 }
 export const forTesting = { initDb, downloadDatabase }
