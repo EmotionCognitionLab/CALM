@@ -165,6 +165,12 @@ function hasDoneCognitiveExperiment(experiment) {
     return result[0]['count'] > 0;
 }
 
+function latestExperimentResult(experiment, stage) {
+    const stmt = db.prepare('SELECT * from cognitive_results WHERE experiment = ? AND stage = ? ORDER BY date_time DESC LIMIT 1');
+    const result = stmt.all(experiment, stage);
+    return (result.map(rowToObject))[0];
+}
+
 function saveCognitiveResults(experiment, isRelevant, stage, results) {
     if (stage != 1 && stage != 4) {
         throw new Error(`Expected stage to be 1 or 4, but got ${stage}`);
@@ -245,6 +251,7 @@ export {
     getEmWaveSessionMinutesForDayAndStage,
     getEmWaveWeightedAvgCoherencesForStage,
     hasDoneCognitiveExperiment,
+    latestExperimentResult,
     saveCognitiveResults
 }
 export const forTesting = { initDb, downloadDatabase }

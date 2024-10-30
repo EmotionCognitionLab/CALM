@@ -8,7 +8,7 @@ import { ipcMain } from 'electron';
 const Logger = require('logger');
 import emwave from './emwave';
 import { emWaveDbPath, deleteShortSessions as deleteShortEmwaveSessions, extractSessionData, getDataForSessions } from './emwave-data';
-import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getNextEmoPic, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, saveCognitiveResults } from './local-data';
+import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getNextEmoPic, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults } from './local-data';
 import version from "../version.json";
 import packageInfo from "../package.json"
 import { SessionStore } from './session-store'
@@ -277,15 +277,19 @@ ipcMain.handle('get-emwave-session-data', (event, sessionIds) => {
 
 ipcMain.handle('get-emwave-session-minutes-for-day-and-stage', (event, date, stage) => {
   return getEmWaveSessionMinutesForDayAndStage(date, stage);
-})
+});
 
 ipcMain.handle('has-done-cognitive-experiment', (_event, experiment) => {
   return hasDoneCognitiveExperiment(experiment);
+});
+
+ipcMain.handle('latest-experiment-result', (_event, experiment, stage) => {
+  return latestExperimentResult(experiment, stage);
 })
 
 ipcMain.handle('save-cognitive-results', (event, experiment, isRelevant, stage, results) => {
   saveCognitiveResults(experiment, isRelevant, stage, results);
-})
+});
 
 ipcMain.handle('get-next-emo-pic', (event) => {
   return getNextEmoPic();
