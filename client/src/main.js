@@ -279,8 +279,8 @@ ipcMain.handle('get-emwave-session-minutes-for-day-and-stage', (event, date, sta
   return getEmWaveSessionMinutesForDayAndStage(date, stage);
 });
 
-ipcMain.handle('has-done-cognitive-experiment', (_event, experiment) => {
-  return hasDoneCognitiveExperiment(experiment);
+ipcMain.handle('has-done-cognitive-experiment', (_event, experiment, stage) => {
+  return hasDoneCognitiveExperiment(experiment, stage);
 });
 
 ipcMain.handle('latest-experiment-result', (_event, experiment, stage) => {

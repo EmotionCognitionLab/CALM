@@ -159,9 +159,9 @@ function getEmWaveWeightedAvgCoherencesForStage(stage) {
     return result.map(rowToObject);
 }
 
-function hasDoneCognitiveExperiment(experiment) {
-    const stmt = db.prepare('SELECT COUNT(id) as count from cognitive_results WHERE experiment = ? and is_relevant = 1');
-    const result = stmt.all(experiment);
+function hasDoneCognitiveExperiment(experiment, stage) {
+    const stmt = db.prepare('SELECT COUNT(id) as count from cognitive_results WHERE experiment = ? AND stage = ? AND is_relevant = 1');
+    const result = stmt.all(experiment, stage);
     return result[0]['count'] > 0;
 }
 
