@@ -1,0 +1,284 @@
+{
+    "example": {
+        "order": "fixed",
+        "trials": [
+            {
+                "center": "bell",
+                "facing": "tree",
+                "target": "drum"
+            }
+        ]
+    },
+    "practice": {
+        "order": "fixed",
+        "trials": [
+            {
+                "center": "drum",
+                "facing": "traffic light",
+                "target": "wheel"
+            },
+            {
+                "center": "bell",
+                "facing": "tree",
+                "target": "barrel"
+            },
+            {
+                "center": "trash can",
+                "facing": "drum",
+                "target": "bell"
+            }
+        ]
+    },
+    "test-sets": {
+        "1": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "wheel",
+                    "facing": "barrel",
+                    "target": "traffic light"
+                },
+                {
+                    "center": "drum",
+                    "facing": "tree",
+                    "target": "wheel"
+                },
+                {
+                    "center": "traffic light",
+                    "facing": "drum",
+                    "target": "trash can"
+                },
+                {
+                    "center": "drum",
+                    "facing": "bell",
+                    "target": "wheel"
+                }
+            ]
+        },
+        "2": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "traffic light",
+                    "facing": "tree",
+                    "target": "barrel"
+                },
+                {
+                    "center": "traffic light",
+                    "facing": "bell",
+                    "target": "wheel"
+                },
+                {
+                    "center": "barrel",
+                    "facing": "trash can",
+                    "target": "bell"
+                },
+                {
+                    "center": "trash can",
+                    "facing": "bell",
+                    "target": "traffic light"
+                }
+            ]
+        },
+        "3": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "wheel",
+                    "facing": "traffic light",
+                    "target": "tree"
+                },
+                {
+                    "center": "barrel",
+                    "facing": "drum",
+                    "target": "wheel"
+                },
+                {
+                    "center": "tree",
+                    "facing": "bell",
+                    "target": "trash can"
+                },
+                {
+                    "center": "drum",
+                    "facing": "trash can",
+                    "target": "barrel"
+                }
+            ]
+        },
+        "4": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "bell",
+                    "facing": "tree",
+                    "target": "traffic light"
+                },
+                {
+                    "center": "trash can",
+                    "facing": "drum",
+                    "target": "traffic light"
+                },
+                {
+                    "center": "tree",
+                    "facing": "traffic light",
+                    "target": "bell"
+                },
+                {
+                    "center": "barrel",
+                    "facing": "drum",
+                    "target": "trash can"
+                }
+            ]
+        },
+        "6": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "wheel",
+                    "facing": "barrel",
+                    "target": "tree"
+                },
+                {
+                    "center": "traffic light",
+                    "facing": "trash can",
+                    "target": "bell"
+                },
+                {
+                    "center": "tree",
+                    "facing": "trash can",
+                    "target": "barrel"
+                },
+                {
+                    "center": "trash can",
+                    "facing": "drum",
+                    "target": "barrel"
+                }
+            ]
+        },
+        "7": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "wheel",
+                    "facing": "bell",
+                    "target": "drum"
+                },
+                {
+                    "center": "traffic light",
+                    "facing": "drum",
+                    "target": "tree"
+                },
+                {
+                    "center": "traffic light",
+                    "facing": "trash can",
+                    "target": "barrel"
+                },
+                {
+                    "center": "trash can",
+                    "facing": "traffic light",
+                    "target": "wheel"
+                }
+            ]
+        },
+        "8": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "traffic light",
+                    "facing": "barrel",
+                    "target": "drum"
+                },
+                {
+                    "center": "traffic light",
+                    "facing": "drum",
+                    "target": "wheel"
+                },
+                {
+                    "center": "bell",
+                    "facing": "trash can",
+                    "target": "wheel"
+                },
+                {
+                    "center": "wheel",
+                    "facing": "traffic light",
+                    "target": "trash can"
+                }
+            ]
+        },
+        "9": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "traffic light",
+                    "facing": "tree",
+                    "target": "bell"
+                },
+                {
+                    "center": "trash can",
+                    "facing": "wheel",
+                    "target": "bell"
+                },
+                {
+                    "center": "drum",
+                    "facing": "trash can",
+                    "target": "traffic light"
+                },
+                {
+                    "center": "bell",
+                    "facing": "trash can",
+                    "target": "drum"
+                }
+            ]
+        },
+        "10": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "traffic light",
+                    "facing": "wheel",
+                    "target": "tree"
+                },
+                {
+                    "center": "bell",
+                    "facing": "trash can",
+                    "target": "barrel"
+                },
+                {
+                    "center": "drum",
+                    "facing": "tree",
+                    "target": "barrel"
+                },
+                {
+                    "center": "wheel",
+                    "facing": "barrel",
+                    "target": "bell"
+                }
+            ]
+        },
+        "12": {
+            "order": "random",
+            "trials": [
+                {
+                    "center": "tree",
+                    "facing": "wheel",
+                    "target": "trash can"
+                },
+                {
+                    "center": "wheel",
+                    "facing": "bell",
+                    "target": "traffic light"
+                },
+                {
+                    "center": "barrel",
+                    "facing": "bell",
+                    "target": "tree"
+                },
+                {
+                    "center": "trash can",
+                    "facing": "barrel",
+                    "target": "wheel"
+                }
+            ]
+        }
+    }
+}
