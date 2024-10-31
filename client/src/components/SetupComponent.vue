@@ -16,7 +16,11 @@
                 <button @click="nextStep">Continue</button>
             </div>
             <div v-else-if="step==2">
-                <RestComponent @timerFinished="nextStep" />
+                <RestComponent @timerFinished="nextStep">
+                    <template #preText>
+                        Now you will be asked to sit quietly for five minutes with a pulse sensor on your ear to measure your heart rate.
+                    </template>
+                </RestComponent>
             </div>
             <div v-else-if="step==3">
                 <p>
@@ -42,16 +46,8 @@
                 <p>One moment while we crunch the data...</p>
             </div>
             <div v-else-if="step==7 && errorText == null">
-                <UploadComponent>
-                    <template #preUploadText>
-                        <div class="instruction">Terrific! Thank you for completing this orientation. Please wait while we upload your data...</div>
-                    </template>
-                    <template #postUploadText>
-                        <div class="instruction">Upload complete! At home please log in to the app to start your home training.</div>
-                        <br/>
-                        <button class="button" @click="quit">Quit</button>
-                    </template>
-                </UploadComponent>
+                <p>Great! You're finished with the breathing exercises. Next up: some cognitive exercises.</p>
+                <button @click="goToCognitive">Continue</button>
             </div>
         </div>
     </div>
@@ -59,10 +55,10 @@
 
 <script setup>
     import { ref, onBeforeMount } from '@vue/runtime-core'
+    import { useRouter } from "vue-router"
     import RestComponent from './RestComponent.vue'
     import TrainingComponent from './TrainingComponent.vue'
-    import UploadComponent from './UploadComponent.vue'
-    import { calculatePersonalizedPace, getConditionFactors, slowBreathsPerMinute, slowerBreathsPerMinute } from '../utils'
+    import { calculatePersonalizedPace } from '../utils'
     import { SessionStore } from '../session-store'
     import ApiClient from '../../../common/api/client';
 
@@ -77,8 +73,8 @@
     const paces = ref(['rest', 13.333, 12, 8.571])
     const errorText = ref(null)
     const errorRequiresQuit = ref(false)
+    const router = useRouter()
     let pacerHasFinished = false
-    let factors
     let session;
     let apiClient
     let stage
@@ -89,7 +85,6 @@
         stepKey = `stage${stage}Step`
         session = await SessionStore.getRendererSession()
         apiClient = new ApiClient(session)
-        factors = await getConditionFactors(apiClient)
         window.mainAPI.setStage(stage)
         const curStep = await window.mainAPI.getKeyValue(stepKey)
         if (!curStep) {
@@ -148,6 +143,10 @@
         
     }
 
+    function goToCognitive() {
+        router.push({path: `/cognitive/${stage}`})
+    }
+
     async function finalizeSetup() {
         if (stage == 1) {
             const paceSet = await setPace()
@@ -166,39 +165,28 @@
         let personalPace
 
         try {
-
-            if (factors.paceSelection === 'standard') {
-                if (factors.breathingFrequency === 'slower') {
-                    personalPace = slowerBreathsPerMinute
-                } else {
-                    personalPace = slowBreathsPerMinute
-                }
-            } else {
-                // they're in the personalized pace condition
-
-                // ensure we have data to calculate personalized pace
-                const stage1Sessions = await window.mainAPI.getEmWaveSessionsForStage(stage)
-                const sessIds = stage1Sessions.map(s => s.emWaveSessionId)
-                const sessData = await window.mainAPI.getEmWaveSessionData(sessIds)
-                const ibiData = sessData.map(s => s.liveIBI)
-                if (ibiData.length !== 4) {
-                    const verb = ibiData.length == 1 ? 'was' : 'were'
-                    errorText.value = `An error has occurred. Please ask the experimenter for assistance.
-                    Experimenter: Four sessions with IBI data were expected, but ${ibiData.length} ${verb} found. Please 
-                    quit the app, delete the fd-breath-study.sqlite file, and restart the app.
-                    `
-                    errorRequiresQuit.value = true
-                    return
-                }
-                // find hrv peaks and calculate personalized pace
-                for (let i=0; i<4; i++) {
-                    const ibd = ibiData[i]
-                    const pace = paces.value[i]
-                    const hrvPeaks = (await apiClient.getHRVAnalysis(ibd))[0] // for some reason hrv analysis results are wrapped in an array
-                    hrvResults.push({pace: pace, peaks: hrvPeaks})
-                }
-                personalPace = calculatePersonalizedPace(factors.breathingFrequency, hrvResults.map(hrv => hrv.peaks))
+            // ensure we have data to calculate personalized pace
+            const stage1Sessions = await window.mainAPI.getEmWaveSessionsForStage(stage)
+            const sessIds = stage1Sessions.map(s => s.emWaveSessionId)
+            const sessData = await window.mainAPI.getEmWaveSessionData(sessIds)
+            const ibiData = sessData.map(s => s.liveIBI)
+            if (ibiData.length !== 4) {
+                const verb = ibiData.length == 1 ? 'was' : 'were'
+                errorText.value = `An error has occurred. Please ask the experimenter for assistance.
+                Experimenter: Four sessions with IBI data were expected, but ${ibiData.length} ${verb} found. Please 
+                quit the app, delete the fd-breath-study.sqlite file, and restart the app.
+                `
+                errorRequiresQuit.value = true
+                return
             }
+            // find hrv peaks and calculate personalized pace
+            for (let i=0; i<4; i++) {
+                const ibd = ibiData[i]
+                const pace = paces.value[i]
+                const hrvPeaks = (await apiClient.getHRVAnalysis(ibd))[0] // for some reason hrv analysis results are wrapped in an array
+                hrvResults.push({pace: pace, peaks: hrvPeaks})
+            }
+            personalPace = calculatePersonalizedPace(hrvResults.map(hrv => hrv.peaks))
 
             paceData['pace'] = personalPace
             if (hrvResults.length > 0) {

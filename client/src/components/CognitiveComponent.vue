@@ -1,7 +1,14 @@
 <template>
-   <h2 v-if="allDone">
-        Thanks! You're all done for today. The researcher will tell you about the next step.
-   </h2>
+    <UploadComponent v-if="allDone">
+        <template #preUploadText>
+            <div class="instruction">Terrific! Thank you for completing this orientation. Please wait while we upload your data...</div>
+        </template>
+        <template #postUploadText>
+            <div class="instruction">Upload complete! At home please log in to the app to start your home training.</div>
+            <br/>
+            <button class="button" @click="quit">Quit</button>
+        </template>
+    </UploadComponent>
 </template>
 <script setup>
     import { ref, onMounted } from '@vue/runtime-core'
@@ -10,6 +17,7 @@
     import { SpatialOrientation } from '../cognitive/spatial-orientation/spatial-orientation'
     import { TaskSwitching } from '../cognitive/task-switching/task-switching'
     import { VerbalLearning } from '../cognitive/verbal-learning/verbal-learning'
+    import UploadComponent from './UploadComponent.vue'
     import version from '../../version.json'
 
     const props = defineProps(['stageNum'])
@@ -102,6 +110,10 @@
 
     async function hasDoneCognitiveExperiment(experiment, stage) {
         return await window.mainAPI.hasDoneCognitiveExperiment(experiment, stage)
+    }
+
+    function quit() {
+        window.mainAPI.quit()
     }
 
 </script>
