@@ -7,7 +7,9 @@
     import { ref, onMounted } from '@vue/runtime-core'
     import { initJsPsych } from 'jspsych'
     import { Flanker } from '../cognitive/flanker/flanker'
-    import { VerbalLearning } from '../cognitive/verbal-learning/verbal-learning';
+    import { SpatialOrientation } from '../cognitive/spatial-orientation/spatial-orientation'
+    import { TaskSwitching } from '../cognitive/task-switching/task-switching'
+    import { VerbalLearning } from '../cognitive/verbal-learning/verbal-learning'
     import version from '../../version.json'
 
     const props = defineProps(['stageNum'])
@@ -19,10 +21,10 @@
         {name: 'verbal-learning-learning', setNum: 1},
         {name: 'flanker-1', setNum: 3},
         // {name: 'emomem-learning', setNum: 0},
-        // {name: 'spatial-orientation', setNum: 0},
+        {name: 'spatial-orientation', setNum: 0},
         {name: 'flanker-2', setNum: 5},
         {name: 'verbal-learning-recall', setNum: 8},
-        // {name: 'task-switching', setNum: 0},
+        {name: 'task-switching', setNum: 0},
         // {name: 'emomem-recall', setNum: 0}
     ]
 
@@ -73,6 +75,13 @@
         if (taskInfo.name == 'flanker-1' || taskInfo.name == 'flanker-2') {
             const set = stage == 1 ? 3 : 5
             return new Flanker(jsPsych, set)
+        }
+        if (taskInfo.name == 'spatial-orientation') {
+            const set = stage == 1 ? 1 : 7
+            return new SpatialOrientation(jsPsych, set)
+        }
+        if (taskInfo.name == 'task-switching') {
+            return new TaskSwitching(jsPsych)
         }
         if (taskInfo.name == 'verbal-learning-recall') {
             return new VerbalLearning(jsPsych, taskInfo.setNum, 2, verbalLearningEndTime)
