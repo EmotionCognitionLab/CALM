@@ -14,6 +14,8 @@ window.mainAPI.onGetCurrentUser((event) => {
   event.sender.send('current-user', getCurrentUser())
 })
 
+window.mainAPI.currentUser(getCurrentUser())
+
 </script>
 
 <style>
