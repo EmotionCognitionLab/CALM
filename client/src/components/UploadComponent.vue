@@ -17,11 +17,16 @@
     const emit = defineEmits(['upload-complete'])
 
     onMounted(async () => {
-        const sess = await SessionStore.getRendererSession()
-        await window.mainAPI.uploadEmWaveData(sess)
-        await window.mainAPI.uploadBreathData(sess)
-        uploadComplete.value = true
-        emit('upload-complete')
+        try {
+            const sess = await SessionStore.getRendererSession()
+            await window.mainAPI.uploadEmWaveData(sess)
+            await window.mainAPI.uploadBreathData(sess)
+            uploadComplete.value = true
+            emit('upload-complete')
+        } catch (err) {
+            console.error('Error uploading data', err)
+        }
+        
     })
 </script>
 <style scoped>
