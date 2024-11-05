@@ -27,7 +27,7 @@ resource "aws_dynamodb_table" "experiment-data-table" {
   name           = "${var.project}-${var.env}-experiment-data"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "userId"
-  range_key      = "experimentDateTime"
+  range_key      = "dateTimeExperiment"
   point_in_time_recovery {
     enabled = "${terraform.workspace == "prod" ? true : false}"
   }
@@ -38,7 +38,7 @@ resource "aws_dynamodb_table" "experiment-data-table" {
   }
 
   attribute {
-    name = "experimentDateTime"
+    name = "dateTimeExperiment"
     type = "S"
   }
 
