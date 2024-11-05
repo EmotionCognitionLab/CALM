@@ -72,6 +72,7 @@ functions:
       S3_ENDPOINT: "https://s3.us-west-2.amazonaws.com"
       SESSIONS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/sessions}
       EARNINGS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/earnings}
+      COGNITIVE_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/experiments}
     layers:
       - !Ref BetterSqlite3LambdaLayer
     role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/sqlite/process}
@@ -216,10 +217,10 @@ build:
     minify: ${self:custom.isProd.${self:provider.stage}}
     external:
       - '@aws-sdk/*'
+      - 'better-sqlite3'
     exclude:
       - '@aws-sdk/*'
       - '**/__test__/*'
-      - 'better-sqlite3'
       - '@smithy'
       - '**/*.js'
 

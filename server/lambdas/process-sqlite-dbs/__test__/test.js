@@ -24,6 +24,7 @@ let sqliteTestDbPath;
 
 const sessionsTable = process.env.SESSIONS_TABLE;
 const earningsTable = process.env.EARNINGS_TABLE;
+const cogResultsTable = process.env.COGNITIVE_TABLE;
 
 const mockGetUser = jest.fn((userId) => ({userId: userId, condition: 2}));
 const mockGetUserEarnings = jest.fn((userId) => []);
@@ -48,11 +49,16 @@ beforeEach(async () => {
         [{AttributeName: 'userId', KeyType: 'HASH'}, {AttributeName: 'dateType', KeyType: 'RANGE'}], 
         [{AttributeName: 'userId', AttributeType: 'S'}, {AttributeName: 'dateType', AttributeType: 'S'}]
     );
+    await th.dynamo.createTable(process.env.COGNITIVE_TABLE, 
+        [{AttributeName: 'userId', KeyType: 'HASH'}, {AttributeName: 'dateTimeExperiment', KeyType: 'RANGE'}], 
+        [{AttributeName: 'userId', AttributeType: 'S'}, {AttributeName: 'dateTimeExperiment', AttributeType: 'S'}]
+    );
 });
 
 afterEach(async () => {
     await th.dynamo.deleteTable(process.env.SESSIONS_TABLE);
     await th.dynamo.deleteTable(process.env.EARNINGS_TABLE);
+    await th.dynamo.deleteTable(process.env.COGNITIVE_TABLE);
     mockGetUser.mockClear();
     mockGetUserEarnings.mockClear();
     mockUpdateUser.mockClear();
@@ -84,7 +90,7 @@ describe("Processing a sqlite file", () => {
     it("should only save sessions newer than the last uploaded session", async () => {
         const lastSessionTime = dayjs().subtract(1, 'day');
         const dynamoSessions = [{ emWaveSessionId: 'cafe451', avgCoherence: 2.3, startDateTime: lastSessionTime.unix(), validStatus: 1, durationSeconds: maxSessionMinutes*60, stage: 2, weightedAvgCoherence: 2.3 }];
-        await insertDynamoSessions(theUserId, dynamoSessions);
+        await insertDynamoItems(theUserId, dynamoSessions);
 
         const sessions = [
             { emwave_session_id: 'adcd123', avg_coherence: 1.2, pulse_start_time: lastSessionTime.subtract(2, 'hours').unix(), valid_status: 1, duration_seconds: maxSessionMinutes*60, stage: 2, weighted_avg_coherence:1.2 },
@@ -147,7 +153,7 @@ describe("Processing a sqlite file", () => {
             const weightedCoh = i == 3 ? 7 : 3;
             dynamoSessions.push({emWaveSessionId: `cafe45${i}`, avgCoherence: 2.3, startDateTime: startTime.unix(), validStatus: 1, durationSeconds: maxSessionMinutes*60, stage: 2, weightedAvgCoherence: weightedCoh, isComplete: true})
         }
-        await insertDynamoSessions(theUserId, dynamoSessions);
+        await insertDynamoItems(theUserId, dynamoSessions);
 
         const sessTime = lastSessionTime.add(4, 'days').tz('America/Los_Angeles');
          // with a weighted_avg_coherence of 5, this should score in the top 66% but not the top 25%
@@ -213,6 +219,35 @@ describe("Processing a sqlite file", () => {
         expect(mockUpdateUser).toHaveBeenCalledTimes(1);
         expect(mockUpdateUser.mock.calls[0][0]).toBe(theUserId);
         expect(mockUpdateUser.mock.calls[0][1]).toStrictEqual({progress: {status: statusTypes.COMPLETE}});
+    });
+
+    it("should only save cognitive results newer than the last uploaded results", async () => {
+        const lastUploadedResultTime = dayjs().subtract(1, 'day');
+        const dynamoCogResults = [{ dateTimeExperiment: `${lastUploadedResultTime.toISOString()}|flanker`, isRelevant: 1, results: [1,2,3], stage: 1 }];
+        await insertDynamoItems(theUserId, dynamoCogResults, cogResultsTable);
+
+        const cogResults = [
+            { experiment: 'flanker-2', is_relevant: 0, date_time: lastUploadedResultTime.subtract(2, 'hours').toISOString(), results: '{"correct_response":"arrowright","arrows":[1,1,1,1,1]}', stage: 1 },
+            { experiment: 'verbal-learning-learning', is_relevant: 1, date_time: lastUploadedResultTime.add(20, 'hours').toISOString(), results: '{"rt":null,"response":null,"stimulus":"/src/cognitive/verbal-learning/pre-a.mp3"}', stage: 1 },
+        ];
+        await insertCogResults(db, cogResults);
+        await runS3PutLambda();
+
+        const expectedNewCogResults = cogResults.filter(r => dayjs(r.date_time).isAfter(lastUploadedResultTime));
+        const addedCogResults = (await getDynamoCogResults(theUserId)).filter(r => r.dateTimeExperiment != dynamoCogResults[0].dateTimeExperiment);
+        expect(addedCogResults.length).toBe(expectedNewCogResults.length);
+    });
+
+    it("should save all cognitive results if none have been uploaded yet", async () => {
+        const cogResults = [
+            { experiment: 'flanker-2', is_relevant: 0, date_time: '2024-10-10T11:11:12.000Z', results: '{"correct_response":"arrowright","arrows":[1,1,1,1,1]}', stage: 1 },
+            { experiment: 'verbal-learning-learning', is_relevant: 1, date_time: '2024-10-11T09:10:11.120Z', results: '{"rt":null,"response":null,"stimulus":"/src/cognitive/verbal-learning/pre-a.mp3"}', stage: 1 },
+        ];
+        await insertCogResults(db, cogResults);
+        await runS3PutLambda();
+
+        const addedCogResults = (await getDynamoCogResults(theUserId));
+        expect(addedCogResults.length).toBe(cogResults.length);
     });
 
     afterAll(async () => {
@@ -418,12 +453,15 @@ async function initSqliteDb() {
 
     const createSessionsTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS emwave_sessions(emwave_session_id TEXT PRIMARY KEY, avg_coherence FLOAT NOT NULL, pulse_start_time INTEGER NOT NULL, valid_status INTEGER NOT NULL, duration_seconds INTEGER NOT NULL, stage INTEGER NOT NULL, emo_pic_name TEXT, weighted_avg_coherence FLOAT NOT NULL DEFAULT 0.0)');
     createSessionsTableStmt.run();
+
+    const createCogResultsTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS cognitive_results(id INTEGER NOT NULL PRIMARY KEY, experiment TEXT NOT NULL, is_relevant INTEGER NOT NULL, date_time TEXT NOT NULL, results TEXT NOT NULL, stage INTEGER NOT NULL)');
+    createCogResultsTableStmt.run();
     
     return db;
 }
 
-async function insertDynamoSessions(userId, sessions) {
-    const puts = sessions.map(s => {
+async function insertDynamoItems(userId, items, table=sessionsTable) {
+    const puts = items.map(s => {
         s.userId = userId;
         return {
             PutRequest: {
@@ -432,7 +470,7 @@ async function insertDynamoSessions(userId, sessions) {
         };
     });
     const params = { RequestItems: {} };
-    params.RequestItems[sessionsTable] = puts;
+    params.RequestItems[table] = puts;
     await docClient.send(new BatchWriteCommand(params));
 }
 
@@ -447,12 +485,26 @@ async function insertSessions(db, sessions) {
     await th.s3.addFile(process.env.DATA_BUCKET, sqliteKey, sqliteFile);
 }
 
+async function insertCogResults(db, results) {
+    const stmt = db.prepare('INSERT INTO cognitive_results(experiment, is_relevant, date_time, results, stage) VALUES(?, ? , ?, ?, ?)');
+    for (const r of results) {
+        stmt.run(r.experiment, r.is_relevant, r.date_time, r.results, r.stage);
+    }
+    await th.s3.removeBucket(process.env.DATA_BUCKET);
+    const sqliteFile = await readFile(sqliteTestDbPath);
+    await th.s3.addFile(process.env.DATA_BUCKET, sqliteKey, sqliteFile);
+}
+
 async function getDynamoSessions(userId) {
    return await dynamoQueryByUserId(userId, sessionsTable);
 }
 
 async function getDynamoEarnings(userId) {
    return await dynamoQueryByUserId(userId, earningsTable);
+}
+
+async function getDynamoCogResults(userId) {
+    return await dynamoQueryByUserId(userId, cogResultsTable);
 }
 
 async function dynamoQueryByUserId(userId, tableName) {

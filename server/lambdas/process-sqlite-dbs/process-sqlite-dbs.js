@@ -24,6 +24,7 @@ const db = new Db();
 db.docClient = docClient;
 const sessionsTable = process.env.SESSIONS_TABLE;
 const earningsTable = process.env.EARNINGS_TABLE;
+const cogResultsTable = process.env.COGNITIVE_TABLE;
 
 export async function handler(event) {
     let sqliteDbPath;
@@ -35,6 +36,16 @@ export async function handler(event) {
         sqliteDb = new Database(sqliteDbPath);
         const userId = decodeURIComponent(event.Records[0].s3.object.key).split('/')[0];
 
+         // upload new cognitive results from sqlite db
+         const lastCogResultTime = await lastUploadedCogResultTime(userId);
+         const newCogResultsStmt = sqliteDb.prepare('select experiment, is_relevant, date_time, results, stage from cognitive_results where date_time > ?');
+         const newCogResults = newCogResultsStmt.all(lastCogResultTime).map(rowToObject);
+         if (newCogResults.length > 0) {
+            console.log(`About to save ${newCogResults.length} cognitive results for user ${userId}.`);
+            await saveCogResults(userId, newCogResults);
+            console.log(`Finished saving cognitive results.`);
+         }
+ 
         // get new sessions from sqlite db
         const lastUploadTime = await lastUploadedSessionTime(userId);
         const newSessionsStmt = sqliteDb.prepare('select * from emwave_sessions where pulse_start_time > ?');
@@ -147,6 +158,29 @@ async function getPriorCoherenceValues(userId, latestStartDateTime) {
     return res.Items.map(i => i.weightedAvgCoherence);
 }
 
+async function saveCogResults(userId, results) {
+    const cogPuts = results.map(r => {
+        r.dateTimeExperiment = `${r.dateTime}|${r.experiment}`;
+        r.userId = userId;
+        delete(r.dateTime);
+        delete(r.experiment);
+        return {
+            PutRequest: {
+                Item: r
+            }
+        };
+    });
+
+    while (cogPuts.length > 0) {
+        const params = { RequestItems: {} };
+        params.RequestItems[cogResultsTable] = cogPuts.splice(0, 25);
+        const resp = await docClient.send(new BatchWriteCommand(params));
+        if (resp.UnprocessedItems.length > 0) {
+            await retrySaveWithBackoff(resp.UnprocessedItems);
+        }
+    }
+}
+
 async function saveSessionsAndEarnings(userId, sessions, earnings) {
     const sessionPuts = sessions.map(s => {
         s.userId = userId;
@@ -219,17 +253,30 @@ async function retrySaveWithBackoff(unprocessedItems) {
 }
 
 async function lastUploadedSessionTime(userId) {
+    const dynResults = await lastUploadedTime(userId, sessionsTable);
+    if (dynResults.Items.length === 0) return 0;
+  
+    return dynResults.Items[0].startDateTime;
+}
+
+async function lastUploadedCogResultTime(userId) {
+    const dynResults = await lastUploadedTime(userId, cogResultsTable);
+    if (dynResults.Items.length === 0) return 0;
+
+    const parts = dynResults.Items[0].dateTimeExperiment.split('|')
+  
+    return parts[0];
+}
+
+async function lastUploadedTime(userId, dynTable) {
     const baseParams = new QueryCommand({
-        TableName: sessionsTable,
+        TableName: dynTable,
         KeyConditionExpression: "userId = :userId",
         ScanIndexForward: false,
         Limit: 1,
         ExpressionAttributeValues: { ":userId": userId },
     });
-    const dynResults = await docClient.send(baseParams);
-    if (dynResults.Items.length === 0) return 0;
-  
-    return dynResults.Items[0].startDateTime;
+    return await docClient.send(baseParams);
 }
 
 const rowToObject = (result) => {

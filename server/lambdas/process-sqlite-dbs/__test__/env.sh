@@ -1,3 +1,4 @@
 SESSIONS_TABLE=sessions
 EARNINGS_TABLE=earnings
+COGNITIVE_TABLE=cognitive
 DATA_BUCKET=user-data
