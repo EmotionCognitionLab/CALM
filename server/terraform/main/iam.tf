@@ -331,6 +331,7 @@ resource "aws_iam_role" "lambda-sqlite-process" {
     aws_iam_policy.dynamodb-earnings-read.arn,
     aws_iam_policy.dynamodb-earnings-write.arn,
     aws_iam_policy.dynamodb-user-read-write.arn,
+    aws_iam_policy.dynamodb-experiment-read-write.arn
   ]
 }
 
@@ -442,7 +443,6 @@ resource "aws_iam_role" "lambda" {
     aws_iam_policy.dynamodb-user-read-write.arn,
     aws_iam_policy.dynamodb-earnings-read.arn,
     aws_iam_policy.dynamodb-lumos-acct-read-write.arn,
-    aws_iam_policy.dynamodb-read-all-experiment-data.arn,
     aws_iam_policy.cloudwatch-write.arn
   ]
 }
@@ -652,11 +652,11 @@ resource "aws_iam_access_key" "console-log-writer-key" {
   user = aws_iam_user.console-log-writer.name
 }
 
-# Policy to allow reading from the experiment data table
-resource "aws_iam_policy" "dynamodb-read-all-experiment-data" {
-  name = "${var.project}-${var.env}-dynamodb-read-all-experiment-data"
-  path = "/policy/dynamodb/experimentData/readAll/"
-  description = "Allows reading all data from Dynamodb experiment data table"
+# Policy to allow writing/reading to/from the experiment data table
+resource "aws_iam_policy" "dynamodb-experiment-read-write" {
+  name = "${var.project}-${var.env}-dynamodb-experiment-read-write"
+  path = "/policy/dynamodb/experimentData/all/"
+  description = "Allows reading from/writing to dynamodb experiment data table"
   policy = <<POLICY
 {
   "Version": "2012-10-17",
@@ -666,13 +666,10 @@ resource "aws_iam_policy" "dynamodb-read-all-experiment-data" {
       "Action": [
         "dynamodb:DescribeTable",
         "dynamodb:Query",
-        "dynamodb:Scan",
-        "dynamodb:GetItem",
-        "dynamodb:BatchGetItem"
+        "dynamodb:BatchWriteItem"
       ],
       "Resource": [
-        "arn:aws:dynamodb:${var.region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.experiment-data-table.name}",
-        "arn:aws:dynamodb:${var.region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.experiment-data-table.name}/index/*"
+        "arn:aws:dynamodb:${var.region}:${data.aws_caller_identity.current.account_id}:table/${aws_dynamodb_table.experiment-data-table.name}"
       ]
     }
   ]
