@@ -32,6 +32,7 @@
 
     function reset() {
         secondsRemaining.value = props.secondsDuration
+        running.value = false
     }
 
     defineExpose({running, reset})
