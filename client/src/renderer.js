@@ -46,6 +46,8 @@ import CognitiveComponent from './components/CognitiveComponent.vue';
 
 import { isAuthenticated, getAuth } from '../../common/auth/auth'
 import { SessionStore } from './session-store'
+import LumosityComponent from './components/LumosityComponent.vue';
+import Stage2Component from './components/Stage2Component.vue';
 
 
 const routes = [
@@ -54,12 +56,14 @@ const routes = [
     { path: '/signin', component: LoginComponent, name: 'signin', props: true },
     { path: '/login', beforeEnter: handleOauthRedirect, component: OauthRedirectComponent }, // TODO eliminate now-obsolete OauthRedirectComponent; the beforeEnter guard is now doing all the work
     { path: '/earnings', component: EarningsComponent },
+    { path: '/stage2', component: Stage2Component },
     { path: '/stage/:stageNum', component: StageComponent, props: true },
     { path: '/donetoday', component: DoneTodayComponent},
     { path: '/alldone', component: StudyCompleteComponent},
     { path: '/', name: 'landing-page', component: ConnectingComponent},
     { path: '/cognitive/:stageNum', component: CognitiveComponent, props: true },
     { path: '/current-stage', redirect: '/setup/1' },
+    { path: '/lumosity', component: LumosityComponent }
 ]
 
 const noAuthRoutes = ['/signin', '/login', '/']
