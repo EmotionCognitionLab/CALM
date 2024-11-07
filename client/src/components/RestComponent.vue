@@ -6,7 +6,7 @@
         </slot>
         <EmWaveListener :showIbi=false @pulseSensorCalibrated="startTimer" @pulseSensorStopped="sensorStopped" @pulseSensorSignalLost="sensorStopped" @pulseSensorSignalRestored="startTimer" @pulseSensorSessionEnded="resetTimer" ref="emwaveListener"/> 
         <br/>
-        <TimerComponent :secondsDuration=300 :showButtons=false @timerFinished="stopSession" ref="timer" />
+        <TimerComponent :secondsDuration="secondsDuration" :showButtons=false @timerFinished="stopSession" ref="timer" />
     </div>
     <div class="instruction" v-else>
         <slot name="postText">
@@ -25,6 +25,7 @@ const emwaveListener = ref(null)
 const timer = ref(null)
 const done = ref(false)
 const emit = defineEmits(['timer-finished'])
+const props = defineProps(['secondsDuration'])
 let timerDone = false
 
 async function startTimer() {
