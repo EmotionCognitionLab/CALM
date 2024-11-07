@@ -1,3 +1,8 @@
+
+export function quit() {
+    window.mainAPI.quit()
+}
+
 export function yyyymmddNumber(date) {
     return Number.parseInt(yyyymmddString(date));
 }
