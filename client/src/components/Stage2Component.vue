@@ -2,10 +2,10 @@
     <div>
         <div id="waiting" v-show="!waitOver">
             {{  waitMessage }} 
-            <TimerComponent @timerFinished="waitOver=true" :secondsDuration=6 :showButtons=false :countBy="'seconds'" ref="timer" />
+            <TimerComponent @timerFinished="waitOver=true" :secondsDuration=600 :showButtons=false :countBy="'seconds'" ref="timer" />
         </div>
         <div id="breathing" v-show="waitOver">
-            <RestComponent :key="heartMeasurementCount" :secondsDuration="60" @timerFinished="resetWait">
+            <RestComponent :key="heartMeasurementCount" :secondsDuration="120" @timerFinished="resetWait">
                 <template #preText>
                     Now you will be asked to sit quietly for two minutes with a pulse sensor on your ear to measure your heart rate.
                 </template>
