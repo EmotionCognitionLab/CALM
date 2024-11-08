@@ -1,6 +1,6 @@
 <template>
     <div>
-        <button v-if="!gamesDone" @click="done">All done with Brain Games</button>
+        <button @click="done">All done with Brain Games</button>
         <dialog ref="confirm">
             <form method="dialog">
                 Have you played all of today's Brain Games?
@@ -8,7 +8,7 @@
                 <button>No</button>
             </form>
         </dialog>
-        <div id="lumosity-container" v-if="!gamesDone">
+        <div id="lumosity-container">
             <iframe src="https://www.lumosity.com" frameborder="0" id="lumosity-iframe">
 
             </iframe>
@@ -22,7 +22,6 @@
     const router = useRouter()
 
     const confirm = ref(null)
-    const gamesDone = ref(false)
     
     function done() {
         confirm.value.showModal()
