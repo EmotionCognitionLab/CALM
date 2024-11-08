@@ -18,6 +18,8 @@
 <script setup>
     import { ref, onBeforeMount } from '@vue/runtime-core'
     import { useRouter } from "vue-router"
+    import { SessionStore } from '../session-store.js'
+    import ApiClient from "../../../common/api/client.js"
 
     const router = useRouter()
 
@@ -27,7 +29,7 @@
     onBeforeMount(async () => {
         try {
             const session = await SessionStore.getRendererSession()
-            apiClient = new ApiClient(session)
+            const apiClient = new ApiClient(session)
             const data = await apiClient.getSelf()
             if (data?.progress?.status == 'stage2Complete') {
                 doneDest = '/stage3'
