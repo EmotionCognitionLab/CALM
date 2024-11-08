@@ -67,7 +67,7 @@ const routes = [
 ]
 
 const noAuthRoutes = ['/signin', '/login', '/']
-const dbRequiredRoutes = ['/earnings', '/current-stage', '/setup/1', '/setup/3', '/cognitive/1', '/cognitive/4']
+const dbRequiredRoutes = ['/earnings', '/current-stage', '/setup/1', '/setup/3', '/cognitive/1', '/cognitive/4', '/lumosity', '/stage2']
 
 const router = createRouter({
     history: import.meta.env.PROD ? createWebHashHistory() : createWebHistory(),
