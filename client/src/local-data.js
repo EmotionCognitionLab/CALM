@@ -100,6 +100,11 @@ function getKeyValue(key) {
     return res.value;
 }
 
+function deleteKeyValue(key) {
+    const stmt = db.prepare('DELETE FROM key_value_store where name = ?');
+    stmt.run(key)
+}
+
 /**
  * Finds all of the positive emotional pictures that 
  * have received the fewest views so far and returns
@@ -245,6 +250,7 @@ export {
     dbPath,
     getKeyValue,
     setKeyValue,
+    deleteKeyValue,
     getNextEmoPic,
     saveEmWaveSessionData,
     getEmWaveSessionsForStage,

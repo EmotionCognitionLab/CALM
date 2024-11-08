@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('mainAPI', {
     getNextEmoPic: async () => await ipcRenderer.invoke('get-next-emo-pic'),
     getKeyValue: async (key) => await ipcRenderer.invoke('get-key-value', key),
     setKeyValue: (key, value) => ipcRenderer.send('set-key-value', key, value),
+    deleteKeyValue: (key) => ipcRenderer.send('delete-key-value', key),
     disableMenus: async () => ipcRenderer.invoke('disable-menus'),
     quit: () => ipcRenderer.invoke('quit'),
 })

@@ -16,19 +16,33 @@
     </div>
 </template>
 <script setup>
-    import { ref } from '@vue/runtime-core'
+    import { ref, onBeforeMount } from '@vue/runtime-core'
     import { useRouter } from "vue-router"
 
     const router = useRouter()
 
     const confirm = ref(null)
+    let doneDest = '/stage2'
     
+    onBeforeMount(async () => {
+        try {
+            const session = await SessionStore.getRendererSession()
+            apiClient = new ApiClient(session)
+            const data = await apiClient.getSelf()
+            if (data?.progress?.status == 'stage2Complete') {
+                doneDest = '/stage3'
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    })
+
     function done() {
         confirm.value.showModal()
     }
 
     function gamesConfirmed() {
-        router.push('/stage2')
+        router.push(doneDest)
     }
 
 </script>

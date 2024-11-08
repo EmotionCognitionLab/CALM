@@ -8,7 +8,7 @@ import { ipcMain } from 'electron';
 const Logger = require('logger');
 import emwave from './emwave';
 import { emWaveDbPath, deleteShortSessions as deleteShortEmwaveSessions, extractSessionData, getDataForSessions } from './emwave-data';
-import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getNextEmoPic, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults } from './local-data';
+import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getNextEmoPic, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue } from './local-data';
 import version from "../version.json";
 import packageInfo from "../package.json"
 import { SessionStore } from './session-store'
@@ -330,6 +330,10 @@ ipcMain.handle('get-key-value', (event, key) => {
 
 ipcMain.on('set-key-value', (event, key, value) => {
   setKeyValue(key, value)
+})
+
+ipcMain.on('delete-key-value', (event, key) => {
+  deleteKeyValue(key)
 })
 
 ipcMain.handle('set-stage', async(_event, stage) => {

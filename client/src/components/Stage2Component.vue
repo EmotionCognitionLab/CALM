@@ -2,7 +2,7 @@
     <div>
         <div id="waiting" v-show="!waitOver">
             {{  waitMessage }} 
-            <TimerComponent @timerFinished="waitOver=true" :secondsDuration=600 :showButtons=false :countBy="'seconds'" ref="timer" />
+            <TimerComponent @timerFinished="waitOver=true" :secondsDuration="waitSeconds" :showButtons=false :countBy="'seconds'" ref="timer" />
         </div>
         <div id="breathing" v-show="waitOver">
             <RestComponent :key="heartMeasurementCount" :secondsDuration="120" @timerFinished="resetWait">
@@ -24,12 +24,25 @@
     import RestComponent from './RestComponent.vue';
     import { quit } from '../utils'
 
+    const waitSeconds = ref(120)
     const timer = ref(null)
     const waitOver = ref(false)
     let waitMessage = 'Please wait at least 10 minutes before your next task, which is to rest for 2 minutes while measuring your resting heart rate.'
     const heartMeasurementCount = ref(0)
 
-    onMounted(() => timer.value.running = true)
+    onMounted(async() => {
+        const defaultEnd =  Date.now() + (waitSeconds.value * 1000)
+        const waitEnd = Number.parseInt(await window.mainAPI.getKeyValue('waitEnd'))
+        if (Number.isNaN(waitEnd) || waitEnd == 0) { // then there was no value set
+            waitEnd = defaultEnd
+            await window.mainAPI.setKeyValue('waitEnd', waitEnd)
+        } else if (waitEnd < defaultEnd) {
+            waitOver.value = true
+        } else {
+            waitSeconds.value = (Date.now() - waitEnd) / 1000
+        }
+        timer.value.running = true
+    })
     
     function resetWait() {
         if (heartMeasurementCount.value != 0) return
