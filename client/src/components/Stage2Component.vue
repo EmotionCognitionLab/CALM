@@ -1,8 +1,11 @@
 <template>
     <div>
         <div id="waiting" v-show="!waitOver">
-            {{  waitMessage }} 
-            <TimerComponent @timerFinished="waitOver=true" :secondsDuration="waitSeconds" :showButtons=false :countBy="'seconds'" ref="timer" />
+            <TimerComponent @timerFinished="waitDone" :endAtTime=endWaitAt :endAtKey="endAtKey" :showButtons=false :countBy="'seconds'" ref="timer">
+                <template #text>
+                    {{ waitMessage }}
+                </template>
+            </TimerComponent>
         </div>
         <div id="breathing" v-show="waitOver">
             <RestComponent :key="heartMeasurementCount" :secondsDuration="120" @timerFinished="resetWait">
@@ -24,31 +27,31 @@
     import RestComponent from './RestComponent.vue';
     import { quit } from '../utils'
 
-    const waitSeconds = ref(120)
+    let endWaitAt = ref(futureMinutes(10))
+    let endAtKey = 'stage2Wait1'
     const timer = ref(null)
     const waitOver = ref(false)
     let waitMessage = 'Please wait at least 10 minutes before your next task, which is to rest for 2 minutes while measuring your resting heart rate.'
     const heartMeasurementCount = ref(0)
 
     onMounted(async() => {
-        const defaultEnd =  Date.now() + (waitSeconds.value * 1000)
-        const waitEnd = Number.parseInt(await window.mainAPI.getKeyValue('waitEnd'))
-        if (Number.isNaN(waitEnd) || waitEnd == 0) { // then there was no value set
-            waitEnd = defaultEnd
-            await window.mainAPI.setKeyValue('waitEnd', waitEnd)
-        } else if (waitEnd < defaultEnd) {
-            waitOver.value = true
-        } else {
-            waitSeconds.value = (Date.now() - waitEnd) / 1000
-        }
         timer.value.running = true
     })
+
+    async function waitDone() {
+        waitOver.value = true
+    }
+
+    function futureMinutes(min) {
+        return Date.now() + (min * 60 * 1000)
+    }
     
     function resetWait() {
         if (heartMeasurementCount.value != 0) return
 
         waitMessage = "Your first resting heart rate measurement is complete. As before, please wait at least 10 minutes before completing another 2 minutes of heart rate measurement."
-        timer.value.reset()
+        endAtKey = 'stage2Wait2'
+        endWaitAt.value = futureMinutes(10)
 
         // ugh - if we just set running = true immediately the watcher
         // in TimerComponent doesn't trigger
