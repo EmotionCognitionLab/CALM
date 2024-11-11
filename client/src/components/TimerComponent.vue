@@ -101,6 +101,8 @@
     const timeLeft = computed(() => {
         const minutes = Math.floor(secondsRemaining.value / 60)
         const seconds = secondsRemaining.value % 60
+        if (minutes <= 0 && seconds <= 0) return ''
+        
         if (countBy.value === 'seconds') {
             return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
         }
