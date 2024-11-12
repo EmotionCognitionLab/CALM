@@ -1,6 +1,7 @@
-import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamoDocClient as docClient } from "../common/aws-clients.js";
 const usersTable = process.env.USERS_TABLE;
+const lumosAcctTable = process.env.LUMOS_ACCT_TABLE;
 import Db from '../../../common/db/db.js';
 
 
@@ -14,6 +15,9 @@ exports.handler = async (event) => {
         if (method === "PUT") {
             return updateSelf(event.requestContext.authorizer.jwt.claims.sub, JSON.parse(event.body));
         }
+    }
+    if (path === "/self/lumos" && method === "GET") {
+        return getLumosCreds(event.requestContext.authorizer.jwt.claims.sub);
     }
     if (path.startsWith("/self/earnings") && method === "GET") {
         const earningsType = event.pathParameters.earningsType;
@@ -84,6 +88,57 @@ const getEarnings = async (userId, earningsType = null) => {
         const db = new Db();
         db.docClient = docClient;
         return await db.earningsForUser(userId, earningsType);
+    } catch (err) {
+        console.error(err);
+        if (!(err instanceof HttpError)) {
+            err = new HttpError(err.message);
+        }
+        return errorResponse(err);
+    }
+}
+
+const getLumosCreds = async (userId) => {
+    try {
+        // check to see if they already have lumos creds assigned
+
+        const findCredsParams = {
+            TableName: lumosAcctTable,
+            FilterExpression: '#owner = :owner',
+            ExpressionAttributeNames: { '#owner': 'owner' },
+            ExpressionAttributeValues: { ':owner': userId },
+            ConsistentRead: true
+        };
+        const credsResults = await docClient.send(new ScanCommand(findCredsParams));
+        if (credsResults.Items.length === 1) {
+            return credsResults.Items[0];
+        }
+
+        // no creds assigned; assign them an unused lumosity account
+        const readParams = {
+            TableName: lumosAcctTable,
+            FilterExpression: 'attribute_not_exists(#owner)',
+            ExpressionAttributeNames: { '#owner': 'owner' },
+            ConsistentRead: true
+        };
+        const dynResults = await docClient.send(new ScanCommand(readParams));
+        if (dynResults.Items.length < 1) {
+            throw new Error(`No unused Lumosity accounts.`);
+        }
+        const acct = dynResults.Items[0];
+        
+        // and now mark the lumosity account we've selected as theirs
+        const email = acct['email'];
+        const writeParams = {
+            TableName: lumosAcctTable,
+            Key: {email: email},
+            UpdateExpression: 'set #owner = :userId',
+            ExpressionAttributeNames: { '#owner': 'owner' },
+            ExpressionAttributeValues: { ':userId': userId },
+            ConditionExpression: 'attribute_not_exists(#owner)'
+        };
+        await docClient.send(new UpdateCommand(writeParams));
+
+        return acct;
     } catch (err) {
         console.error(err);
         if (!(err instanceof HttpError)) {

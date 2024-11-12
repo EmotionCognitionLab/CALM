@@ -104,8 +104,13 @@ functions:
           method: GET
           path: /self/earnings/{earningsType+}
           authorizer: serviceAuthorizer
+      - httpApi:
+          method: GET
+          path: /self/lumos
+          authorizer: serviceAuthorizer
     environment:
       USERS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/users}
+      LUMOS_ACCT_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/lumosacct}
       DYNAMO_ENDPOINT: "https://dynamodb.${self:provider.region}.amazonaws.com"
     role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda}
 
