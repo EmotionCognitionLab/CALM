@@ -1,5 +1,5 @@
 import './crypto-polyfill'
-import { app, BrowserWindow, Menu } from 'electron';
+import { app, BrowserWindow, Menu, WebContentsView } from 'electron';
 import path from 'path';
 import * as AmazonCognitoIdentity from 'amazon-cognito-auth-js';
 import awsSettings from '../../common/aws-settings.json';
@@ -338,6 +338,70 @@ ipcMain.on('delete-key-value', (event, key) => {
 
 ipcMain.handle('set-stage', async(_event, stage) => {
   emwave.setStage(stage);
+});
+
+let lumosityView = null;
+
+// handles login page, returns true if login successfully attempted
+function lumosityLogin(email, password) {
+  const emailInput = document.getElementById("user_login");
+  const passwordInput = document.getElementById("user_password");
+  const formSubmit = document.querySelector('input[type="submit"][value="Log In"]');
+  if (emailInput && passwordInput && formSubmit) {
+      emailInput.value = email;
+      passwordInput.value = password;
+      formSubmit.click();
+      return true;
+  } else {
+      return false;
+  }
+}
+
+function lumosityLoginJS(email, password) {
+  return `(${lumosityLogin})("${email}@${awsSettings.LumosDomain}", "${password}")`;
+}
+
+ipcMain.on('create-lumosity-view', async (_event, email, password, userAgent) => {
+  if (lumosityView) {
+      return;
+  }
+  if (!mainWin) {
+    // if we're going staight to Lumosity on startup we may need to
+    // wait a bit for main window initialization
+    await new Promise(resolve => setTimeout(() => resolve(), 200))
+  }
+
+  lumosityView = new WebContentsView();
+  mainWin.contentView.addChildView(lumosityView);
+  lumosityView.setBounds({x: 0, y: 80, width: 1284, height: 593});  // hardcoded!!!
+  // handle first login page load
+  lumosityView.webContents.once("did-finish-load", () => {
+      // #323 skipping past lumosity might cause the lumosity view to be
+      // removed before the login can be executed
+      if (lumosityView && lumosityView.webContents) {
+        lumosityView.webContents.executeJavaScript(lumosityLoginJS(email, password));
+      }
+  });
+  lumosityView.webContents.loadURL("https://www.lumosity.com/login", {userAgent: userAgent.replace(/heartbeam.* /, '').replace(/Electron.* /, '')});
+});
+
+ipcMain.on('hide-lumosity-view', (_event) => {
+  if (!lumosityView) return;
+
+  lumosityView.setVisible(false);
+});
+
+ipcMain.on('close-lumosity-view', (_event) => {
+  if (!mainWin || !lumosityView) return;
+
+  mainWin.contentView.removeChildView(lumosityView);
+  lumosityView = null;
+});
+
+ipcMain.on('show-lumosity-view', (_event) => {
+  if (!lumosityView) return;
+
+  lumosityView.setVisible(true);
 });
 
 ipcMain.handle('quit', () => {

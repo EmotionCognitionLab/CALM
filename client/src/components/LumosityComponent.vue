@@ -5,14 +5,9 @@
             <form method="dialog">
                 Have you played all of today's Brain Games?
                 <button @click="gamesConfirmed">Yes</button>
-                <button>No</button>
+                <button @click="showLumosityView">No</button>
             </form>
         </dialog>
-        <div id="lumosity-container">
-            <iframe src="https://www.lumosity.com" frameborder="0" id="lumosity-iframe">
-
-            </iframe>
-        </div>
     </div>
 </template>
 <script setup>
@@ -34,34 +29,36 @@
             if (data?.progress?.status == 'stage2Complete') {
                 doneDest = '/stage3'
             }
+            let lumosInfo = await window.mainAPI.getKeyValue('lumos')
+            if (!lumosInfo) {
+                const lumosCreds = await apiClient.getLumosCredsForSelf()
+                lumosInfo = `${lumosCreds.email}:${lumosCreds.pw}`
+                await window.mainAPI.setKeyValue('lumos', lumosInfo)
+            }
+            const [email, pw] = lumosInfo.split(':')
+            window.mainAPI.createLumosityView(email, pw, navigator.userAgent)
+
         } catch (err) {
             console.error(err);
         }
     })
 
     function done() {
+        window.mainAPI.hideLumosityView()
         confirm.value.showModal()
     }
 
     function gamesConfirmed() {
+        window.mainAPI.closeLumosityView()
         router.push(doneDest)
+    }
+
+    function showLumosityView() {
+        window.mainAPI.showLumosityView()
     }
 
 </script>
 <style scoped>
-    #lumosity-container {
-        position: relative;
-        height: 0;
-        width: 96%;
-        padding-bottom: 56%;
-    }
-    #lumosity-iframe {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
     :modal {
         background-color: lightgrey;
         border: 2px solid black;
