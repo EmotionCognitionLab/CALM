@@ -371,12 +371,18 @@ ipcMain.on('create-lumosity-view', async (_event, email, password, userAgent) =>
     await new Promise(resolve => setTimeout(() => resolve(), 200))
   }
 
+  // Sets bounds for the lumosity view based on the main content view,
+  // allowing some room at the top for a "All done with brain games" button
+  const calculateBounds = (bounds) => {
+    return {x: bounds.x, y: bounds.y + 90, width: bounds.width, height: bounds.height - 90}
+  }
+
   lumosityView = new WebContentsView();
   mainWin.contentView.addChildView(lumosityView);
-  lumosityView.setBounds({x: 0, y: 80, width: 1284, height: 593});  // hardcoded!!!
+  lumosityView.setBounds(calculateBounds(mainWin.contentView.getBounds()));
   // handle first login page load
   lumosityView.webContents.once("did-finish-load", () => {
-      // #323 skipping past lumosity might cause the lumosity view to be
+      // skipping past lumosity might cause the lumosity view to be
       // removed before the login can be executed
       if (lumosityView && lumosityView.webContents) {
         lumosityView.webContents.executeJavaScript(lumosityLoginJS(email, password));
