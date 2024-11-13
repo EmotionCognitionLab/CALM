@@ -56,7 +56,12 @@ const routes = [
     { path: '/signin', component: LoginComponent, name: 'signin', props: true },
     { path: '/login', beforeEnter: handleOauthRedirect, component: OauthRedirectComponent }, // TODO eliminate now-obsolete OauthRedirectComponent; the beforeEnter guard is now doing all the work
     { path: '/earnings', component: EarningsComponent },
-    { path: '/stage2', component: Stage2Component },
+    { path: '/stage2/:mustWait', name: 'stage2', component: Stage2Component, props: (route) => {
+        // apparently the router changes booleans to strings; change it back :-(
+        if (route.params.mustWait == 'false') return { mustWait: false }
+        if (route.params.mustWait == 'true') return { mustWait: true }
+        return {}
+     }},
     { path: '/stage/:stageNum', component: StageComponent, props: true },
     { path: '/donetoday', component: DoneTodayComponent},
     { path: '/alldone', component: StudyCompleteComponent},

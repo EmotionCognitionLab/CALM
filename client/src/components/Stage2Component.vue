@@ -27,10 +27,11 @@
     import RestComponent from './RestComponent.vue';
     import { quit } from '../utils'
 
+    const { mustWait = true } = defineProps({mustWait: Boolean})
     let endWaitAt = ref(futureMinutes(10))
     let endAtKey = 'stage2Wait1'
     const timer = ref(null)
-    const waitOver = ref(false)
+    const waitOver = ref(!mustWait)
     let waitMessage = 'Please wait at least 10 minutes before your next task, which is to rest for 2 minutes while measuring your resting heart rate.'
     const heartMeasurementCount = ref(0)
 
