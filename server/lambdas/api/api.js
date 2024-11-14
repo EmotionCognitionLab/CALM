@@ -4,7 +4,6 @@ const usersTable = process.env.USERS_TABLE;
 const lumosAcctTable = process.env.LUMOS_ACCT_TABLE;
 import Db from '../../../common/db/db.js';
 
-
 exports.handler = async (event) => {
     const path = event.requestContext.http.path;
     const method = event.requestContext.http.method;
@@ -22,6 +21,9 @@ exports.handler = async (event) => {
     if (path.startsWith("/self/earnings") && method === "GET") {
         const earningsType = event.pathParameters.earningsType;
         return getEarnings(event.requestContext.authorizer.jwt.claims.sub, earningsType);
+    }
+    if (path === '/self/condition' && method === "POST") {
+        return assignToCondition(event.requestContext.authorizer.jwt.claims.sub);
     }
     
     return errorResponse({statusCode: 400, message: `Unknown operation "${method} ${path}"`});
@@ -146,6 +148,80 @@ const getLumosCreds = async (userId) => {
         }
         return errorResponse(err);
     }
+}
+
+const validConditions = ['A', 'B']; 
+exports.validConditions = validConditions // exported for testing
+
+const assignToCondition = async (userId) => {
+    try {
+        const db = new Db({usersTable: usersTable});
+        db.docClient = docClient;
+        const user = await db.getUser(userId);
+        if (!user.condition?.race || !user.condition?.assignedSex) {
+            throw new Error(`User ${userId} lacks either condition.assignedSex or condition.race; cannot be assigned to condition.`);
+        }
+        const userConds = await getActiveUserConditions(user.condition.race, user.condition.assignedSex);
+        const condCounts = Array(validConditions.length).fill(0);
+        
+        for (const cond of userConds) {
+            const idx = validConditions.indexOf(cond);
+            if (idx == -1) throw new Error(`Unexpected condition ${cond} found. User ${userId} cannot be assigned to condition.`)
+            condCounts[idx] += 1;
+        }
+
+        // across all conditions, what is the lowest number of participants?
+        const minCondCount = Math.min(...condCounts);
+
+        // find all of the conditions that have the minCondCount
+        const availableConds = [];
+        condCounts.forEach((val, idx) => {
+            if (val == minCondCount) availableConds.push(idx)
+        });
+
+        // choose one of the available conditions at random
+        const newCondIdx = availableConds[Math.floor(Math.random() * availableConds.length)];
+        const newCond = validConditions[newCondIdx];
+
+        const existingConditionData = user.condition;
+        existingConditionData.assigned = newCond;
+        await db.updateUser(userId, {condition: existingConditionData});
+        return successResponse({condition: newCond});
+    } catch (err) {
+        console.error(err);
+        if (!(err instanceof HttpError)) {
+            err = new HttpError(err.message);
+        }
+        return errorResponse(err);
+    }
+}
+
+/**
+ * Does a full table scan. Use sparingly.
+ */
+async function getActiveUserConditions(race, sex) {
+    let ExclusiveStartKey, dynResults
+    const allResults = [];
+    do {
+        const params = {
+            TableName: usersTable,
+            ExclusiveStartKey,
+            ProjectionExpression: "#condition",
+            FilterExpression: `attribute_exists(#condition) and
+            #condition.assignedSex = :sex and #condition.race = :race and
+            attribute_exists(#condition.assigned) and
+            ( attribute_not_exists(progress) or ( attribute_exists(progress) and 
+            progress.#status <> :dropped ))`,
+            ExpressionAttributeNames: {'#condition': 'condition', '#status': 'status'},
+            ExpressionAttributeValues: {':dropped': 'dropped', ':race': race, ':sex': sex},
+            ConsistentRead: true
+        }
+        dynResults = await docClient.send(new ScanCommand(params));
+        ExclusiveStartKey = dynResults.LastEvaluatedKey
+        allResults.push(...dynResults.Items);
+    } while (dynResults.LastEvaluatedKey)
+
+    return allResults.map(r => r.condition.assigned);
 }
 
 function successResponse(data) {

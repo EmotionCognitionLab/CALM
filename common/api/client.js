@@ -46,6 +46,11 @@ export default class ApiClient {
         return await this.doFetch(url, "get", "There was an error getting the lumos account information");
     }
 
+    async assignConditionToSelf() {
+        const url = `${awsSettings.UserApiUrl}/condition`;
+        return await this.doFetch(url, "post", "There was an error assigning the user to condition");
+    }
+
     /**
      * Updates the record of the logged-in user.
      * @param {object} updates An object with the fields you want to update and the values you want to set them to

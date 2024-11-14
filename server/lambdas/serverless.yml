@@ -108,6 +108,10 @@ functions:
           method: GET
           path: /self/lumos
           authorizer: serviceAuthorizer
+      - httpApi:
+          method: POST
+          path: /self/condition
+          authorizer: serviceAuthorizer
     environment:
       USERS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/users}
       LUMOS_ACCT_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/lumosacct}
