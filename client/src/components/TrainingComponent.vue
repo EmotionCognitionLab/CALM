@@ -4,7 +4,7 @@
             <div id="hb-chart" v-if="factors.showHeartRate==true">
                 <canvas id="hb-chart-canvas" width="900px"></canvas>
             </div>
-            <div id="pacer-animation" v-if="factors.showPacer">
+            <div id="pacer-animation" v-show="factors.showPacer">
                 <VerticalPacerComponent 
                     :regimes="remainingRegimes"
                     :playAudio=factors.playAudioPacer
