@@ -30,8 +30,7 @@ const user = {
     name: 'Kim',
     phone_number: '012-345-6789',
     phone_number_verified: false,
-    sub: 'abc123',
-    condition: verified.validConditions[0]
+    sub: 'abc123'
 };
 
 async function putUser(user) {
@@ -64,7 +63,6 @@ describe("Testing with a valid post confirmation trigger event", () => {
         const now = new Date().toISOString().substring(0, 18)
         expect(userRec.Item.createdAt.substring(0, 18)).toBe(now);
         expect(userRec.Item.phone_number_verified).toBeFalsy();
-        expect(verified.validConditions).toContain(userRec.Item.condition);
     });
 
     test("should do nothing if the trigger is not for a signup", async() => {
@@ -105,100 +103,4 @@ describe("Testing with a valid post confirmation trigger event", () => {
         await th.dynamo.deleteTable(process.env.USERS_TABLE);
     });
 });
-
-function buildUserVerificationEvent(userId) {
-    const event = JSON.parse(postConfirmationEventJson);
-    event.request.userAttributes.sub = userId;
-    return event;
-}
-
-describe("assignment to condition", () => {
-    const numUsers = 63;
-
-    beforeEach(async() => {
-        await th.dynamo.createTable(process.env.USERS_TABLE, 
-            [{AttributeName: 'userId', KeyType: 'HASH'}], 
-            [{AttributeName: 'userId', AttributeType: 'S'}]
-        );
-        
-        for (let i = 0; i<numUsers; i++) {
-            const params = {
-                TableName: process.env.USERS_TABLE,
-                Item: {userId: i.toString(), condition: i}
-            };
-            await docClient.send(new PutCommand(params));
-        }
-    });
-
-    test("should choose from among the conditions with the lowest number of participants", async() => {
-        const newUserId = 'testUser';
-        const result = await verified.handler(buildUserVerificationEvent(newUserId));
-        expect(result.response).toBeDefined();
-
-        const params = {
-            TableName: process.env.USERS_TABLE,
-            Key: {
-                userId: newUserId
-            }
-        };
-        const userRes = (await docClient.send(new GetCommand(params))).Item;
-        expect(userRes.condition).toBe(numUsers);
-    });
-
-    test("should ignore the conditions of dropped users when determining conditions with the lowest number of participants", async() => {
-        const droppedUserId = '31';
-        const params = {
-            TableName: process.env.USERS_TABLE,
-            Key: {'userId': droppedUserId},
-            UpdateExpression: 'set progress = :progress',
-            ExpressionAttributeValues: {':progress': {dropped: '2023-01-07T19:42:28.092Z'}}
-        };
-        await docClient.send(new UpdateCommand(params));
-
-        const newUserId = 'testUser';
-        const result = await verified.handler(buildUserVerificationEvent(newUserId));
-        expect(result.response).toBeDefined();
-
-        const getParams = {
-            TableName: process.env.USERS_TABLE,
-            Key: {
-                userId: newUserId
-            }
-        };
-        const userRes = (await docClient.send(new GetCommand(getParams))).Item;
-        // it should choose between the condition of the dropped user and the one unassigned condition
-        expect(userRes.condition == Number.parseInt(droppedUserId) || userRes.condition == numUsers).toBe(true);
-    });
-
-    test("should handle the case where some conditions have two, some one and some zero participants", async() => {
-        const testUserId = '30';
-        const params = {
-            TableName: process.env.USERS_TABLE,
-            Key: {'userId': testUserId},
-            UpdateExpression: 'set #condition = :condition',
-            ExpressionAttributeNames: {'#condition': 'condition'},
-            ExpressionAttributeValues: {':condition': 31}
-        };
-        await docClient.send(new UpdateCommand(params));
-
-        const newUserId = 'newUser';
-        const result = await verified.handler(buildUserVerificationEvent(newUserId));
-        expect(result.response).toBeDefined();
-
-        const getParams = {
-            TableName: process.env.USERS_TABLE,
-            Key: {
-                userId: newUserId
-            }
-        };
-        const userRes = (await docClient.send(new GetCommand(getParams))).Item;
-        // it should choose between the two conditions that don't exist: The one from the test user and the one unassigned condition
-        expect(userRes.condition == Number.parseInt(testUserId) || userRes.condition == numUsers).toBe(true);
-    });
-
-    afterEach(async () => {
-        await th.dynamo.deleteTable(process.env.USERS_TABLE);
-    });
-});
-
 
