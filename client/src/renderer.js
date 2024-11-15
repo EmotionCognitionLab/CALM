@@ -35,7 +35,6 @@ import App from './App.vue';
 import SetupComponent from './components/SetupComponent.vue'
 import UploadComponent from './components/UploadComponent.vue'
 import LoginComponent from './components/LoginComponent.vue'
-import StageComponent from './components/StageComponent.vue'
 import StudyCompleteComponent from './components/StudyCompleteComponent.vue'
 import EarningsComponent from './components/EarningsComponent.vue'
 import DoneTodayComponent from './components/DoneTodayComponent.vue'
@@ -69,7 +68,6 @@ const routes = [
         if (route.params.mustWait == 'true') return { mustWait: true }
         return {}
      }},
-    { path: '/stage/:stageNum', component: StageComponent, props: true },
     { path: '/donetoday', component: DoneTodayComponent},
     { path: '/alldone', component: StudyCompleteComponent},
     { path: '/', name: 'landing-page', component: ConnectingComponent},
@@ -96,7 +94,7 @@ async function practiceOrSetup(to) {
     if (to.params.stageNum == 3) return true;
 
     if (await window.mainAPI.getKeyValue('setupComplete') == 'true') {
-        return { path: '/stage/2' }
+        return { path: '/stage3/false' }
     }
 
     return true
