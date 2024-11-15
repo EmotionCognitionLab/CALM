@@ -57,7 +57,7 @@ export function conditionToFactors(condition) {
     }
 }
 
-export const defaultBreathsPerMinute = 11.11
+export const defaultBreathsPerMinute = 5.4
 
 /**
  * Calculates a personalized breathing pace for a participant.
