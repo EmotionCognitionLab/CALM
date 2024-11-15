@@ -77,7 +77,7 @@
     </div>
 </template>
 <script setup>
-    import { ref, onBeforeMount, onMounted } from '@vue/runtime-core'
+    import { ref, onBeforeMount, onMounted, provide } from '@vue/runtime-core'
     import TimerComponent from './TimerComponent.vue'
     import TrainingComponent from './TrainingComponent.vue'
     import UploadComponent from './UploadComponent.vue'
@@ -108,6 +108,9 @@
     const showFirstSessionPostUploadText = ref(false)
     const showSubsequentSessionPostUploadText = ref(false)
 
+    const invertIbi = ref(false)
+    provide('invertIbi', invertIbi)
+
     onBeforeMount(async() => {
         const session = await SessionStore.getRendererSession()
         const apiClient = new ApiClient(session)
@@ -122,6 +125,9 @@
 
         if (condition.value == 'A') {
             pace.value = self.pace
+            invertIbi.value = false
+        } else {
+            invertIbi.value = true
         }
 
         const minutesDoneToday = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), 2)

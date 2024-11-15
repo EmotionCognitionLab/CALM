@@ -18,7 +18,7 @@
    
 </template>
 <script setup>
-    import { ref, watch, computed, onMounted } from '@vue/runtime-core'
+    import { ref, watch, computed, onMounted, inject } from '@vue/runtime-core'
     import { epToCoherence } from '../coherence.js'
 
     const props = defineProps(['showIbi', 'showScore'])
@@ -34,9 +34,14 @@
     let notVisibleInterval = null
     let stopSensor = ref(false)
     defineExpose({stopSensor})
+    const invertIbi = inject('invertIbi', ref(false))
 
     const score = computed(() => {
         if (ep.value <= 0) return 0
+
+        if (invertIbi.value) {
+            return ((epToCoherence(ep.value).toPrecision(2)) * -1) + 10
+        }
 
         return epToCoherence(ep.value).toPrecision(2)
     })

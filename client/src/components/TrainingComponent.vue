@@ -33,7 +33,7 @@
     </div>
 </template>
 <script setup>
-import { ref, onMounted, computed } from '@vue/runtime-core'
+import { ref, onMounted, computed, inject } from '@vue/runtime-core'
 import { isProxy, toRaw } from 'vue'
 import { pullAt } from 'lodash'
 import CBuffer from 'CBuffer';
@@ -58,6 +58,7 @@ const finishedRegimes = []
 let ep = ref(0)
 let hasSetSound = ref(false)
 let hasReadEyesClosedText = ref(false)
+const invertIbi = inject('invertIbi', ref(false))
 const secondsDuration = computed(() => {
     return (remainingRegimes.value.reduce((prev, cur) => prev + cur.durationMs, 0)) / 1000
 })
@@ -65,6 +66,10 @@ const secondsDuration = computed(() => {
 
 const score = computed(() => {
     if (ep.value <= 0) return 0
+
+    if (invertIbi.value) {
+        return ((epToCoherence(ep.value).toPrecision(2)) * -1) + 10
+    }
 
     return epToCoherence(ep.value).toPrecision(2)
 })
