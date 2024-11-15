@@ -61,7 +61,8 @@ async function buildUserRecord(event) {
         TableName: usersTable,
         Item: {
             userId: event.request.userAttributes["sub"],
-            name: event.request.userAttributes["name"],
+            given_name: event.request.userAttributes["given_name"],
+            family_name: event.request.userAttributes["family_name"],
             email: event.request.userAttributes["email"],
             phone_number: event.request.userAttributes["phone_number"],
             phone_number_verified: event.request.userAttributes["phone_number_verified"] === 'true',

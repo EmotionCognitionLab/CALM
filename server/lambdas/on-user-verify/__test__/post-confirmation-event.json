@@ -14,11 +14,14 @@
         "email_verified": "true",
         "cognito:user_status": "CONFIRMED",
         "cognito:email_alias": "pat@example.com",
-        "name": "Pat",
+        "given_name": "Pat",
+        "family_name": "Johnson",
         "phone_number_verified": "false",
         "phone_number": "+11234567890",
         "email": "pat@example.com",
-        "profile": "1234"
+        "profile": "1234",
+        "custom:race": "white",
+        "custom:sex": "female"
       }
     },
     "response": {}

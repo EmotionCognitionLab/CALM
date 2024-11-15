@@ -54,8 +54,11 @@ describe("Testing with a valid post confirmation trigger event", () => {
         const result = await verified.handler(postConfirmationEvent);
         expect(result.response).toBeDefined();
         const userRec = await getConfirmedUser();
-        for (const field in ['email', 'name', 'phone_number', 'sub']) {
+        for (const field in ['email', 'given_name', 'family_name', 'phone_number', 'sub']) {
             expect(userRec.Item[field]).toBe(postConfirmationEvent.request.userAttributes[field]);
+        }
+        for (const field in ['race', 'sex']) {
+            expect(userRec.Item['condition'][field]).toBe(postConfirmationEvent.request.userAttributes[`custom:${field}`]);
         }
         expect(userRec.Item['rcid']).toBe(postConfirmationEvent.request.userAttributes['profile']);
         const now = new Date().toISOString().substring(0, 18)
