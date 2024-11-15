@@ -4,7 +4,7 @@
             <div id="hb-chart" v-if="factors.showHeartRate==true">
                 <canvas id="hb-chart-canvas" width="900px"></canvas>
             </div>
-            <div id="pacer-animation">
+            <div id="pacer-animation" v-if="factors.showPacer">
                 <VerticalPacerComponent 
                     :regimes="remainingRegimes"
                     :playAudio=factors.playAudioPacer
@@ -12,16 +12,20 @@
                     @pacerRegimeChanged="updateRegimeStatus"
                     ref="pacer" />
             </div>
-            <div id="breath-dir"><i class="arrow up"></i><br/>breathe in<br/><br/><br/>breathe out <br/><i class="arrow down"></i></div>
+            <div id="breath-dir" v-if="factors.showPacer"><i class="arrow up"></i><br/>breathe in<br/><br/><br/>breathe out <br/><i class="arrow down"></i></div>
         </div>
         <br clear="all"/>
         <div id="feedback-area">
             <div id="feedback" :class="feedbackColor">Score: {{ score }}</div>
             <div id="timer"><TimerComponent :secondsDuration=secondsDuration :showButtons=false :countBy="'minutes'" ref="timer" /></div>
         </div>
-        <div v-if="factors.playAudioPacer && !hasSetSound">
-            This part of the application will have sound. Make sure your volume is set so you can hear it. If you find it helps, you may close your eyes during the sessions and use the sound to guide your breathing.<br/>
+        <div v-if="factors.playAudioPacer && !hasSetSound" class="instruction">
+            Sounds are provided to help guide your breathing. If you want to use the sound cues, set your volume so you can hear them. If it helps increase your coherence scores you may close your eyes and use the sound to guide your breathing.<br/>
             <button @click="hasSetSound=true">OK</button>
+        </div>
+        <div v-else-if="!factors.playAudioPacer && !hasReadEyesClosedText">
+            If you find it helps you increase your calmness scores, you may close your eyes during the sessions.<br/>
+            <button @click="hasReadEyesClosedText=true">OK</button>
         </div>
         <div v-else>
             <EmWaveListener :showIbi=false @pulseData="savePulseData" @pulseSensorCalibrated="startDisplay" @pulseSensorStopped="stopDisplay" @pulseSensorSignalLost="stopDisplay" @pulseSensorSignalRestored="resumeDisplay" @pulseSensorSessionEnded="resetDisplay" ref="emwaveListener"/> 
@@ -53,6 +57,7 @@ let inProgressRegime
 const finishedRegimes = []
 let ep = ref(0)
 let hasSetSound = ref(false)
+let hasReadEyesClosedText = ref(false)
 const secondsDuration = computed(() => {
     return (remainingRegimes.value.reduce((prev, cur) => prev + cur.durationMs, 0)) / 1000
 })

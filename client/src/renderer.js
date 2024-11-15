@@ -48,6 +48,7 @@ import { isAuthenticated, getAuth } from '../../common/auth/auth'
 import { SessionStore } from './session-store'
 import LumosityComponent from './components/LumosityComponent.vue';
 import Stage2Component from './components/Stage2Component.vue';
+import Stage3Component from './components/Stage3Component.vue'
 
 
 const routes = [
@@ -57,6 +58,12 @@ const routes = [
     { path: '/login', beforeEnter: handleOauthRedirect, component: OauthRedirectComponent }, // TODO eliminate now-obsolete OauthRedirectComponent; the beforeEnter guard is now doing all the work
     { path: '/earnings', component: EarningsComponent },
     { path: '/stage2/:mustWait', name: 'stage2', component: Stage2Component, props: (route) => {
+        // apparently the router changes booleans to strings; change it back :-(
+        if (route.params.mustWait == 'false') return { mustWait: false }
+        if (route.params.mustWait == 'true') return { mustWait: true }
+        return {}
+     }},
+     { path: '/stage3/:mustWait', name: 'stage3', component: Stage3Component, props: (route) => {
         // apparently the router changes booleans to strings; change it back :-(
         if (route.params.mustWait == 'false') return { mustWait: false }
         if (route.params.mustWait == 'true') return { mustWait: true }
