@@ -1,4 +1,3 @@
-import { emoPics } from '../src/utils.js';
 import * as ld from "../src/local-data.js";
 import { maxSessionMinutes } from '../../common/types/types.js';
 
@@ -61,25 +60,6 @@ describe("Breathing data functions", () => {
     it("should use an in-memory database in test", () => {
         const path = ld.dbPath();
         expect(path).toBe(":memory:");
-    });
-
-    it("getNextEmoPic should return the emotional picture with the fewest views", () => {
-        for (let i=1; i<emoPics.length; i++) {
-            ld.saveEmWaveSessionData(`a${i}`, 1.19, 17136543, 1, 900, 2, emoPics[i]);
-        }
-        const nextPic = ld.getNextEmoPic();
-        expect(nextPic).toBe(emoPics[0]);
-    });
-
-    it("getNextEmoPic should handle the case where multiple pictures have the fewest views", () => {
-        const startIdx = 3;
-        expect(startIdx).toBeLessThan(emoPics.length);
-        for (let i=startIdx; i<emoPics.length; i++) {
-            ld.saveEmWaveSessionData(`a${i}`, 1.19, 17136543, 1, 900, 2, emoPics[i]);
-        }
-        const nextPic = ld.getNextEmoPic();
-        const expectedPossiblePics = emoPics.slice(0, startIdx);
-        expect(expectedPossiblePics).toContain(nextPic);
     });
 
     it("should calculate and save weighted avg coherence when saving emwave data", () => {

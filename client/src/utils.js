@@ -57,9 +57,6 @@ export function conditionToFactors(condition) {
     }
 }
 
-export const emoPics = ['1', '2', '3', '4', '5', '6', '7', '8']
-export const emoPicExt = '.jpeg'
-
 export const defaultBreathsPerMinute = 11.11
 
 /**

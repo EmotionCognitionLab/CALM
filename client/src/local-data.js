@@ -105,36 +105,12 @@ function deleteKeyValue(key) {
     stmt.run(key)
 }
 
-/**
- * Finds all of the positive emotional pictures that 
- * have received the fewest views so far and returns
- * one of them at random. 
- */
-function getNextEmoPic() {
-    const emoPicViewCounts = {};
-    emoPics.forEach(p => emoPicViewCounts[p] = 0);
-    const getEmoPicViewCountsStmt = db.prepare('SELECT emo_pic_name, count(emo_pic_name) as view_count FROM emwave_sessions WHERE emo_pic_name is not null GROUP BY emo_pic_name');
-    const curCounts = getEmoPicViewCountsStmt.all();
-    curCounts.forEach(({emo_pic_name, view_count}) => emoPicViewCounts[emo_pic_name] = view_count);
-    const minCount = Math.min(...Object.values(emoPicViewCounts));
-    const possiblePics = Object.entries(emoPicViewCounts)
-        .filter(([_, viewCount]) => viewCount == minCount)
-        .map(([pic, _]) => pic)
-    return possiblePics[Math.floor(Math.random() * possiblePics.length)];
-}
-
-function saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, emoPicName=null) {
+function saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage) {
     const sessionMinutes = Math.min(Math.round(durationSec / 60), maxSessionMinutes); // participants don't get extra credit for doing sessions longer than max session length
     const weightedAvgCoherence = (sessionMinutes / maxSessionMinutes) * avgCoherence;
 
-    if (emoPicName) {
-        const insertStmt = db.prepare('INSERT INTO emwave_sessions(emwave_session_id, avg_coherence, weighted_avg_coherence, pulse_start_time, valid_status, duration_seconds, stage, emo_pic_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-        insertStmt.run(emWaveSessionId, avgCoherence, weightedAvgCoherence, pulseStartTime, validStatus, durationSec, stage, emoPicName);
-    } else {
-        // used for non-emopic conditition participants and for setup sessions
-        const insertStmt = db.prepare('INSERT INTO emwave_sessions(emwave_session_id, avg_coherence, weighted_avg_coherence, pulse_start_time, valid_status, duration_seconds, stage) VALUES (?, ?, ?, ?, ?, ?, ?)');
-        insertStmt.run(emWaveSessionId, avgCoherence, weightedAvgCoherence, pulseStartTime, validStatus, durationSec, stage);
-    }
+    const insertStmt = db.prepare('INSERT INTO emwave_sessions(emwave_session_id, avg_coherence, weighted_avg_coherence, pulse_start_time, valid_status, duration_seconds, stage) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    insertStmt.run(emWaveSessionId, avgCoherence, weightedAvgCoherence, pulseStartTime, validStatus, durationSec, stage);
 }
 
 function getEmWaveSessionsForStage(stage) {
@@ -215,7 +191,7 @@ async function initDb(serializedSession) {
         insertKeyValueStmt = db.prepare('REPLACE INTO key_value_store(name, value) VALUES(?, ?)');
         getKeyValueStmt = db.prepare('SELECT value FROM key_value_store where name = ?');
 
-        const createSessionTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS emwave_sessions(emwave_session_id TEXT PRIMARY KEY, avg_coherence FLOAT NOT NULL, weighted_avg_coherence FLOAT NOT NULL DEFAULT 0.0, pulse_start_time INTEGER NOT NULL, valid_status INTEGER NOT NULL, duration_seconds INTEGER NOT NULL, stage INTEGER NOT NULL, emo_pic_name TEXT)');
+        const createSessionTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS emwave_sessions(emwave_session_id TEXT PRIMARY KEY, avg_coherence FLOAT NOT NULL, weighted_avg_coherence FLOAT NOT NULL DEFAULT 0.0, pulse_start_time INTEGER NOT NULL, valid_status INTEGER NOT NULL, duration_seconds INTEGER NOT NULL, stage INTEGER NOT NULL)');
         createSessionTableStmt.run();
 
         const createCogDataTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS cognitive_results(id INTEGER NOT NULL PRIMARY KEY, experiment TEXT NOT NULL, is_relevant INTEGER NOT NULL, date_time TEXT NOT NULL, results TEXT NOT NULL, stage INTEGER NOT NULL)')
@@ -251,7 +227,6 @@ export {
     getKeyValue,
     setKeyValue,
     deleteKeyValue,
-    getNextEmoPic,
     saveEmWaveSessionData,
     getEmWaveSessionsForStage,
     getEmWaveSessionMinutesForDayAndStage,
