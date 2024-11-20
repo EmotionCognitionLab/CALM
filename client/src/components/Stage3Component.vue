@@ -137,8 +137,7 @@
             return
         }
         
-        // sessionDurationMs.value = Math.min(maxSessionMinutes, remainingMinutes) * 60 * 1000
-        sessionDurationMs.value = 3 * 60 * 1000
+        sessionDurationMs.value = Math.min(maxSessionMinutes, remainingMinutes) * 60 * 1000
     })
 
     onMounted(async() => {
