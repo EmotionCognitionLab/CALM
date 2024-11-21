@@ -757,4 +757,73 @@ resource "aws_s3_bucket_policy" "receive" {
   )
 }
 
+# policy to allow getting/putting in lumosity email bucket
+resource "aws_iam_policy" "ses-bucket-read-write" {
+  name = "${var.project}-${var.env}-ses-bucket-read-write"
+  path = "/policy/s3/lumos/emails/"
+  description = "Allows limited reading from/writing to lumosity email bucket"
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject",
+          "s3:PutObjectAcl"
+        ],
+        "Resource": [
+          "${aws_s3_bucket.ses-bucket.arn}/reports/*"
+        ]
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject"
+        ],
+        "Resource": [
+          "${aws_s3_bucket.ses-bucket.arn}/emails/*",
+          "${aws_s3_bucket.ses-bucket.arn}/reports/*"
+        ]
+      }
+    ]
+}
+POLICY
+}
+
+resource "aws_iam_role" "lambda-ses-process" {
+  name = "${var.project}-${var.env}-lambda-ses-process"
+  path = "/role/lambda/ses/process/"
+  description = "Role for lambda function(s) handling receipt of emails in SES bucket"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action =  [
+          "sts:AssumeRole"
+        ]
+      }
+    ]
+  })
+
+  managed_policy_arns = [aws_iam_policy.cloudwatch-write.arn,
+    aws_iam_policy.dynamodb-user-read-write.arn,
+    aws_iam_policy.dynamodb-lumos-acct-read-write.arn,
+    aws_iam_policy.dynamodb-lumos-plays-read-write.arn,
+    aws_iam_policy.ses-bucket-read-write.arn
+  ]
+}
+
+# save above IAM role to SSM so serverless can reference it
+resource "aws_ssm_parameter" "lambda-ses-role" {
+  name = "/${var.project}/${var.env}/role/lambda/ses/process"
+  description = "ARN for lambda role to process emails received from SES"
+  type = "SecureString"
+  value = "${aws_iam_role.lambda-ses-process.arn}"
+}
+
 
