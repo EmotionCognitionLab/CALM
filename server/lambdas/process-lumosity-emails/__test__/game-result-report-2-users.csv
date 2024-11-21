@@ -1,0 +1,13 @@
+user,email_address,username,activation_code,game,game_name,score,created_at_utc,user_level,session_level,nth_play,game_lpi
+100000000,heartbeam1@example.com,,RGV7O-LATP3,322,Color Match 2 Web,1550,2022-05-25 20:57:19,2,1,1,386
+100000000,heartbeam1@example.com,,RGV7O-LATP3,119,Raindrops Web,25000,2022-07-07 15:47:33,3,0,1,1747
+100000000,heartbeam1@example.com,,RGV7O-LATP3,322,Color Match 2 Web,650,2022-07-07 15:53:42,2,2,2,386
+100000000,heartbeam1@example.com,,RGV7O-LATP3,233,Brain Shift Web,14500,2022-07-07 16:36:41,1,1,1,903
+100000000,heartbeam1@example.com,,RGV7O-LATP3,948,Memory Serves Web,9900,2022-07-07 16:38:50,2,0,1,989
+100000000,heartbeam1@example.com,,NUL5R-BBTD8,901,Memory Serves Web,9900,2022-07-08 14:08:50,2,0,2,989
+100000000,heartbeam1@example.com,,NUL5R-BBTD8,901,Memory Serves Web,9900,2022-07-09 11:16:07,2,0,3,989
+100000001,heartbeam2@example.com,,RGV7O-LATP3,729,Ebb and Flow Web,21850,2022-05-18 22:16:40,2,0,1,1037
+100000001,heartbeam2@example.com,,RGV7O-LATP3,812,Lost in Migration Web,20350,2022-05-18 22:18:05,0,0,1,1290
+100000001,heartbeam2@example.com,,RGV7O-LATP3,111,Familiar Faces Web,2350,2022-05-18 22:21:09,1,0,1,560
+100000001,heartbeam2@example.com,,RGV7O-LATP3,119,Raindrops Web,22500,2022-05-20 21:44:29,1,0,1,1697
+

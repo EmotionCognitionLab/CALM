@@ -32,6 +32,40 @@ plugins:
   - serverless-ssm-publish
 
 functions:
+  process-lumosity-emails:
+    handler: process-lumosity-emails/process-lumosity-emails.saveattachments
+    events:
+      - s3:
+          bucket: ${ssm:/${self:service}/${self:provider.stage}/info/lambda/ses/bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: ${ssm:/${self:service}/${self:provider.stage}/info/lambda/ses/prefix}
+          existing: true
+    environment:
+      DEST_BUCKET: ${ssm:/${self:service}/${self:provider.stage}/info/lambda/ses/bucket}
+      DEST_PREFIX: reports
+      S3_ENDPOINT: "https://s3.us-west-2.amazonaws.com"
+    role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/ses/process}
+
+  process-lumosity-reports:
+    handler: process-lumosity-emails/process-lumosity-emails.processreports
+    events:
+      - s3:
+          bucket: ${ssm:/${self:service}/${self:provider.stage}/info/lambda/ses/bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: reports
+          existing: true
+    timeout: 600
+    memorySize: 2048
+    environment:
+      S3_ENDPOINT: "https://s3.us-west-2.amazonaws.com"
+      DYNAMO_ENDPOINT: "https://dynamodb.${self:provider.region}.amazonaws.com"
+      USERS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/users}
+      LUMOS_ACCT_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/lumosacct}
+      LUMOS_PLAYS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/lumosplays}
+    role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/ses/process}
+
   handle-rc-event:
     handler: redcap/redcap.handleEvent
     events:
@@ -58,6 +92,7 @@ functions:
           method: post
     timeout: 30
     provisionedConcurrency: 1
+
   process-sqlite-dbs:
     handler: process-sqlite-dbs/process-sqlite-dbs.handler
     events:

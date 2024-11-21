@@ -23,6 +23,9 @@ export const earningsAmounts = Object.freeze({
 
 export const statusTypes = Object.freeze({
     ACTIVE: 'active',
+    STAGE_1_COMPLETE: 'stage1Complete',
+    STAGE_2_COMPLETE: 'stage2Complete',
+    STAGE_2_COMPLETED_ON: 'stage2CompletedOn',
     COMPLETE: 'complete',
     DROPPED: 'dropped'
 })
