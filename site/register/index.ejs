@@ -12,43 +12,49 @@
                 <div class="row">
                     <div class="left"><img src="https://d3vowlh1lzbs4j.cloudfront.net/ui/reg-screen.jpg"/></div>
                     <div class="right">
-                        <div class="column extended-col">
-                            <p class="header">Welcome to the CALM study!</p>
-                            <p>Let's create your account:</p>
+                        <div class="column extended-col header">
+                            Welcome to the CALM study!
                         </div>
+                        <div class="column extended-col"><p class="task-statement">Let's create your account.</p></div>
+                        
                         <div class="column">
                             <input type="hidden" name="rcid" id="rcid" value=""/>
-                            <input type="text" tabindex="1" name="firstName" id="firstName" value="" placeholder="First Name"/> <br/>
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" tabindex="1" name="firstName" id="firstName" value=""/> <br/>
+                            <label for="sex" class="form-label">Born  Male or Female</label>
                             <select tabindex="3" id="sex" required>
-                                <option value="">What sex were you assigned at birth?</option>
                                 <option value="female">Female</option>
-                                <option value="intersex">Intersex</option>
                                 <option value="male">Male</option>
                             </select><br/>
                             <span class="error hidden" id="sexErr"></span>
-                            <input tabindex="5" type="email" name="email" id="email" value="" required placeholder="Email"/>
-                            <span class="error hidden" id="emailErr"></span>
-                            <input tabindex="7" type="password" name="password" id="password" minlength="12" placeholder="Password (minimum 12 characters)" required value="" /> <br/>
+                            <label for="email" class="form-label">Email</label>
+                            <br/><span class="error hidden" id="emailErr"></span>
+                            <input tabindex="5" type="email" name="email" id="email" value="" required/>
+                            <label for="password" class="form-label">Password</label>
+                            <input tabindex="7" type="password" name="password" id="password" minlength="12" required value="" /> <br/>
                         </div>
                         <div class="column">
-                            <input type="text" tabindex="2" name="family_name" id="lastName" value="" placeholder="Last Name"/> <br/>
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" tabindex="2" name="family_name" id="lastName" value=""/> <br/>
+                            <label for="race" class="form-label">Self-identified Race</label>
+                            <br/><span class="error hidden" id="raceErr"></span>
                             <select tabindex="4" id="race" required>
-                                <option value="">Which race do you identify more with?</option>
-                                <option value="black">Black</option>
-                                <option value="white">White</option>
+                                <option value="black">Black/African ancestry</option>
+                                <option value="white">White/European ancestry</option>
                             </select> <br/>
-                            <span class="error hidden" id="raceErr"></span>
-                            <input tabindex="6" type="text" name="phone" id="phone" minlength="10" pattern="[\-0-9 \)\(]+" required placeholder="Phone, with area code" value="" /><span class="advisory">A validation code will be sent</span><br/>
-                            <span class="error hidden" id="phoneErr"></span>
+                            <label for="phone" class="form-label">Cell Phone</label> <span class="advisory">(a validation code will be sent)</span>
+                            <br/><span class="error hidden" id="phoneErr"></span>
+                            <input tabindex="6" type="text" name="phone" id="phone" minlength="10" pattern="[\-0-9 \)\(]+" required value="" /><br/>
                             
+                            <label for="passwordConfirm" class="form-label">Confirm Password</label>
+                            <br/><span class="error hidden" id="passwordConfirmErr"></span>
+                            <input tabindex="8" type="password" name="passwordConfirm" id="passwordConfirm" minlength="12" required value="" /> <br/>
                             
-                            <input tabindex="8" type="password" name="passwordConfirm" id="passwordConfirm" minlength="12" placeholder="Confirm Password" required value="" /> <br/>
-                            <span class="error hidden" id="passwordConfirmErr"></span>
                         </div>
                         <div class="column extended-col">
+                            <span class="error hidden" id="msgConsentErr"></span><br/>
                             <input tabindex="9" type="checkbox" id="msgConsent" name="msgConsent" required />
-                            <label for="msgConsent" class="small">As part of participating in this study I agree to receive text messages to remind me of study activities.</label><br/>
-                            <span class="error hidden"></span>
+                            <label for="msgConsent" class="small"><em>As part of participating in this study I agree to receive text messages to remind me of study activities.</em></label><br/>
                         </div>
                         <div class="column extended-col">
                             <button tabindex="10" id="submit-button" type="submit">SIGN UP</button>

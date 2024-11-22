@@ -158,7 +158,7 @@ function registrationFormIsValid() {
     }
 
     const msgConsent = regInfo.elements.msgConsent;
-    const msgConsentErr = document.querySelector("#msgConsent ~ span.error");
+    const msgConsentErr = document.querySelector("#msgConsentErr");
     if (msgConsent.validity.valid) {
         msgConsentErr.textContent = "";
         msgConsentErr.className = "error hidden";

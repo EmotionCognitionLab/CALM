@@ -1,9 +1,8 @@
 body {
-    display: flex;
     font-size: 20px !important;
-    background-color: lightgrey;
+    background-color: #F6F7F8;
     justify-content: center;
-    font-family: Verdana;
+    font-family: Arial;
 }
 
 img {
@@ -13,16 +12,17 @@ img {
 }
 
 input:not(input[type="checkbox"], input[type="radio"]), select {
-    margin: 10px 0px 10px 0px;
+    margin-bottom: 7px;
     border-radius: 22px;
-    height: 30px;
+    height: 25px;
     padding: 3px 10px;
     background-color: white;
-    min-width: 240px;
+    min-width: 200px;
 }
 
 select {
     padding: 8px 4px 30px 4px;
+    width: 228px;
 }
 
 p * {
@@ -32,7 +32,6 @@ p * {
 .advisory {
     display: inline-block;
     font-size: 60%;
-    transform: translateY(-10px) translateX(10px);
     color: rgb(83, 80, 80);
 }
 
@@ -45,11 +44,18 @@ p * {
     flex: 100%;
 }
 
+.form-label {
+    font-size: 14px;
+    margin-left: 10px;
+}
+
 .header {
     width: 350px;
     color: rgb(125, 184, 236);
-    font-size: larger;
+    font-size: 40px;
     text-align: center;
+    margin-top: 28px;
+    flex: 100%;
 }
 
 .hidden {
@@ -64,8 +70,8 @@ p * {
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
-    flex: 0 0 calc(63% - 10px);
-    margin-left: 10px;
+    flex: 0 0 calc(63% - 25px);
+    margin-left: 25px;
 }
 
 .row {
@@ -78,12 +84,17 @@ p * {
     color: rgb(66, 65, 65);
 }
 
+.task-statement {
+    margin: 12px 0px 12px 0px;
+}
+
 .error {
     width: 100%;
-    padding-top: 2px;
+    padding: 2px 0px 2px 0px;
     font-size: 80%;
     color: darkred;
     background-color: lightpink;
+    margin-bottom: 2px;
 }
 
 #errors {
@@ -97,17 +108,17 @@ p * {
     max-width: 600px;
 }
 
-#password {
-    margin-top: 33px;
-}
-
 #registration-form {
     width: 960px;
     height: 580px;
     border-radius: 5%;
-    box-shadow: 10px 5px 5px darkgray;
+    box-shadow: 15px 8px 8px rgb(209, 207, 207);
     background-color: white;
     overflow: hidden;
+    margin: 0;
+    position: absolute;
+    top: 20%;
+    translate: 50%;
 }
 
 #researcher-confirmation {
@@ -119,9 +130,10 @@ p * {
 #submit-button {
     color: black;
     font-size: 18px;
-    transform: translate(20px, 40px);
+    font-variant-caps: all-small-caps;
+    transform: translate(1px, 20px);
     border-radius: 12px;
-    padding:10px 30px 10px 30px;
-    background-color: rgb(9, 112, 202);
+    padding:10px 40px 10px 40px;
+    background-color: #538FE9;
     color: white;
 }
