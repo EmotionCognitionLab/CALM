@@ -128,12 +128,17 @@ p * {
 }
 
 #submit-button {
-    color: black;
+    font-weight: bold;
     font-size: 18px;
     font-variant-caps: all-small-caps;
     transform: translate(1px, 20px);
+    border: none;
     border-radius: 12px;
     padding:10px 40px 10px 40px;
     background-color: #538FE9;
     color: white;
+}
+
+#submit-button:hover {
+    background-color: #4084ea;
 }
