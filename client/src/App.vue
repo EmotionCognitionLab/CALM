@@ -21,15 +21,28 @@ window.mainAPI.currentUser(getCurrentUser())
 <style>
 body {
   font-family: Arial, sans-serif;
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1.6em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  background-color: beige;
+  background-color: #F6F7F8;
   height: 100%;
   width: 100%;
+}
+button {
+    font-size: 18px;
+    font-variant-caps: all-small-caps;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    padding:10px 40px 10px 40px;
+    background-color: #538FE9;
+    color: #F6F7F8;
+}
+button:hover {
+  background-color: #4084ea;
 }
 .instruction {
     max-width: 40em;
