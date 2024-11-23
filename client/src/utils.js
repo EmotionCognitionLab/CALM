@@ -1,3 +1,4 @@
+import { minSessionSeconds } from "../../common/types/types";
 
 export function quit() {
     window.mainAPI.quit()
@@ -121,4 +122,24 @@ export function calculatePersonalizedPace(peakFreqs) {
 // exported for testing
 export function hzToBreathsPerMinute(hz) {
     return Math.round(((hz * 60) * 10) * (1 + Number.EPSILON)) / 10;
+}
+
+/**
+ * Saves the data from the most recent emWave session to the app database.
+ * @param {Number} stage The stage the data should be associated with
+ * @returns Promise
+ */
+export function saveEmWaveSessionData(stage) {
+    return new Promise(resolve => setTimeout(async () => { // use setTimeout to give emWave a moment to save the session
+        // if the session ended w/o emwave writing any data
+        // (e.g., sensor wasn't attached at session start)
+        // this may fetch a session that we have already stored,
+        // generating unique constraint violation when we try to save
+        // it again
+        const s = (await window.mainAPI.extractEmWaveSessionData(-1, false))[0]
+        if (s.durationSec > minSessionSeconds) {
+            await window.mainAPI.saveEmWaveSessionData(s.sessionUuid, s.avgCoherence, s.pulseStartTime, s.validStatus, s.durationSec, stage)
+        }
+        resolve()
+    }, 1000) );
 }

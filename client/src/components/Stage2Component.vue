@@ -3,7 +3,7 @@
         <div id="waiting" v-show="!waitOver">
             <TimerComponent @timerFinished="waitDone" :endAtTime=endWaitAt :endAtKey="endAtKey" :showButtons=false :countBy="'seconds'" ref="timer">
                 <template #text>
-                    {{ waitMessage }}
+                    <div class="instruction">{{ waitMessage }}</div>
                 </template>
             </TimerComponent>
         </div>
@@ -25,7 +25,7 @@
     import { ref, onMounted } from '@vue/runtime-core'
     import TimerComponent from './TimerComponent.vue'
     import RestComponent from './RestComponent.vue';
-    import { quit } from '../utils'
+    import { quit, saveEmWaveSessionData } from '../utils'
 
     const { mustWait = true } = defineProps({mustWait: Boolean})
     let endWaitAt = ref(futureMinutes(10))
@@ -47,20 +47,20 @@
         return Date.now() + (min * 60 * 1000)
     }
     
-    function resetWait() {
-        if (heartMeasurementCount.value != 0) return
-
-        waitMessage = "Your first resting heart rate measurement is complete. As before, please wait at least 10 minutes before completing another 2 minutes of heart rate measurement."
-        endAtKey = 'stage2Wait2'
-        endWaitAt.value = futureMinutes(10)
-
-        // ugh - if we just set running = true immediately the watcher
-        // in TimerComponent doesn't trigger
-        setTimeout(() => {
-            timer.value.running = true
-        }, 100)
-        heartMeasurementCount.value = 1 // reset the RestComponent
-        waitOver.value=false
+    async function resetWait() {
+        if (heartMeasurementCount.value == 0) {
+            waitMessage = "Your first resting heart rate measurement is complete. As before, please wait at least 10 minutes before completing another 2 minutes of heart rate measurement."
+            endAtKey = 'stage2Wait2'
+            endWaitAt.value = futureMinutes(10)
+            waitOver.value = false
+            // ugh - if we just set running = true immediately the watcher
+            // in TimerComponent doesn't trigger
+            setTimeout(() => {
+                timer.value.running = true
+            }, 100)
+            heartMeasurementCount.value = 1 // reset the RestComponent
+        }
+        await saveEmWaveSessionData(2)        
     }
 
 </script>

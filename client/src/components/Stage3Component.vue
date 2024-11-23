@@ -38,7 +38,7 @@
                         :regimes="[{durationMs: sessionDurationMs, breathsPerMinute: pace, randomize: false}]"
                         :factors="{showHeartRate: true, playAudioPacer: condition=='A', showPacer: condition=='A'}"
                         @pacerFinished="pacerFinished"
-                        @sessionRestart="saveEmWaveSessionData">
+                        @sessionRestart="saveEmWaveSessionData(stage)">
                     </TrainingComponent>
                 </div>
             </div>
@@ -81,11 +81,10 @@
     import TimerComponent from './TimerComponent.vue'
     import TrainingComponent from './TrainingComponent.vue'
     import UploadComponent from './UploadComponent.vue'
-    import { quit } from '../utils'
+    import { defaultBreathsPerMinute, quit, saveEmWaveSessionData } from '../utils'
     import { SessionStore } from '../session-store.js'
     import ApiClient from '../../../common/api/client';
-    import { maxSessionMinutes, minSessionSeconds } from '../../../common/types/types.js'
-    import { defaultBreathsPerMinute } from '../utils';
+    import { maxSessionMinutes } from '../../../common/types/types.js'
 
     import seatedIcon from '../assets/seated-person.png'
 
@@ -174,21 +173,6 @@
         instructionsRead.value = true
     }
 
-    function saveEmWaveSessionData() {
-        return new Promise(resolve => setTimeout(async () => { // use setTimeout to give emWave a moment to save the session
-            // if the session ended w/o emwave writing any data
-            // (e.g., sensor wasn't attached at session start)
-            // this may fetch a session that we have already stored,
-            // generating unique constraint violation when we try to save
-            // it again
-            const s = (await window.mainAPI.extractEmWaveSessionData(-1, false))[0]
-            if (s.durationSec > minSessionSeconds) {
-                await window.mainAPI.saveEmWaveSessionData(s.sessionUuid, s.avgCoherence, s.pulseStartTime, s.validStatus, s.durationSec, stage)
-            }
-            resolve()
-        }, 1000) );
-    }
-
     async function pacerFinished() {
         // get all of our stage 3 sessions - we'll need them in showEndOfSessionText
         // and once sessionDone is set to true the database is closed and
@@ -199,7 +183,7 @@
             resolve()
         }, 500))
         await p
-        await saveEmWaveSessionData()
+        await saveEmWaveSessionData(stage)
         doneForToday.value = (await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), 3)) >= 36 // two 18-minute sessions/day
         sessionDone.value = true
     }
