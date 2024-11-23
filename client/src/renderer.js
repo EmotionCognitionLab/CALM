@@ -94,7 +94,7 @@ async function practiceOrSetup(to) {
     if (to.params.stageNum == 3) return true;
 
     if (await window.mainAPI.getKeyValue('setupComplete') == 'true') {
-        return { path: '/stage3/false' }
+        return { path: '/lumosity' }
     }
 
     return true
