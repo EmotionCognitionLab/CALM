@@ -129,7 +129,7 @@
             invertIbi.value = true
         }
 
-        const minutesDoneToday = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), 2)
+        const minutesDoneToday = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), stage)
         const remainingMinutes = (2 * maxSessionMinutes) - minutesDoneToday
         if (remainingMinutes < 1) {
             doneForToday.value = true
