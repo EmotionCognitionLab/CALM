@@ -8,7 +8,7 @@
  import { DynamoDBDocumentClient, ScanCommand, QueryCommand, UpdateCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
  import Logger from "logger";
  import { getAuth } from "../auth/auth.js";
- import { earningsAmounts } from "../types/types.js";
+ import { earningsAmounts, statusTypes } from "../types/types.js";
  
  
  'use strict';
@@ -68,9 +68,10 @@ export default class Db {
         try {
             const params = {
                 TableName: this.usersTable,
-                FilterExpression: 'progress.#status = :active',
+                FilterExpression: `exists(progress.#status) and 
+                progress.#status <> ${statusTypes.COMPLETE} and 
+                progress.#status <> ${statusTypes.DROPPED}`,
                 ExpressionAttributeNames: { '#status': 'status' },
-                ExpressionAttributeValues: { ':active': 'active' }
             }
             const dynResults = await this.scan(params);
             return dynResults.Items;
