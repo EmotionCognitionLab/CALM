@@ -10,12 +10,13 @@ import { mockClient } from 'aws-sdk-client-mock'
 
 const path = require('path');
 require('dotenv').config({path: path.join(__dirname, './env.sh')});
-import { statusTypes, maxSessionMinutes } from '../../../../common/types/types';
+import { statusTypes, maxSessionMinutes, stage2BreathingMinutes } from '../../../../common/types/types';
 import { handler } from '../reminders';
 
-const defaultUser =  { userId: '123abc', email: 'nobody@example.com', phone: '+11112223333', phone_number_verified: true, progress: {status: statusTypes.ACTIVE}};
-const unverifiedPhoneUser = { userId: '678ghi', email:'badphone@example.com', phone: '+14445556666', phone_number_verified: false, progress: {status: statusTypes.ACTIVE}};
-const mockGetActiveUsers = jest.fn(() => [ defaultUser ]);
+const stage3User =  { userId: '123abc', email: 'nobody@example.com', phone: '+11112223333', phone_number_verified: true, progress: {status: statusTypes.STAGE_2_COMPLETE}};
+const stage2User = { userId: '456def', email: 'somebody@example.com', phone: '+14445556666', phone_number_verified: true, progress: {status: statusTypes.STAGE_1_COMPLETE}};
+const unverifiedPhoneUser = { userId: '678ghi', email:'badphone@example.com', phone: '+14445556666', phone_number_verified: false, progress: {status: statusTypes.STAGE_2_COMPLETE}};
+const mockGetActiveUsers = jest.fn(() => [ stage3User, stage2User ]);
 const mockSessionsForUser = jest.fn(() => []);
 
 const mockSNSClient = mockClient(SNSClient);
@@ -25,7 +26,7 @@ jest.mock('db/db', () => {
     return jest.fn().mockImplementation(() => {
         return {
             getActiveUsers: () => mockGetActiveUsers(),
-            sessionsForUser: () => mockSessionsForUser()
+            sessionsForUser: (userId) => mockSessionsForUser(userId)
         };
     });
 });
@@ -47,8 +48,9 @@ describe("reminders", () => {
 
     it("should send an sms when the reminderType is correct and the participant has not trained", async () => {
         await handler({reminderType: 'homeTraining'});
-        expect(mockSNSClient.commandCalls(PublishCommand).length).toBe(1);
-        expect(mockSNSClient.commandCalls(PublishCommand)[0].args[0].input.PhoneNumber).toBe(defaultUser.phone_number);
+        expect(mockSNSClient.commandCalls(PublishCommand).length).toBe(2);
+        expect(mockSNSClient.commandCalls(PublishCommand)[0].args[0].input.PhoneNumber).toBe(stage3User.phone_number);
+        expect(mockSNSClient.commandCalls(PublishCommand)[1].args[0].input.PhoneNumber).toBe(stage2User.phone_number);
     });
 
     it("should not send a reminder to someone who has dropped out", async () => {
@@ -75,25 +77,49 @@ describe("reminders", () => {
     });
 
     it("should not send a reminder to someone who has already done two full sessions today", async() => {
-        mockSessionsForUser.mockImplementationOnce(() => [
-            {durationSeconds: maxSessionMinutes * 60},
-            {durationSeconds: (maxSessionMinutes / 2) * 60},
-            {durationSeconds: (maxSessionMinutes / 2) * 60}
-        ]);
+        const mockSessionsImpl = (userId) => {
+            if (userId == stage3User.userId) {
+                return [
+                    {durationSeconds: maxSessionMinutes * 60},
+                    {durationSeconds: (maxSessionMinutes / 2) * 60},
+                    {durationSeconds: (maxSessionMinutes / 2) * 60}
+                ]
+            } else if (userId == stage2User.userId) {
+                return [
+                    {durationSeconds: stage2BreathingMinutes * 60},
+                    {durationSeconds: stage2BreathingMinutes * 60}
+                ]
+            }
+        };
+        mockSessionsForUser
+            .mockImplementationOnce(userId => mockSessionsImpl(userId))
+            .mockImplementationOnce(userId => mockSessionsImpl(userId));
         await handler({reminderType: 'homeTraining'});
         expect(mockGetActiveUsers).toHaveBeenCalledTimes(1);
-        expect(mockSessionsForUser).toHaveBeenCalledTimes(1);
+        expect(mockSessionsForUser).toHaveBeenCalledTimes(2);
         expect(mockSNSClient.commandCalls(PublishCommand).length).toBe(0);
     });
 
-    it("should send a reminder to someone who has done >0 minutes of training and less than two full sessions today", async() => {
-        mockSessionsForUser.mockImplementationOnce(() => [
-            {durationSeconds: maxSessionMinutes * 60}
-        ]);
+    it("should send a reminder to someone who has done >0 minutes of training and less than two full stage 3 sessions today", async() => {
+        const mockSessionsImpl = (userId) => {
+            if (userId == stage3User.userId) {
+                return [
+                    {durationSeconds: maxSessionMinutes * 60}
+                ]
+            } else if (userId == stage2User.userId) {
+                return [
+                    {durationSeconds: stage2BreathingMinutes * 60}
+                ]
+            }
+        };
+        mockSessionsForUser
+            .mockImplementationOnce(userId => mockSessionsImpl(userId))
+            .mockImplementationOnce(userId => mockSessionsImpl(userId));
         await handler({reminderType: 'homeTraining'});
         expect(mockGetActiveUsers).toHaveBeenCalledTimes(1);
-        expect(mockSessionsForUser).toHaveBeenCalledTimes(1);
-        expect(mockSNSClient.commandCalls(PublishCommand).length).toBe(1);
+        expect(mockSessionsForUser).toHaveBeenCalledTimes(2);
+        expect(mockSNSClient.commandCalls(PublishCommand).length).toBe(2);
     });
+
 });
 

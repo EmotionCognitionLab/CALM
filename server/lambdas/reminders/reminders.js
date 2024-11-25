@@ -11,21 +11,19 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 import Db from 'db/db.js';
-import { maxSessionMinutes, statusTypes } from '../../../common/types/types.js';
+import { maxSessionMinutes, stage2BreathingMinutes, statusTypes } from '../../../common/types/types.js';
 
 const snsEndpoint = process.env.SNS_ENDPOINT;
 const region = process.env.REGION;
 
 const homeTrainingMsgs = [
-    "This is a friendly reminder from the breathing study team! If you haven't done your breathing session today, put a reminder in your calendar to do it later today, or try it now!",
-    "Remember to breathe slowly today! Log in to get started.",
-    "Ready to take a breather? Find a comfortable, quiet spot and inhale…exhale….and repeat…",
-    "Day flying by? Take some time for yourself and breathe.",
-    "Hi there! This is your daily reminder to slow your breathing. Log in now for a quick 18-minute session.",
-    "Need a break? Take 18 minutes to slow down and breathe. Log your session now.",
-    "Are you ready to breathe today? Slow breathing is just a click away.",
-    "Don't hold your breath! Log your 18-minute session now and take it one breath at a time.",
-    "Hello! It's time for your daily breathing session. Keep calm and breathe on!"
+    "This is a friendly reminder from the CALM study team! If you haven't done your mindfulness practice today, why not start now?",
+    "Remember to carve out some calm time for yourself today! Log in to get started.",
+    "Day flying by? Take some time for yourself and focus on your heart.",
+    "Hi there! This is your a reminder to do your daily mindfulness practice. Log in now for a quick 18-minute practice.",
+    "Need a break? Take 18 minutes to slow down and relax. Log your practice now.",
+    "Are you ready for a pause today? Calmness is just a click away.",
+    "Hello! It's time for your daily mindfulness practice. Keep calm and carry on!"
 ];
 
 const sns = new SNSClient({endpoint: snsEndpoint, apiVersion: '2010-03-31', region: region});
@@ -47,13 +45,23 @@ async function sendHomeTraininingReminders(reminderType) {
     let sentCount = 0;
     const usersToRemind = [];
     try {
-        const activeUsers = (await db.getActiveUsers()).filter(u => u?.progress?.status == statusTypes.ACTIVE); // filter shouldn't be necessary but better safe than sorry
+        const activeUsers = await db.getActiveUsers();
         for (const u of activeUsers) {
             const todayStart = dayjs().tz('America/Los_Angeles').startOf('day').toDate();
             const todayEnd = dayjs().tz('America/Los_Angeles').endOf('day').toDate();
-            const stage2Sessions = await db.sessionsForUser(u.userId, todayStart, todayEnd, 2);
-            const minutes = stage2Sessions.reduce((prev, cur) => Math.round(cur.durationSeconds / 60) + prev, 0);
-            if (minutes < 2 * maxSessionMinutes) usersToRemind.push(u);
+            let curStage;
+            if (u?.progress?.status == statusTypes.STAGE_1_COMPLETE) {
+                curStage = 2;
+            } else if (u?.progress?.status == statusTypes.STAGE_2_COMPLETE) {
+                curStage = 3;
+            } else {
+                console.error(`User ${u.userId} is apparently active but status is ${u?.progress?.status}. Unable to send reminders.`);
+                continue;
+            }
+            const sessions = await db.sessionsForUser(u.userId, todayStart, todayEnd, curStage);
+            const minutes = sessions.reduce((prev, cur) => Math.round(cur.durationSeconds / 60) + prev, 0);
+            if (curStage == 2 && minutes < 2 * stage2BreathingMinutes) usersToRemind.push(u); // stage 2 users should do 2 2 minute sessions/day
+            if (curStage == 3 && minutes < 2 * maxSessionMinutes) usersToRemind.push(u); 
         }
         const randMsgIdx = Math.floor(Math.random() * homeTrainingMsgs.length);
         const msg = homeTrainingMsgs[randMsgIdx];
