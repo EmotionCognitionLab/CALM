@@ -55,9 +55,29 @@ export async function handler(event) {
         const user = await db.getUser(userId);
         const prevEarnings = await db.earningsForUser(userId);
 
-        // set user to active if necessary
-        if (!user?.progress?.status) {
-            await db.updateUser(userId, {progress: { status: statusTypes.ACTIVE }});
+        // update user status if necessary
+        const sessionStages = new Set();
+        for (const s of newSessions) {
+            sessionStages.add(s.stage);
+        }
+        if (sessionStages.has(1) && !user?.progress?.status) {
+            // stage 1 is in-lab and is complete as soon as data are uploaded
+            const progress = Object.assign({}, user.progress);
+            progress['status'] = statusTypes.STAGE_1_COMPLETE;
+            progress[statusTypes.STAGE_1_COMPLETED_ON] = dayjs().tz('America/Los_Angeles').format('YYYYMMDD');
+            await db.updateUser(userId, {progress: progress});
+        }
+        if (sessionStages.has(3) && user?.progress?.status !== statusTypes.STAGE_2_COMPLETE) {
+            const progress = Object.assign({}, user.progress);
+            progress['status'] = statusTypes.STAGE_2_COMPLETE;
+            progress[statusTypes.STAGE_2_COMPLETED_ON] = dayjs().tz('America/Los_Angeles').format('YYYYMMDD');
+            await db.updateUser(userId, {progress: progress});
+        }
+        if (sessionStages.has(4) && user?.progress?.status !== statusTypes.COMPLETE) {
+            // stage 4 is in-lab and means the user has finished the study
+            const progress = Object.assign({}, user.progress);
+            progress['status'] = statusTypes.COMPLETE;
+            await db.updateUser(userId, {progress: progress});
         }
 
         // get quality-based earnings
@@ -89,11 +109,6 @@ export async function handler(event) {
         let v2Rewards = [];
         if (!prevEarnings.some(e => e.type === earningsTypes.VISIT_2)) {
             v2Rewards = visitRewards(sqliteDb, 2);
-        }
-
-        // if they earned v2Rewards it means they've completed the study
-        if (v2Rewards.length > 0) {
-            await db.updateUser(userId, {progress: { status: statusTypes.COMPLETE }})
         }
 
         //save earnings and sessions

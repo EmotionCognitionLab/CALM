@@ -198,7 +198,7 @@ describe("Processing a sqlite file", () => {
         expect(addedEarnings.length).toBe(0);
     });
 
-    it("should set the user progress status to active if it is not already", async () => {
+    it("should set the user progress status to stage1Complete when stage 1 sessions are uploaded and progress status is not set", async () => {
         const sessions = [
             { emwave_session_id: 'cafe450', avg_coherence: 1.2, pulse_start_time: dayjs().subtract(8, 'hours').unix(), valid_status: 1, duration_seconds: 300, stage: 1, weighted_avg_coherence: (5/18)*1.2 }
         ];
@@ -206,14 +206,31 @@ describe("Processing a sqlite file", () => {
 
         expect(mockUpdateUser).toHaveBeenCalledTimes(1);
         expect(mockUpdateUser.mock.calls[0][0]).toBe(theUserId);
-        expect(mockUpdateUser.mock.calls[0][1]).toStrictEqual({progress: {status: statusTypes.ACTIVE}});
+        const progress = {};
+        progress['status'] = statusTypes.STAGE_1_COMPLETE;
+        progress[statusTypes.STAGE_1_COMPLETED_ON] = dayjs().tz('America/Los_Angeles').format('YYYYMMDD')
+        expect(mockUpdateUser.mock.calls[0][1]).toStrictEqual({progress: progress});
     });
 
-    it("should set the user progress status to complete if v2 rewards are earned", async () => {
+    it("should set the user progress status to stage2Complete when stage 3 sessions are uploaded and progress status is not already set to stage_2_complete", async () => {
         const sessions = [
             { emwave_session_id: 'cafe450', avg_coherence: 1.2, pulse_start_time: dayjs().subtract(8, 'hours').unix(), valid_status: 1, duration_seconds: 300, stage: 3, weighted_avg_coherence: (5/18)*1.2 }
         ];
-        mockGetUser.mockReturnValueOnce({userId: theUserId, condition: 12, progress: {status: statusTypes.ACTIVE}});
+        await runLambdaTestWithSessions(db, sessions);
+
+        expect(mockUpdateUser).toHaveBeenCalledTimes(1);
+        expect(mockUpdateUser.mock.calls[0][0]).toBe(theUserId);
+        const progress = {};
+        progress['status'] = statusTypes.STAGE_2_COMPLETE;
+        progress[statusTypes.STAGE_2_COMPLETED_ON] = dayjs().tz('America/Los_Angeles').format('YYYYMMDD')
+        expect(mockUpdateUser.mock.calls[0][1]).toStrictEqual({progress: progress}); 
+    });
+
+    it("should set the user progress status to complete if stage 4 sessions are uploaded", async () => {
+        const sessions = [
+            { emwave_session_id: 'cafe450', avg_coherence: 1.2, pulse_start_time: dayjs().subtract(8, 'hours').unix(), valid_status: 1, duration_seconds: 300, stage: 4, weighted_avg_coherence: (5/18)*1.2 }
+        ];
+        mockGetUser.mockReturnValueOnce({userId: theUserId, condition: 12, progress: {status: statusTypes.STAGE_2_COMPLETE}});
         await runLambdaTestWithSessions(db, sessions);
 
         expect(mockUpdateUser).toHaveBeenCalledTimes(1);
