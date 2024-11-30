@@ -34,5 +34,6 @@ contextBridge.exposeInMainWorld('mainAPI', {
     setKeyValue: (key, value) => ipcRenderer.send('set-key-value', key, value),
     deleteKeyValue: (key) => ipcRenderer.send('delete-key-value', key),
     disableMenus: async () => ipcRenderer.invoke('disable-menus'),
+    beep: async () => ipcRenderer.invoke('beep'),
     quit: () => ipcRenderer.invoke('quit'),
 })

@@ -1,5 +1,5 @@
 import './crypto-polyfill'
-import { app, BrowserWindow, Menu, WebContentsView } from 'electron';
+import { app, shell, BrowserWindow, Menu, WebContentsView } from 'electron';
 import path from 'path';
 import * as AmazonCognitoIdentity from 'amazon-cognito-auth-js';
 import awsSettings from '../../common/aws-settings.json';
@@ -150,7 +150,6 @@ function buildMenuTemplate(window) {
 // Some APIs can only be used after this event occurs.
 app.on('ready', async () => {
   await emwave.startEmWave();
-
   // give emwave some time to start,
   // them create window and menus
   setTimeout(async () => {
@@ -405,6 +404,10 @@ ipcMain.on('show-lumosity-view', (_event) => {
 
   lumosityView.setVisible(true);
 });
+
+ipcMain.handle('beep', () => {
+  shell.beep()
+})
 
 ipcMain.handle('quit', () => {
   app.quit();
