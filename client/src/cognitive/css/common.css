@@ -4,10 +4,20 @@
 }
 
 .jspsych-btn {
-    margin: 5%;
+    font-size: 18px;
+    font-variant-caps: all-small-caps;
+    font-weight: bold;
+    border: none;
+    border-radius: 12px;
+    padding:10px 40px 10px 40px;
+    background-color: #538FE9;
+    color: #F6F7F8;
+}
+.jspsych-btn:hover {
+    background-color: #4084ea;
 }
 
 .jspsych-display-element {
     font-size: 22px !important;
-    background-color: beige;
+    background-color: #F6F7F8;
 }
