@@ -13,6 +13,7 @@
 <script setup>
     import { ref, onMounted } from '@vue/runtime-core'
     import { initJsPsych } from 'jspsych'
+    import { EmotionalMemory } from '../cognitive/emotional-memory/emotional-memory'
     import { Flanker } from '../cognitive/flanker/flanker'
     import { SpatialOrientation } from '../cognitive/spatial-orientation/spatial-orientation'
     import { TaskSwitching } from '../cognitive/task-switching/task-switching'
@@ -28,12 +29,12 @@
     const taskInfo = [
         {name: 'verbal-learning-learning', setNum: 1},
         {name: 'flanker-1', setNum: 3},
-        // {name: 'emomem-learning', setNum: 0},
+        {name: 'emomem-learning', setNum: 0},
         {name: 'spatial-orientation', setNum: 0},
         {name: 'flanker-2', setNum: 5},
         {name: 'verbal-learning-recall', setNum: 8},
         {name: 'task-switching', setNum: 0},
-        // {name: 'emomem-recall', setNum: 0}
+        {name: 'emomem-recall', setNum: 1}
     ]
 
     onMounted(async () => {
@@ -93,6 +94,9 @@
         }
         if (taskInfo.name == 'verbal-learning-recall') {
             return new VerbalLearning(jsPsych, taskInfo.setNum, 2, verbalLearningEndTime)
+        }
+        if (taskInfo.name == 'emomem-learning' || taskInfo.name == 'emomem-recall') {
+            return new EmotionalMemory(jsPsych, taskInfo.setNum)
         }
             
         throw new Error(`No class found for task ${taskInfo.name}.`)
