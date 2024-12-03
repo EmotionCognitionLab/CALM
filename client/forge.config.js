@@ -18,6 +18,7 @@ module.exports = {
     },
     asar: true,
     extraResource: ['./src/powershell/hide-emwave.ps1'],
+    derefSymlinks: true
   },
   rebuildConfig: {},
   makers: [
