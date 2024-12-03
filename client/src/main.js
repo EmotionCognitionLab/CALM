@@ -5,7 +5,7 @@ import * as AmazonCognitoIdentity from 'amazon-cognito-auth-js';
 import awsSettings from '../../common/aws-settings.json';
 import { ipcMain } from 'electron';
 // import * as Logger from 'logger'
-const Logger = require('logger');
+import Logger from 'logger';
 import emwave from './emwave';
 import { emWaveDbPath, deleteShortSessions as deleteShortEmwaveSessions, extractSessionData, getDataForSessions } from './emwave-data';
 import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue } from './local-data';
@@ -253,6 +253,7 @@ ipcMain.on('show-login-window', async () => {
     }) 
     
   } catch (err) {
+    // console.error(err)
     remoteLogger.error(err);
   } 
 });
