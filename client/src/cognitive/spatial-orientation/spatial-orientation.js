@@ -16,7 +16,7 @@ const instruction_0_html = (await import("./frag/instruction_0.html?raw")).defau
 const instruction_1_html = (await import("./frag/instruction_1.html?raw")).default;
 const sample_instruction_html = (await import("./frag/sample_instruction.html?raw")).default;
 const practice_instruction_html = (await import("./frag/practice_instruction.html?raw")).default;
-const test_instruction_html = (await import("./frag/test_instruction.html?raw")).default;
+const test_instruction_html = (await import("./frag/timed_instruction.html?raw")).default;
 
 export class SpatialOrientation {
     constructor(jsPsych, setNum) {
