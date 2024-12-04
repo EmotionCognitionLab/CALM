@@ -6,7 +6,6 @@ import Database from 'better-sqlite3';
 import s3utils from './s3utils.js'
 import { SessionStore } from './session-store.js'
 import version from '../version.json'
-import { emoPics } from './utils.js';
 import * as path from 'path'
 import { maxSessionMinutes } from '../../common/types/types.js';
 import lte from 'semver/functions/lte';
