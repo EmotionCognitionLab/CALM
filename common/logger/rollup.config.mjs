@@ -1,5 +1,5 @@
 import json from '@rollup/plugin-json';
-import pkg from './package.json' assert {type: 'json'};
+import pkg from './package.json' with {type: 'json'};
 
 export default [
         // CommonJS (for Node) and ES module (for bundlers) build.
