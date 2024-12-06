@@ -13,7 +13,7 @@
                     Now you will be asked to sit quietly for two minutes with a pulse sensor on your ear to measure your heart rate.
                 </template>
                 <template #postText>
-                    You're all done for today! For this part of the study, you will repeat what you did today: play brain games and have your heart rate measured twice daily. When we're done with these heart rate measurements, you will begin the next part of the study: brain training plus daily mindfulness practice focusing on the breath.
+                    You're all done for today! For this part of the study, you will repeat what you did today: play brain games and have your heart rate measured twice daily. When we're done with these baseline measurements, you will begin the next part of the study: brain training plus daily mindfulness practice focusing on the breath.
                     <br/>
                     <button class="button"  @click="quit">Quit</button>
                 </template>
