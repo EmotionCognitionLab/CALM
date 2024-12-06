@@ -1,7 +1,7 @@
 <template>
     <div>
         <div id="main">
-            <div id="pacer-animation" v-show="true">
+            <div id="pacer-animation" v-show="factors.showPacer">
                 <PacerComponent 
                     :regimes="remainingRegimes"
                     :playAudio=factors.playAudioPacer
