@@ -59,8 +59,7 @@
                                 <p>
                                     You have just completed your first 18-minute mindfulness practice of the day. 
                                     Come back later today to complete the second practice. 
-                                    Remember, if you complete all 36 minutes of your assigned mindfulness practice today, 
-                                    you may earn bonuses! Click 'Quit' for now but come back anytime later today for your second practice.
+                                    After your second practice, you will be eligible to earn bonuses when your heart rate score is one of your best scores. Click 'Quit' for now but come back anytime later today for your second practice.
                                 </p>
                             </div>
                             <div id="subsequentSession" :class="{hidden: !showSubsequentSessionPostUploadText}">
