@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite';
+import { builtinModules } from "node:module";
 
 // https://vitejs.dev/config
 export default defineConfig({
     build: {
         rollupOptions: {
-            external: ["electron", "better-sqlite3"]
+            external: [...builtinModules, "electron", "better-sqlite3"]
         }
     }
 });
