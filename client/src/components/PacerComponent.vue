@@ -1,6 +1,6 @@
 <template>
     <div style="overflow: hidden;">
-        <canvas ref="pacer" width="600" height="200"></canvas>
+        <canvas ref="pacer" width="1200" height="400"></canvas>
     </div>
 </template>
 <script setup>
@@ -76,7 +76,7 @@
 <style scoped>
     canvas {
         background-color: mintcream;
-        width: 600px;
-        height: 200px;
+        width: 1200px;
+        height: 400px;
     }
 </style>
