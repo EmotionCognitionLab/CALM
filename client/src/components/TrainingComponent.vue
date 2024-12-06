@@ -19,15 +19,7 @@
             <div id="feedback" :class="feedbackColor">Score: {{ score }}</div>
             <div id="timer"><TimerComponent :secondsDuration=secondsDuration :showButtons=false :countBy="'minutes'" ref="timer" /></div>
         </div>
-        <div v-if="factors.playAudioPacer && !hasSetSound" class="instruction">
-            Sounds are provided to help guide your breathing. If you want to use the sound cues, set your volume so you can hear them. If it helps increase your coherence scores you may close your eyes and use the sound to guide your breathing.<br/>
-            <button @click="hasSetSound=true">OK</button>
-        </div>
-        <div v-else-if="!factors.playAudioPacer && !hasReadEyesClosedText">
-            If you find it helps you increase your calmness scores, you may close your eyes during the sessions.<br/>
-            <button @click="hasReadEyesClosedText=true">OK</button>
-        </div>
-        <div v-else>
+        <div>
             <EmWaveListener :showIbi=false @pulseData="savePulseData" @pulseSensorCalibrated="startDisplay" @pulseSensorStopped="stopDisplay" @pulseSensorSignalLost="stopDisplay" @pulseSensorSignalRestored="resumeDisplay" @pulseSensorSessionEnded="resetDisplay" ref="emwaveListener"/> 
         </div>
     </div>
@@ -53,8 +45,6 @@ const remainingRegimes = ref(props.regimes)
 let inProgressRegime
 const finishedRegimes = []
 let ep = ref(0)
-let hasSetSound = ref(false)
-let hasReadEyesClosedText = ref(false)
 const invertIbi = inject('invertIbi', ref(false))
 const secondsDuration = computed(() => {
     return (remainingRegimes.value.reduce((prev, cur) => prev + cur.durationMs, 0)) / 1000
