@@ -36,7 +36,7 @@
                 <div>
                     <TrainingComponent 
                         :regimes="[{durationMs: sessionDurationMs, breathsPerMinute: pace, randomize: false}]"
-                        :factors="{showHeartRate: true, playAudioPacer: condition=='A', showPacer: condition=='A'}"
+                        :factors="{showHeartRate: true, playAudioPacer: condition=='A', showPacer: condition=='A', showScore: true}"
                         @pacerFinished="pacerFinished"
                         @sessionRestart="saveEmWaveSessionData(stage)">
                     </TrainingComponent>

@@ -16,7 +16,7 @@
         </div>
         <br clear="all"/>
         <div id="feedback-area">
-            <div id="feedback" :class="feedbackColor">Score: {{ score }}</div>
+            <div id="feedback" :class="feedbackColor" v-show="factors.showScore">Score: {{ score }}</div>
             <div id="timer"><TimerComponent :secondsDuration=secondsDuration :showButtons=false :countBy="'minutes'" ref="timer" /></div>
         </div>
         <div>
