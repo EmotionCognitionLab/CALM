@@ -4,7 +4,7 @@
         <div id="waiting" v-show="!waitOver">
             <TimerComponent @timerFinished="waitDone" :endAtTime=endWaitAt :endAtKey="endAtKey" :showButtons=false :countBy="'seconds'" ref="timer">
                 <template #text>
-                    {{ waitMessage }}
+                    You're done with today's brain games! Come back in 10 minutes to start today's first mindfulness practice.
                 </template>
             </TimerComponent>
         </div>
@@ -92,8 +92,6 @@
     let endAtKey = 'stage3Wait1'
     const timer = ref(null)
     const waitOver = ref(!mustWait)
-    let waitMessage = 'Please wait at least 10 minutes before your next task, which is to rest for 2 minutes while measuring your resting heart rate.'
-    const heartMeasurementCount = ref(0)
     const instructionsRead = ref(false)
     const sessionDurationMs = ref(maxSessionMinutes*60*1000)
     const doneForToday = ref(false)
@@ -151,22 +149,6 @@
 
     function futureMinutes(min) {
         return Date.now() + (min * 60 * 1000)
-    }
-    
-    function resetWait() {
-        if (heartMeasurementCount.value != 0) return
-
-        waitMessage = "Your first resting heart rate measurement is complete. As before, please wait at least 10 minutes before completing another 2 minutes of heart rate measurement."
-        endAtKey = 'stage3Wait2'
-        endWaitAt.value = futureMinutes(10)
-
-        // ugh - if we just set running = true immediately the watcher
-        // in TimerComponent doesn't trigger
-        setTimeout(() => {
-            timer.value.running = true
-        }, 100)
-        heartMeasurementCount.value = 1 // reset the RestComponent
-        waitOver.value=false
     }
 
     async function beginSession() {
