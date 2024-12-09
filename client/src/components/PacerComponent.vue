@@ -6,7 +6,8 @@
 <script setup>
     import { BreathPacer } from 'pvs-breath-pacer'
     import { onMounted, ref, watch } from '@vue/runtime-core';
-    import { isProxy, toRaw } from 'vue'
+    import { isProxy, toRaw, inject } from 'vue'
+    import awsSettings from '../../../common/aws-settings.json'
 
     const props = defineProps(['regimes', 'scaleH', 'scaleT', 'offsetProportionX', 'offsetProportionY'])
     const pacer = ref(null)
@@ -59,6 +60,11 @@
             scaleT: props.scaleT,
             offsetProportionX: props.offsetProportionX,
             offsetProportionY: props.offsetProportionY
+        }
+        const playAudioPacer = inject('playAudioPacer')
+        if (playAudioPacer.value) {
+            pacerConfig.audioInhaleUrl = `${awsSettings.ImagesUrl}/assets/breath_in.mp3`
+            pacerConfig.audioExhaleUrl = `${awsSettings.ImagesUrl}/assets/breath_out.mp3`
         }
         // if we don't do this we'll fail to emit regime-changed
         // events b/c Object.clone (used by electron's ipc event system)

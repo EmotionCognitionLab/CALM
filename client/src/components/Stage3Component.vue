@@ -36,7 +36,7 @@
                 <div>
                     <TrainingComponent 
                         :regimes="[{durationMs: sessionDurationMs, breathsPerMinute: pace, randomize: false}]"
-                        :factors="{showHeartRate: true, playAudioPacer: condition=='A', showPacer: condition=='A', showScore: true}"
+                        :factors="{showHeartRate: true, showPacer: condition=='A', showScore: true}"
                         @pacerFinished="pacerFinished"
                         @sessionRestart="saveEmWaveSessionData(stage)">
                     </TrainingComponent>
@@ -107,7 +107,9 @@
     const showSubsequentSessionPostUploadText = ref(false)
 
     const invertIbi = ref(false)
+    const playAudioPacer = ref(false)
     provide('invertIbi', invertIbi)
+    provide('playAudioPacer', playAudioPacer)
 
     onBeforeMount(async() => {
         const session = await SessionStore.getRendererSession()
@@ -124,6 +126,7 @@
         if (condition.value == 'A') {
             pace.value = self.pace
             invertIbi.value = false
+            playAudioPacer.value = true
         } else {
             invertIbi.value = true
         }
@@ -139,7 +142,7 @@
     })
 
     onMounted(async() => {
-        if (!mustWait) timer.value.running = true
+        if (mustWait) timer.value.running = true
     })
 
     async function waitDone() {

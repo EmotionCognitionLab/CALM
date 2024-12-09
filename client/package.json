@@ -61,7 +61,7 @@
     "logger": "file:../common/logger",
     "mathjs": "^13.2.0",
     "pay-info": "file:../common/pay-info",
-    "pvs-breath-pacer": "github:EmotionCognitionLab/pvs-breath-pacer#semver:^1.0.1",
+    "pvs-breath-pacer": "github:EmotionCognitionLab/pvs-breath-pacer#semver:^1.1.0",
     "semver": "^7.6.2",
     "vue": "^3.5.12",
     "vue-router": "^4.4.5"

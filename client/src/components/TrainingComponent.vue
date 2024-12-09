@@ -4,7 +4,6 @@
             <div id="pacer-animation" v-show="factors.showPacer">
                 <PacerComponent 
                     :regimes="remainingRegimes"
-                    :playAudio=factors.playAudioPacer
                     :offset-proportion-x="0.4"
                     :offset-proportion-y="0.9"
                     scale-h="320"
