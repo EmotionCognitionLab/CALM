@@ -44,6 +44,10 @@ button {
 button:hover {
   background-color: #4084ea;
 }
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .instruction {
     max-width: 40em;
     padding: 2.5%;
