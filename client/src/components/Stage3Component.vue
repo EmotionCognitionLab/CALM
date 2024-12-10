@@ -9,7 +9,25 @@
             </TimerComponent>
         </div>
 
-        <div id="breathing" v-show="waitOver && !sessionDone">
+        <div id="first-time-instructions" class="instruction" v-show="waitOver && !firstTimeInstructionsRead">
+            <p>
+                We are now finished with the part of the study measuring your resting heart rate. Great job! Today you will start your first mindfulness practice.
+            </p>
+            <p>
+                Throughout your practice, you will see a "calmness" score. This score shows whether your body is relaxed, according to your heart rate.  The higher the score the better!
+            </p>
+            <div v-if="condition=='A'">
+                Some helpful tips:
+                <ul>
+                    <li>If you start to feel lightheaded or dizzy, try breathing less deeply. </li>
+                    <li>If that doesn't help, remove the sensor from your ear and take a break. Try again later when you're feeling better. </li>
+                    <li>Try to breathe in a relaxed way without taking in more air than necessary</li>
+                </ul>
+            </div>
+            <button @click="firstTimeInstructionsRead = true">Continue</button>
+        </div>
+
+        <div id="breathing" v-show="waitOver && firstTimeInstructionsRead && !sessionDone">
             <div class="instruction" :class="{hidden: instructionsRead}">
                 <div class="header">
                     <h2>Get ready for your mindfulness practice!</h2>
@@ -92,6 +110,7 @@
     let endAtKey = 'stage3Wait1'
     const timer = ref(null)
     const waitOver = ref(!mustWait)
+    const firstTimeInstructionsRead = ref(false)
     const instructionsRead = ref(false)
     const sessionDurationMs = ref(maxSessionMinutes*60*1000)
     const doneForToday = ref(false)
@@ -113,6 +132,8 @@
         const session = await SessionStore.getRendererSession()
         const apiClient = new ApiClient(session)
         const self = await apiClient.getSelf()
+
+        // check assignment to condition
         if (!self.condition?.assigned) {
             // they haven't been assigned to condition yet; do it
             const resp = await apiClient.assignConditionToSelf()
@@ -121,6 +142,7 @@
             condition.value = self.condition.assigned
         }
 
+        // set various things that are only to be seen by one condition
         if (condition.value == 'A') {
             pace.value = self.pace
             invertIbi.value = false
@@ -129,6 +151,11 @@
             invertIbi.value = true
         }
 
+        // see if this is their first stage 3 session ever
+        const stage3Sessions = await window.mainAPI.getEmWaveSessionsForStage(3)
+        firstTimeInstructionsRead.value = stage3Sessions.length > 0
+
+        // figure out how long this session should be
         const minutesDoneToday = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), stage)
         const remainingMinutes = (2 * maxSessionMinutes) - minutesDoneToday
         if (remainingMinutes < 1) {
