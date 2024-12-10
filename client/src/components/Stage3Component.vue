@@ -4,7 +4,7 @@
         <div id="waiting" v-show="!waitOver">
             <TimerComponent @timerFinished="waitDone" :endAtTime=endWaitAt :endAtKey="endAtKey" :showButtons=false :countBy="'seconds'" ref="timer">
                 <template #text>
-                    You're done with today's brain games! Come back in 10 minutes to start today's first mindfulness practice.
+                    You're done with today's brain games! Come back in a few minutes to start today's first mindfulness practice.
                 </template>
             </TimerComponent>
         </div>
