@@ -14,6 +14,12 @@
             </div>
         </div>
         <br clear="all"/>
+        <div v-show="factors.showPacer" class="instructions">
+            <p>Breathe in when the ball rises. Breathe out when it falls.</p>
+            <p v-show="playAudioPacer">
+                You will hear a rising tone when the ball rises and a falling one when it falls.
+            </p>
+        </div>
         <div id="feedback-area">
             <div id="feedback" :class="feedbackColor" v-show="factors.showScore">Score: {{ score }}</div>
             <div id="timer"><TimerComponent :secondsDuration=secondsDuration :showButtons=false :countBy="'minutes'" ref="timer" /></div>
@@ -45,6 +51,7 @@ let inProgressRegime
 const finishedRegimes = []
 let ep = ref(0)
 const invertIbi = inject('invertIbi', ref(false))
+const playAudioPacer = inject('playAudioPacer')
 const secondsDuration = computed(() => {
     return (remainingRegimes.value.reduce((prev, cur) => prev + cur.durationMs, 0)) / 1000
 })
