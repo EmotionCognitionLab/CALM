@@ -24,7 +24,7 @@
     </div>
 </template>
 <script setup>
-import { ref, computed, inject } from '@vue/runtime-core'
+import { ref, computed, inject, onBeforeMount } from '@vue/runtime-core'
 import { isProxy, toRaw } from 'vue'
 import { pullAt } from 'lodash'
 import CBuffer from 'CBuffer';
@@ -47,6 +47,11 @@ let ep = ref(0)
 const invertIbi = inject('invertIbi', ref(false))
 const secondsDuration = computed(() => {
     return (remainingRegimes.value.reduce((prev, cur) => prev + cur.durationMs, 0)) / 1000
+})
+let audioGuide
+
+onBeforeMount(() => {
+    if (props.factors.audioGuideUrl) audioGuide = new Audio(props.factors.audioGuideUrl)
 })
 
 
@@ -76,6 +81,7 @@ function savePulseData(hrData) {
 async function startDisplay() {
     if (pacer) pacer.value.start = true
     if (timer) timer.value.running = true
+    if (audioGuide) audioGuide.play()
     emit('pacer-started')
     await window.mainAPI.disableMenus()
 }
@@ -83,6 +89,7 @@ async function startDisplay() {
 function stopDisplay() {
     pacer.value.pause = true
     timer.value.running = false
+    if (audioGuide) audioGuide.pause()
     emit('pacer-stopped')
 }
 
@@ -94,6 +101,7 @@ function resumeDisplay() {
 function resetDisplay() {
     pacer.value.pause = true
     timer.value.running = false
+    if (audioGuide) audioGuide.currentTime = 0
     inProgressRegime = null
     const toPull = finishedRegimes.map(r => remainingRegimes.value.findIndex(elem => elem.id === r.id)).filter(idx => idx !== -1)
     if (toPull.length > 0) pullAt(remainingRegimes.value, toPull)

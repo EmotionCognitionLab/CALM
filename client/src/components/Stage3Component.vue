@@ -27,7 +27,34 @@
             <button @click="firstTimeInstructionsRead = true">Continue</button>
         </div>
 
-        <div id="breathing" v-show="waitOver && firstTimeInstructionsRead && !sessionDone">
+        <div id="audio-selection" class="instruction" v-show="waitOver && firstTimeInstructionsRead && shouldChooseAudio && !sessionDone">
+            <fieldset>
+                <legend>Please select one of the following audio guides for your practice today. Over time, you should try out the different options and observe which one leads to the best calmness scores for you.</legend>
+                <div>
+                    <input type="radio" id="belly" v-model="audioGuide" value="belly-focus.mp3" />
+                    <label for="belly">Belly Focus</label>
+                </div>
+                <div>
+                    <input type="radio" id="lip" v-model="audioGuide" value="lip-focus.mp3" />
+                    <label for="lip">Lip Focus</label>
+                </div>
+                <div>
+                    <input type="radio" id="eyes" v-model="audioGuide" value="eyes-shut.mp3" />
+                    <label for="eyes">Eyes closed</label>
+                </div>
+                <div v-if="condition == 'A'">
+                    <input type="radio" id="pacer-only" v-model="audioGuide" value="" />
+                    <label for="pacer-only">No audio guide, just the pacer</label>
+                </div>
+                <div>
+                    <input type="radio" id="no-pacer" v-model="audioGuide" value="no-pacer" checked />
+                    <label for="no-pacer">No sound</label>
+                </div>
+            </fieldset>
+            <button @click="setAudioGuide">Continue</button>
+        </div>
+
+        <div id="breathing" v-show="waitOver && firstTimeInstructionsRead && !shouldChooseAudio && !sessionDone">
             <div class="instruction" :class="{hidden: instructionsRead}">
                 <div class="header">
                     <h2>Get ready for your mindfulness practice!</h2>
@@ -54,7 +81,7 @@
                 <div>
                     <TrainingComponent 
                         :regimes="[{durationMs: sessionDurationMs, breathsPerMinute: pace, randomize: false}]"
-                        :factors="{showHeartRate: true, showPacer: condition=='A', showScore: true}"
+                        :factors="{showHeartRate: true, showPacer: condition=='A', showScore: true, audioGuideUrl: audioGuideUrl}"
                         @pacerFinished="pacerFinished"
                         @sessionRestart="saveEmWaveSessionData(stage)">
                     </TrainingComponent>
@@ -102,6 +129,7 @@
     import { SessionStore } from '../session-store.js'
     import ApiClient from '../../../common/api/client';
     import { maxSessionMinutes } from '../../../common/types/types.js'
+    import awsSettings from '../../../common/aws-settings.json'
 
     import seatedIcon from '../assets/seated-person.png'
 
@@ -125,6 +153,9 @@
 
     const invertIbi = ref(false)
     const playAudioPacer = ref(false)
+    const audioGuideUrl = ref(null)
+    const shouldChooseAudio = ref(false)
+    const audioGuide = ref('no-pacer')
     provide('invertIbi', invertIbi)
     provide('playAudioPacer', playAudioPacer)
 
@@ -155,6 +186,25 @@
         const stage3Sessions = await window.mainAPI.getEmWaveSessionsForStage(3)
         firstTimeInstructionsRead.value = stage3Sessions.length > 0
 
+        // choose their audio guide
+        if (stage3Sessions.length >= 3) {
+            shouldChooseAudio.value = true
+        } else {
+            switch (stage3Sessions.length) {
+                case 0:
+                    audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/belly-focus.mp3`
+                    break;
+                case 1:
+                    audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/lip-focus.mp3`
+                    break;
+                case 2:
+                    audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/eyes-shut.mp3`
+                    break;
+                default:
+                    audioGuideUrl.value = null
+            }
+        }
+
         // figure out how long this session should be
         const minutesDoneToday = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), stage)
         const remainingMinutes = (2 * maxSessionMinutes) - minutesDoneToday
@@ -169,6 +219,22 @@
     onMounted(async() => {
         if (mustWait) timer.value.running = true
     })
+
+    function setAudioGuide() {
+        switch (audioGuide.value) {
+            case '':
+                audioGuideUrl.value = null
+                break;
+            case 'no-pacer':
+                audioGuideUrl.value = null
+                playAudioPacer.value = false
+                break;
+            default:
+                audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/${audioGuide.value}`
+                break;
+        }
+        shouldChooseAudio.value = false
+    }
 
     async function waitDone() {
         waitOver.value = true
@@ -243,5 +309,9 @@
 }
 .instruction {
     max-width: 50em;
+}
+#audio-selection > fieldset {
+    margin-bottom: 30px;
+    text-align: left;
 }
 </style>
