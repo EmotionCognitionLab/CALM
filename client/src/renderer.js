@@ -74,11 +74,11 @@ const routes = [
     { path: '/', name: 'landing-page', component: ConnectingComponent},
     { path: '/cognitive/:stageNum', component: CognitiveComponent, props: true },
     { path: '/current-stage', redirect: '/setup/1' },
-    { path: '/lumosity', component: LumosityComponent }
+    { path: '/lumosity/:stageNum', component: LumosityComponent, props: true }
 ]
 
 const noAuthRoutes = ['/signin', '/login', '/']
-const dbRequiredRoutes = ['/earnings', '/current-stage', '/setup/1', '/setup/3', '/cognitive/1', '/cognitive/4', '/lumosity', '/stage2']
+const dbRequiredRoutes = ['/earnings', '/current-stage', '/setup/1', '/setup/3', '/cognitive/1', '/cognitive/4', '/lumosity/2', '/lumosity/3', '/stage2', '/stage3']
 let stage2Complete = false
 
 const router = createRouter({
@@ -103,7 +103,7 @@ async function practiceOrSetup(to) {
                 return { path: '/stage2/true' }
             }
         }
-        return { path: '/lumosity' }
+        return stage2Complete ? { path: '/lumosity/3' } : { path: '/lumosity/2' }
     }
 
     return true

@@ -17,19 +17,26 @@
     import ApiClient from "../../../common/api/client.js"
 
     const router = useRouter()
-
+    const props = defineProps(['stageNum'])
+    let doneDest = null
     const confirm = ref(null)
-    let doneDest = 'stage2'
     let mustWaitBeforeNextStep = true
     
     onBeforeMount(async () => {
         try {
-            const session = await SessionStore.getRendererSession()
-            const apiClient = new ApiClient(session)
-            const data = await apiClient.getSelf()
-            if (data?.progress?.status == 'stage2Complete') {
-                doneDest = 'stage3'
+            if (!props.stageNum) {
+                const session = await SessionStore.getRendererSession()
+                const apiClient = new ApiClient(session)
+                const data = await apiClient.getSelf()
+                if (data?.progress?.status == 'stage2Complete') {
+                    doneDest = 'stage3'
+                } else {
+                    doneDest = 'stage2'
+                }
+            } else {
+                doneDest = props.stageNum == 2 ? 'stage2' : 'stage3'
             }
+            
             let lumosInfo = await window.mainAPI.getKeyValue('lumos')
             if (!lumosInfo) {
                 const lumosCreds = await apiClient.getLumosCredsForSelf()
