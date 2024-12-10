@@ -8,7 +8,7 @@ import { ipcMain } from 'electron';
 import Logger from 'logger';
 import emwave from './emwave';
 import { emWaveDbPath, deleteShortSessions as deleteShortEmwaveSessions, extractSessionData, getDataForSessions } from './emwave-data';
-import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue } from './local-data';
+import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue, getLumosityDoneToday, setLumosityDoneToday } from './local-data';
 import version from "../version.json";
 import packageInfo from "../package.json"
 import { SessionStore } from './session-store'
@@ -404,6 +404,14 @@ ipcMain.on('show-lumosity-view', (_event) => {
   if (!lumosityView) return;
 
   lumosityView.setVisible(true);
+});
+
+ipcMain.handle('get-lumosity-done-today', (_event) => {
+  return getLumosityDoneToday();
+});
+
+ipcMain.on('set-lumosity-done-today', (_event) => {
+  return setLumosityDoneToday();
 });
 
 ipcMain.handle('beep', () => {

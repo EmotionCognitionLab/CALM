@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('mainAPI', {
     closeLumosityView: () => ipcRenderer.send('close-lumosity-view'),
     hideLumosityView: () => ipcRenderer.send('hide-lumosity-view'),
     showLumosityView: () => ipcRenderer.send('show-lumosity-view'),
+    getLumosityDoneToday: () => ipcRenderer.invoke('get-lumosity-done-today'),
+    setLumosityDoneToday: () => ipcRenderer.send('set-lumosity-done-today'),
     isStageComplete: async (stage) => await ipcRenderer.invoke('is-stage-complete', stage),
     pacerRegimeChanged: async (startTime, regime) => await ipcRenderer.invoke('pacer-regime-changed', startTime, regime),
     regimesForSession: async(condition, stage) => await ipcRenderer.invoke('regimes-for-session', condition, stage),

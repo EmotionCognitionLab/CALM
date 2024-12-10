@@ -56,6 +56,7 @@
 
     function gamesConfirmed() {
         window.mainAPI.closeLumosityView()
+        window.mainAPI.setLumosityDoneToday()
         router.push({name: doneDest, params: { mustWait: mustWaitBeforeNextStep }})
     }
 

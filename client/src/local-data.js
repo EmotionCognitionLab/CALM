@@ -11,6 +11,7 @@ import { maxSessionMinutes } from '../../common/types/types.js';
 import lte from 'semver/functions/lte';
 import semverSort from 'semver/functions/sort';
 import gt from 'semver/functions/gt';
+import { yyyymmddString } from './utils.js'
 
 let db;
 let insertKeyValueStmt, getKeyValueStmt, insertCognitiveResultsStmt;
@@ -160,6 +161,19 @@ function saveCognitiveResults(experiment, isRelevant, stage, results) {
     insertCognitiveResultsStmt.run(experiment, relevant, dateTime, JSON.stringify(results), stage);
 }
 
+function getLumosityDoneToday() {
+    const today = yyyymmddString(new Date());
+    const key = `lumosity-${today}`;
+    const value = getKeyValue(key);
+    return value == 'true';
+}
+
+function setLumosityDoneToday() {
+    const today = yyyymmddString(new Date());
+    const key = `lumosity-${today}`;
+    setKeyValue(key, 'true');
+}
+
 // import this module into itself so that we can mock
 // certain calls in test
 // https://stackoverflow.com/questions/51269431/jest-mock-inner-function
@@ -232,6 +246,8 @@ export {
     getEmWaveWeightedAvgCoherencesForStage,
     hasDoneCognitiveExperiment,
     latestExperimentResult,
-    saveCognitiveResults
+    saveCognitiveResults,
+    getLumosityDoneToday,
+    setLumosityDoneToday
 }
 export const forTesting = { initDb, downloadDatabase }

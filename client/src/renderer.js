@@ -48,6 +48,7 @@ import { SessionStore } from './session-store'
 import LumosityComponent from './components/LumosityComponent.vue';
 import Stage2Component from './components/Stage2Component.vue';
 import Stage3Component from './components/Stage3Component.vue'
+import ApiClient from "../../common/api/client"
 
 
 const routes = [
@@ -78,6 +79,7 @@ const routes = [
 
 const noAuthRoutes = ['/signin', '/login', '/']
 const dbRequiredRoutes = ['/earnings', '/current-stage', '/setup/1', '/setup/3', '/cognitive/1', '/cognitive/4', '/lumosity', '/stage2']
+let stage2Complete = false
 
 const router = createRouter({
     history: import.meta.env.PROD ? createWebHashHistory() : createWebHistory(),
@@ -91,9 +93,16 @@ async function practiceOrSetup(to) {
         console.error(`Database is not initialized; unable to tell if participant requires setup.`)
         return false // TODO should we just send them through signup again?
     }
-    if (to.params.stageNum == 3) return true;
+    if (to.params.stageNum == 3) return true; // TODO probably obsolete; look into deleting
 
-    if (await window.mainAPI.getKeyValue('setupComplete') == 'true') {
+    if (await window.mainAPI.getKeyValue('setupComplete') == 'true') {    
+        if (await window.mainAPI.getLumosityDoneToday()) {
+            if (stage2Complete) {
+                return { path: '/stage3/true' }
+            } else {
+                return { path: '/stage2/true' }
+            }
+        }
         return { path: '/lumosity' }
     }
 
@@ -103,6 +112,11 @@ async function practiceOrSetup(to) {
 async function handleLoginSuccess(session) {
     SessionStore.session = session
     await window.mainAPI.loginSucceeded(session)
+    const apiClient = new ApiClient(session)
+    const data = await apiClient.getSelf()
+    if (data?.progress?.status == 'stage2Complete') {
+        stage2Complete = true
+    }
     isDbInitialized = true
 }
 
