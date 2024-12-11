@@ -1,12 +1,9 @@
 import "./style.css";
 import ApiClient from "../../common/api/client";
 import awsSettings from "../../common/aws-settings.json";
-import Logger  from 'logger';
 import { confirmSignUp, resendSignUpConfirmationCode } from "auth/auth";
 
 async function init() {
-    const l = new Logger(); // overrides console to log to cloud as well
-    await l.init();
     hideError();
 
     const query = new URLSearchParams(window.location.search.substring(1));
