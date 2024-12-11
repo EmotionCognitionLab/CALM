@@ -22,11 +22,12 @@
                             <label for="firstName" class="form-label">First Name</label>
                             <input type="text" tabindex="1" name="firstName" id="firstName" value=""/> <br/>
                             <label for="sex" class="form-label">Born  Male or Female</label>
+                            <br/><span class="error hidden" id="sexErr"></span>
                             <select tabindex="3" id="sex" required>
+                                <option value=""></option>
                                 <option value="female">Female</option>
                                 <option value="male">Male</option>
                             </select><br/>
-                            <span class="error hidden" id="sexErr"></span>
                             <label for="email" class="form-label">Email</label>
                             <br/><span class="error hidden" id="emailErr"></span>
                             <input tabindex="5" type="email" name="email" id="email" value="" required/>
@@ -39,6 +40,7 @@
                             <label for="race" class="form-label">Self-identified Race</label>
                             <br/><span class="error hidden" id="raceErr"></span>
                             <select tabindex="4" id="race" required>
+                                <option value=""></option>
                                 <option value="black">Black/African ancestry</option>
                                 <option value="white">White/European ancestry</option>
                             </select> <br/>
