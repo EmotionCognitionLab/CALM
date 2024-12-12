@@ -231,15 +231,15 @@ describe("Processing reports from S3", () => {
             expect(user?.progress?.status).not.toBeDefined();
         });
 
-        test("should not change a user's stage2Status.complete from true to false", async () => {
-            const status = {};
-            status[statusTypes.STAGE_2_COMPLETE] = true;
-            status[statusTypes.STAGE_2_COMPLETED_ON] = dayjs(new Date()).tz('America/Los_Angeles').format('YYYYMMDD');
+        test("should not undo a user's stage2Status", async () => {
+            const progress = {};
+            progress.status = statusTypes.STAGE_2_COMPLETE;
+            progress[statusTypes.STAGE_2_COMPLETED_ON] = dayjs(new Date()).tz('America/Los_Angeles').format('YYYYMMDD');
             const params = {
                 TableName: usersTable,
                 Key: { userId: lumosAcct.owner },
                 UpdateExpression: 'set progress = :progress',
-                ExpressionAttributeValues: {':progress': {'status': status} }
+                ExpressionAttributeValues: {':progress': progress }
             };
             await docClient.send(new UpdateCommand(params));
 
@@ -359,9 +359,9 @@ async function confirmStage2Complete(userId) {
         ExpressionAttributeValues: { ':userId': userId }
     };
     const res = await docClient.send(new QueryCommand(qParams));
-    expect(res.Items[0]['progress']['status'][statusTypes.STAGE_2_COMPLETE]).toBe(true);
+    expect(res.Items[0]['progress']['status']).toBe(statusTypes.STAGE_2_COMPLETE);
     const today = dayjs(new Date()).tz('America/Los_Angeles').format('YYYYMMDD');
-    expect(res.Items[0]['progress']['status'][statusTypes.STAGE_2_COMPLETED_ON]).toBe(today);
+    expect(res.Items[0]['progress'][statusTypes.STAGE_2_COMPLETED_ON]).toBe(today);
 }
 
 async function runAttachmentLambda() {

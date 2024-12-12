@@ -3,7 +3,7 @@
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import { QueryCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
 import { s3Client as s3 , dynamoDocClient as docClient } from '../common/aws-clients';
-import { statusTypes } from '../../../common/types/types';
+import { earningsAmounts, earningsTypes, statusTypes } from '../../../common/types/types';
 
 const simpleParser = require('mailparser').simpleParser;
 const dataForge = require('data-forge');
@@ -17,6 +17,7 @@ const destBucket = process.env.DEST_BUCKET;
 const destPrefix = process.env.DEST_PREFIX;
 const lumosAcctTable = process.env.LUMOS_ACCT_TABLE;
 const lumosPlaysTable = process.env.LUMOS_PLAYS_TABLE;
+// const earningsTable = process.env.EARNINGS_TABLE;
 const usersTable = process.env.USERS_TABLE;
 import Db from 'db/db.js';
 import awsSettings from '../../../common/aws-settings.json';
@@ -124,6 +125,15 @@ export async function processreports(event) {
       }).toArray();
     if (newPlayData.length > 0) await savePlaysData(newPlayData);
 
+    // find all of the users who have qualify for earnings
+    // you must play all of [color match, lost in migration, familiar faces]
+    // or all of [memory serves, brain shift, raindrops, ebb and flow] in a day to qualify
+    // const withDays = newPlayData.generateSeries({date: r => r.dateTime.substring(0, 10)})
+    // const earningsData = withDays.pivot(["userId", "date"], "gameCount", games => games.count())
+    //                       .filter(r => r.gameCount >= 6)
+    //                       .toArray();
+    // saveEarnings(earningsData);
+
     // find all the users who have a new stage2Complete status and save that to dynamo
     // stage2Complete is true when a user has played each of the available games at least twice
     // and at least six days have elapsed since starting stage 1 (i.e., starting the study)
@@ -157,10 +167,8 @@ export async function processreports(event) {
         // it's now 02:17 on 3/16/24 dayjs will say 6 days have passed
         if (today.diff(stage1Start, 'day') >= 7) {
           const progress = email2UserInfoMap[email].user.progress || {};
-          const status = progress.status || {};
-          status[statusTypes.STAGE_2_COMPLETE] = true;
-          status[statusTypes.STAGE_2_COMPLETED_ON] = today.format('YYYYMMDD');
-          progress.status = status;
+          progress.status = statusTypes.STAGE_2_COMPLETE;
+          progress[statusTypes.STAGE_2_COMPLETED_ON] = today.format('YYYYMMDD');
           await db.updateUser(email2UserInfoMap[email].userId, {progress: progress});
         }
       }
@@ -263,6 +271,37 @@ async function savePlaysData(data) {
       const chunk = chunks[i];
       const params = { RequestItems: {} };
       params['RequestItems'][lumosPlaysTable] = chunk;
+      await docClient.send(new BatchWriteCommand(params));
+  }
+}
+
+/**
+ * 
+ * @param {object[]} data Array of {userId, date, gameCount} objects, where date is YYYY-MM-DD and gameCount is the number of games played that day.
+ */
+async function saveEarnings(data) {
+  const putRequests = data.map(r => {
+    return {
+        PutRequest: {
+            Item: {
+                userId: r.userId,
+                dateType: `${dayjs(r.date).tz('America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`,
+                amount: earningsAmounts[earningsTypes.LUMOSITY]
+            }
+        }
+    };
+  });
+
+  // slice into arrays of no more than 25 PutRequests due to DynamoDB limits
+  const chunks = [];
+  for (let i = 0; i < putRequests.length; i += 25) {
+      chunks.push(putRequests.slice(i, i + 25));
+  }
+
+  for (let i=0; i<chunks.length; i++) {
+      const chunk = chunks[i];
+      const params = { RequestItems: {} };
+      params['RequestItems'][earningsTable] = chunk;
       await docClient.send(new BatchWriteCommand(params));
   }
 }
