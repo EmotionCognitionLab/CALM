@@ -103,6 +103,10 @@ export async function processreports(event) {
       }
      
       const lastPlay = userId ? await lastPlayDate(userId) : '1970-01-01 00:00:00';
+      // TODO we have to process dropped and completed users b/c the Lumosity report is
+      // one day delayed, so they might have Lumosity earnings the day after they drop
+      // or complete. We should find a way to filter them out after that one day delay,
+      // though, so that we're not needlessly processing hundreds of inactive users.
       const userInfo = userId ? await db.getUser(userId) : {};
       email2UserInfoMap[em] = {
         email: em,
