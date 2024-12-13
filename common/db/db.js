@@ -68,7 +68,7 @@ export default class Db {
         try {
             const params = {
                 TableName: this.usersTable,
-                FilterExpression: `exists(progress.#status) and 
+                FilterExpression: `attribute_exists(progress.#status) and 
                 progress.#status <> ${statusTypes.COMPLETE} and 
                 progress.#status <> ${statusTypes.DROPPED}`,
                 ExpressionAttributeNames: { '#status': 'status' },
