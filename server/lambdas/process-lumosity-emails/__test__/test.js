@@ -16,7 +16,7 @@ import { DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand, UpdateCo
 const dynClient = new DynamoDBClient({region: process.env.REGION, endpoint: process.env.DYNAMO_ENDPOINT, apiVersion: "2012-08-10"});
 const docClient = DynamoDBDocumentClient.from(dynClient);
 import Db from '../../../../common/db/db.js';
-import { statusTypes } from '../../../../common/types/types.js';
+import { earningsAmounts, statusTypes } from '../../../../common/types/types.js';
 
 const originPrefix = 'emails';
 const emailKey = `${originPrefix}/7pweiur83jfjeif`;
@@ -25,7 +25,9 @@ const engagementKey = `${originPrefix}/2022-09-13-09-00-30-347.daily_engagement_
 const usersTable = process.env.USERS_TABLE;
 const lumosAcctTable = process.env.LUMOS_ACCT_TABLE;
 const lumosPlaysTable = process.env.LUMOS_PLAYS_TABLE;
+const earningsTable = process.env.EARNINGS_TABLE;
 const toLATime = (dtStr) => dayjs(dtStr).tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss');
+const toLADayStart = (dtStr) => dayjs(dtStr).tz('America/Los_Angeles').startOf('day').format();
 
 afterEach(async () => {
     await th.s3.removeBucket(process.env.DEST_BUCKET);
@@ -101,12 +103,18 @@ describe("Processing reports from S3", () => {
             [{AttributeName: 'userId', KeyType: 'HASH'}, {AttributeName: 'dateTime', KeyType: 'RANGE'}],
             [{AttributeName: 'userId', AttributeType: 'S'}, {AttributeName: 'dateTime', AttributeType: 'S'}]
         );
+
+        await th.dynamo.createTable(earningsTable,
+            [{AttributeName: 'userId', KeyType: 'HASH'}, {AttributeName: 'dateType', KeyType: 'RANGE'}],
+            [{AttributeName: 'userId', AttributeType: 'S'}, {AttributeName: 'dateType', AttributeType: 'S'}]
+        );
     });
 
     afterEach(async () => {
         await th.dynamo.deleteTable(usersTable);
         await th.dynamo.deleteTable(lumosAcctTable);
         await th.dynamo.deleteTable(lumosPlaysTable);
+        await th.dynamo.deleteTable(earningsTable);
     });
 
     const randMaxNoZero = (max) => Math.floor((Math.random() * (max - 1)) + 1).toString().padStart(2, '0');
@@ -138,6 +146,33 @@ describe("Processing reports from S3", () => {
                 return { game: pd.game_name, dateTime: toLATime(pd.created_at_utc), userId: lumosAcct.owner, multiPlay: false, lpi: pd.game_lpi }
             });
             await confirmPlaysWritten(expectedPlays);
+        });
+
+        test.only("should write earnings for days on which the user played all of ['Color Match Web', 'Lost in Migration Web', 'Familiar Faces Web']", async () => {
+            const playsData = [
+                { email_address: lumosAcct.email, game_name: 'Color Match Web', created_at_utc: '2022-05-07 12:09:34', game_lpi: 590 },
+                { email_address: lumosAcct.email, game_name: 'Lost in Migration Web', created_at_utc: '2022-05-07 12:14:17', game_lpi: 400 },
+                { email_address: lumosAcct.email, game_name: 'Familiar Faces Web', created_at_utc: '2022-05-07 12:19:08', game_lpi: 390 },
+            ];
+            await processGameReport(playsData);
+            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: toLADayStart(playsData[0].created_at_utc), amount: 2 }];
+            await confirmEarningsWritten(expectedEarnings);
+        });
+
+        test("should write earnings for days on which the user played all of ['Memory Serves Web', 'Brain Shift Web', 'Raindrops Web', 'Ebb and Flow Web']", async () => {
+
+        });
+
+        test("should write earnings based on LA time day, not UTC time day", async () => {
+
+        })
+
+        test("should not write earnings for days on which the user played a subset of the required games", async () => {
+
+        });
+
+        test("should not write earnings when the user played the required games across multiple days", async () => {
+
         });
 
         test("should not write game play data that is already in dynamodb", async () => {
@@ -344,12 +379,20 @@ function isValidReportData(reportItem) {
     reportItem.hasOwnProperty('game_name') && reportItem.hasOwnProperty('created_at_utc');
 }
 
-async function confirmPlaysWritten(expectedPlays) {
-    const playsScan = await docClient.send(new ScanCommand({
-        TableName: lumosPlaysTable
+async function confirmTableContainsRows(tableName, expectedRows) {
+    const scan = await docClient.send(new ScanCommand({
+        TableName: tableName
     }));
-    expect(playsScan.Items.length).toBe(expectedPlays.length);
-    expectedPlays.forEach(ep => expect(playsScan.Items).toContainEqual(ep));
+    expect(scan.Items.length).toBe(expectedRows.length);
+    expectedRows.forEach(ep => expect(scan.Items).toContainEqual(ep));
+}
+
+async function confirmPlaysWritten(expectedPlays) {
+    confirmTableContainsRows(lumosPlaysTable, expectedPlays);
+}
+
+async function confirmEarningsWritten(expectedEarnings) {
+    confirmTableContainsRows(earningsTable, expectedEarnings);
 }
 
 async function confirmStage2Complete(userId) {
@@ -394,7 +437,7 @@ async function runReportsLambda(fileKey) {
         event: putEvent,
         lambdaPath: path.join(__dirname, '../process-lumosity-emails.js'),
         lambdaHandler: 'processreports',
-        verboseLevel: 0
+        verboseLevel: 3
     });
     return result;
 }

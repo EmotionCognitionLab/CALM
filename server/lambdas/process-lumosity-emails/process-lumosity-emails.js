@@ -17,7 +17,7 @@ const destBucket = process.env.DEST_BUCKET;
 const destPrefix = process.env.DEST_PREFIX;
 const lumosAcctTable = process.env.LUMOS_ACCT_TABLE;
 const lumosPlaysTable = process.env.LUMOS_PLAYS_TABLE;
-// const earningsTable = process.env.EARNINGS_TABLE;
+const earningsTable = process.env.EARNINGS_TABLE;
 const usersTable = process.env.USERS_TABLE;
 import Db from 'db/db.js';
 import awsSettings from '../../../common/aws-settings.json';
@@ -126,17 +126,28 @@ export async function processreports(event) {
     .map(r => {
         r.userId = email2UserInfoMap[r.email].userId;
         return r;
-      }).toArray();
-    if (newPlayData.length > 0) await savePlaysData(newPlayData);
+      });
+    if (newPlayData.count() > 0) await savePlaysData(newPlayData.toArray());
 
-    // find all of the users who have qualify for earnings
+    // find all of the users who qualify for earnings
     // you must play all of [color match, lost in migration, familiar faces]
     // or all of [memory serves, brain shift, raindrops, ebb and flow] in a day to qualify
-    // const withDays = newPlayData.generateSeries({date: r => r.dateTime.substring(0, 10)})
-    // const earningsData = withDays.pivot(["userId", "date"], "gameCount", games => games.count())
-    //                       .filter(r => r.gameCount >= 6)
-    //                       .toArray();
-    // saveEarnings(earningsData);
+
+    // TODO if a previous report successfully wrote plays data and failed to write earnings data
+    // the earnings data will never be written b/c newPlayData is only the plays since
+    // the last recorded play. It would be better to re-filter playsData based on the last
+    // recorded lumosity earnings date for each user and work with that.
+    const withDays = newPlayData.generateSeries({date: r => r.dateTime.substring(0, 10)});
+    const byUserByDay = withDays.groupBy(r => r.userId + r.date);
+    console.debug('byUserByDay count', byUserByDay.count())
+    const earningsQualified = byUserByDay.filter(g => {
+      const gameNames = g.map(i => i.game).toArray();
+      return ['Memory Serves Web', 'Brain Shift Web', 'Raindrops Web', 'Ebb and Flow Web'].every(n => gameNames.indexOf(n) != -1) ||
+              ['Color Match Web', 'Lost in Migration Web', 'Familiar Faces Web'].every(n => gameNames.indexOf(n) != -1)
+    });
+    const earningsData = earningsQualified.map(r => ({userId: r.first().userId, date: r.first().date})).toArray();
+    console.log('earningsData', earningsData)
+    saveEarnings(earningsData);
 
     // find all the users who have a new stage2Complete status and save that to dynamo
     // stage2Complete is true when a user has played each of the available games at least twice
