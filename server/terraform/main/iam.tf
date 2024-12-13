@@ -814,6 +814,7 @@ resource "aws_iam_role" "lambda-ses-process" {
     aws_iam_policy.dynamodb-user-read-write.arn,
     aws_iam_policy.dynamodb-lumos-acct-read-write.arn,
     aws_iam_policy.dynamodb-lumos-plays-read-write.arn,
+    aws_iam_policy.dynamodb-earnings-write.arn,
     aws_iam_policy.ses-bucket-read-write.arn
   ]
 }
