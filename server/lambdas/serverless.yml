@@ -64,6 +64,7 @@ functions:
       USERS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/users}
       LUMOS_ACCT_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/lumosacct}
       LUMOS_PLAYS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/lumosplays}
+      EARNINGS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/earnings}
     role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/ses/process}
 
   handle-rc-event:
@@ -182,6 +183,7 @@ functions:
           authorizer: serviceAuthorizer
     environment:
       DYNAMO_ENDPOINT: "https://dynamodb.${self:provider.region}.amazonaws.com"
+      LUMOS_PLAYS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/lumosplays}
     role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda}
 
   reminders:

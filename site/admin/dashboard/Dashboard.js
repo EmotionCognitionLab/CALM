@@ -55,6 +55,13 @@ export class Dashboard {
         this.fetchStatusForUsers();
     }
 
+    stageForUser(user) {
+        if (!user?.progress?.status) return '1';
+        if (user.progress.status == statusTypes.STAGE_1_COMPLETE) return '2';
+        if (user.progress.status == statusTypes.STAGE_2_COMPLETE) return '3';
+        return 'N/A';
+    }
+
     async loadUsers(userType) {
         if (userType !== 'active' && userType !== 'all') {
             throw new Error(`Expected userType to be 'active' or 'all', but got '${userType}'.`);
@@ -68,11 +75,20 @@ export class Dashboard {
         const displayInfo = [];
         for (const u of users) {
             this.users[u.userId] = u;
+            const stage = this.stageForUser(u);
+            let stageStarted = 'N/A'
+            if (stage == '2') {
+                stageStarted = u.progress[statusTypes.STAGE_1_COMPLETED_ON]
+            } else if (stage == '3') {
+                stageStarted = u.progress[statusTypes.STAGE_2_COMPLETED_ON]
+            }
             displayInfo.push(
                 {
-                    name: u.name,
+                    name: `${u.given_name} ${u.family_name}`,
                     userId: u.userId,
-                    inactive: !u.progress?.status || u.progress.status != statusTypes.ACTIVE
+                    stage: stage,
+                    stageStarted: stageStarted,
+                    inactive: !u.progress?.status || u.progress.status == statusTypes.DROPPED || u.progress.status == statusTypes.COMPLETE
                 }
             );
         }
@@ -89,15 +105,20 @@ export class Dashboard {
         const statusStart = today.subtract(4, 'days').startOf('day');
         const statusEnd = today.subtract(1, 'days').endOf('day');
         const dateRange = `${statusStart.format('MM/DD/YYYY')}-${statusEnd.format('MM/DD/YYYY')}`;
+        let sessEstimate = 'N/A';
+        if (user.progress?.status == statusTypes.STAGE_2_COMPLETE) {
+            sessEstimate = Math.round((user.status.recentMinutes / 18) * 10) / 10;
+        }
+
         const dispUser = {
             userId: user.userId,
             phone: user.phone_number,
             email: user.email,
             status: user.status,
-            dateRange: dateRange
+            sessEstimate: sessEstimate
         };
 
-        this.userDetailsDiv.innerHTML = userDetailsTmpl({user: dispUser});
+        this.userDetailsDiv.innerHTML = userDetailsTmpl({user: dispUser, dateRange: dateRange});
         const payInfoDiv = document.getElementById("pay-info");
         const payErrsDiv = document.getElementById("pay-errors");
         const payboard = new Payboard(payInfoDiv, payErrsDiv, this.apiClient, userId, true);
@@ -122,29 +143,47 @@ export class Dashboard {
     async fetchStatusForUsers() {
         for (const u of Object.values(this.users)) {
             const userRow = document.querySelectorAll(`[data-user-id="${u.userId}"]`)[0]; // TODO handle case where we don't find the user row
-            const statusCell = userRow.querySelectorAll(".status")[0];
-            statusCell.innerHTML = '';
-            if (u.progress?.status !== statusTypes.ACTIVE) {
+            const breathStatusCell = userRow.querySelectorAll(".breath-status")[0];
+            breathStatusCell.innerHTML = '';
+            const lumosStatusCell = userRow.querySelectorAll(".lumos-status")[0];
+            lumosStatusCell.innerHTML = '';
+            if (u.progress?.status !== statusTypes.STAGE_1_COMPLETE && u.progress?.status !== statusTypes.STAGE_2_COMPLETE) {
                 if (!u.progress?.status) {
-                    statusCell.classList.add("dot", "empty");
+                    breathStatusCell.classList.add("dot", "empty")
+                    lumosStatusCell.classList.add("dot", "empty")
                 } else if (u.progress.status === statusTypes.DROPPED) {
-                    statusCell.classList.add("dot", "gray");
+                    breathStatusCell.classList.add("dot", "gray");
+                    lumosStatusCell.classList.add("dot", "gray");
                 } else if (u.progress.status === statusTypes.COMPLETE) {
-                    statusCell.classList.add("dot", "blue");
+                    breathStatusCell.classList.add("dot", "blue");
+                    lumosStatusCell.classList.add("dot", "blue");
                 }
                 continue;
             }
-            
 
             const status = await this.apiClient.getUserStatus(u.userId);
             u.status = status;
-            if (status.recentMinutes >= 72) {
-                statusCell.classList.add("dot", "green");
-            } else if (status.recentMinutes >= 36 && status.recentMinutes <= 71) {
-                statusCell.classList.add("dot", "yellow");
-            } else {
-                statusCell.classList.add("dot", "red");
+            const stage = this.stageForUser(u);
+            const findBreathStatusColor = (stage, minutes) => {
+                if (stage == "2") {
+                    if (minutes >= 8) return "green";
+                    if (minutes >= 4) return "yellow";
+                } else if (stage == "3") {
+                    if (minutes >= 72) return "green";
+                    if (minutes >= 36) return "yellow";
+                }
+                return "red";
             }
+            const breathColor = findBreathStatusColor(stage, status.recentMinutes);
+            breathStatusCell.classList.add("dot", breathColor);
+            
+            let lumosColor = "red";
+            if (status.recentLumosityCount >= 7) {
+                lumosColor = "green";
+            } else if (status.recentLumosityCount >= 4) {
+                lumosColor = "yellow";
+            }
+            lumosStatusCell.classList.add("dot", lumosColor);
         }
     }
 

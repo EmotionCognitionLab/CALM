@@ -4,6 +4,10 @@ body {
     background-color: #f6f6ee;
 }
 
+span {
+    border: 2px solid;
+}
+
 table {
     font-size: 20px;
     color: #263a46;
@@ -128,8 +132,8 @@ label {
 }
 
 .dot {
-    height: 15px;
-    width: 15px;
+    height: 28px;
+    width: 28px;
     border-radius: 50%;
     display: inline-block;
     margin-left: 10px;
