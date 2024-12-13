@@ -108,7 +108,7 @@ export async function processreports(event) {
         email: em,
         userId: userId,
         lastPlay: lastPlay,
-        stage2Complete: userInfo.progress?.status?.[statusTypes.STAGE_2_COMPLETE],
+        stage2Complete: userInfo.progress?.status == statusTypes.STAGE_2_COMPLETE,
         stage1StartedOn: userInfo.createdAt,
         user: userInfo
       };
