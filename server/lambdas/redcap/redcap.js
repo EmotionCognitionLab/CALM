@@ -46,8 +46,8 @@ exports.handleEvent = async (event) => {
         }
     }
 
-    if (props.status !== 'Drop') {
-        console.error(`Expected status value to be "Drop", but got "${props.status}" (rcid: ${props.rcid}).`);
+    if (props.status !== 'Enrolled (Drop)') {
+        console.error(`Expected status value to be "Enrolled (Drop)", but got "${props.status}" (rcid: ${props.rcid}).`);
         return {
             statusCode: 400,
             body: "Invalid participant status"
@@ -56,7 +56,10 @@ exports.handleEvent = async (event) => {
 
     const user = userRecs.Items[0];
     if (!user.progress?.status !== statusTypes.DROPPED) {
-        await db.updateUser(user.userId, {progress: {status: statusTypes.DROPPED}});
+        const progress = user.progress || {};
+        progress.status = statusTypes.DROPPED;
+        progress.endDate = (new Date()).toISOString();
+        await db.updateUser(user.userId, {progress: progress});
         console.log(`Set user ${user.userId} status to dropped.`);
     }
 
