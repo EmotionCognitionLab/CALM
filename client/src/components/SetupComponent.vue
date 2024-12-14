@@ -16,7 +16,7 @@
                 <button @click="nextStep">Continue</button>
             </div>
             <div v-else-if="step==2">
-                <RestComponent @timerFinished="nextStep">
+                <RestComponent @timerFinished="nextStep" :secondsDuration="300">
                     <template #preText>
                         Now you will be asked to sit quietly for five minutes with a pulse sensor on your ear to measure your heart rate.
                     </template>
