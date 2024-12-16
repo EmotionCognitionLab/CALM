@@ -1,8 +1,8 @@
 {
   "name": "calm-study",
-  "productName": "Meditation Study",
+  "productName": "CALM Study",
   "version": "0.0.2",
-  "description": "An application that guides participants through the Meditation Study",
+  "description": "An application that guides participants through the CALM Study",
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
