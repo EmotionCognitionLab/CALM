@@ -13,7 +13,6 @@
                     ref="pacer" />
             </div>
         </div>
-        <br clear="all"/>
         <div v-show="factors.showPacer" class="instructions">
             <p>Breathe in when the ball rises. Breathe out when it falls.</p>
             <p v-show="playAudioPacer">
@@ -140,15 +139,13 @@ async function updateRegimeStatus(startTime, regime) {
     }
     #feedback-area {
         display: flex;
-        height: 150px;
         flex-direction: column;
         align-items: center;
     }
     #main {
         display: flex;
-        height: 500px;
+        height: 450px;
         justify-content: center;
-        gap: 20px;
     }
     #pacer-animation {
         width: 1300px;
