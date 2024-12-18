@@ -139,15 +139,13 @@ export async function processreports(event) {
     // recorded lumosity earnings date for each user and work with that.
     const withDays = newPlayData.generateSeries({date: r => r.dateTime.substring(0, 10)});
     const byUserByDay = withDays.groupBy(r => r.userId + r.date);
-    console.debug('byUserByDay count', byUserByDay.count())
     const earningsQualified = byUserByDay.filter(g => {
       const gameNames = g.map(i => i.game).toArray();
       return ['Memory Serves Web', 'Brain Shift Web', 'Raindrops Web', 'Ebb and Flow Web'].every(n => gameNames.indexOf(n) != -1) ||
               ['Color Match Web', 'Lost in Migration Web', 'Familiar Faces Web'].every(n => gameNames.indexOf(n) != -1)
     });
     const earningsData = earningsQualified.map(r => ({userId: r.first().userId, date: r.first().date})).toArray();
-    console.log('earningsData', earningsData)
-    saveEarnings(earningsData);
+    await saveEarnings(earningsData);
 
     // find all the users who have a new stage2Complete status and save that to dynamo
     // stage2Complete is true when a user has played each of the available games at least twice

@@ -16,7 +16,7 @@ const db = new Db();
 db.docClient = docClient;
 
 const minutesPerDay = (sqliteDb, startTime) => {
-    const stmt = sqliteDb.prepare('select pulse_start_time, duration_seconds from emwave_sessions where stage = 2 and pulse_start_time > ?');
+    const stmt = sqliteDb.prepare('select pulse_start_time, duration_seconds from emwave_sessions where stage = 3 and pulse_start_time > ?');
     const results = stmt.all(startTime);
     const minutesByDay = {};
     for (const r of results) {
@@ -28,153 +28,80 @@ const minutesPerDay = (sqliteDb, startTime) => {
     return Object.keys(minutesByDay).sort((a, b) => a - b).map(day => ({day: day, minutes: minutesByDay[day]}));
 }
 
-// A "session" is 18 minutes long, but may
-// be broken up across multiple actual sessions.
-// Given a number of minutes, converts it to a
-// number of 18 minute abstract sessions
-const minutesToSessions = (minutes) => {
-    return Math.floor(minutes / maxSessionMinutes);
-}
-
 /**
- * Calculates time- (not performance-) based rewards.
+ * Calculates time-based rewards.
  * @param {Object} sqliteDb Handle to open sqlite db
- * @param {Object} condition participant condition - must be >=0 and <= 63
  * @param {Object} latestTimeEarnings most recent time-based earnings record for this participant
- * @returns Array of objects with date, earnings fields. Date is YYYY-MM-DD date for the earnings, earnings is array of types of earnings for that day.
+ * @returns Array of objects with date, minutes, earnings fields. Date is ISO8601 date for the earnings, minutes is the number of minutes for that day, earnings is the earnings type.
  */
-export const trainingTimeRewards = (sqliteDb, condition, latestTimeEarnings) => {
-    if (condition < 0 || condition > 63) throw new Error(`Expected condition to be between 0 and 63, but got ${condition}.`);
-
+export const trainingTimeRewards = (sqliteDb, latestTimeEarnings) => {
     let startDay;
     if (!latestTimeEarnings) {
         startDay = dayjs('1970-01-01 00:00').tz('America/Los_Angeles');
-    } else if (latestTimeEarnings.type == earningsTypes.BREATH1) {
-        // they can still earn a *_BREATH2 reward for this day
-        startDay = dayjs(latestTimeEarnings.date).tz('America/Los_Angeles').startOf('day');
     } else {
-        // there's no other time-based reward for this day - move to the next one
-        startDay = dayjs(latestTimeEarnings.date).tz('America/Los_Angeles').endOf('day').add(1, 'second');
+        startDay = dayjs(latestTimeEarnings.date).tz('America/Los_Angeles');
+    }
+    const stmt = sqliteDb.prepare('select pulse_start_time, duration_seconds from emwave_sessions where stage = 3 and pulse_start_time > ?');
+    const results = stmt.all(startDay.unix());
+    const newEarnings = []
+    for (const r of results) {
+        newEarnings.push({
+            date: dayjs.unix(r.pulse_start_time).tz('America/Los_Angeles').format(),
+            minutes: (r.duration_seconds / 60),
+            earnings: earningsTypes.PER_HOUR
+        });
     }
 
-    const results = minutesPerDay(sqliteDb, startDay.unix());
-    const newEarnings = []
-    for (const res of results) {
-        let earningsForDay = trainingTimeEarningsForDay(res.minutes, condition);
-        const earningsDay = dayjs.tz(res.day, 'YYYY-MM-DD', 'America/Los_Angeles');
-        // make sure we aren't double-paying for the first session while processing the second
-        earningsForDay = earningsForDay.filter(e => {
-            if (!latestTimeEarnings) return true;
-            return `${earningsDay.format()}|${e}` !== `${latestTimeEarnings.date}|${latestTimeEarnings.type}`
-        });
-        
-        for (const earningsType of earningsForDay) {
-            newEarnings.push({day: earningsDay.format(), earnings: earningsType})
-        }
-        
-    }
     return newEarnings;
 }
 
-/**
- * Converts a number of training minutes for a given day into a list of completion awards.
- * Participants in different conditions are eligible for different rewards.
- * @param {number} minutes number of minutes the participant trained in a given day
- * @param {number} condition participant's condition
- * @returns {[string]} array of reward types, as specified in earningsTypes
- */
-const trainingTimeEarningsForDay = (minutes, condition) => {
-    if (minutes < 0) throw new Error(`Expected seconds to be greater than 0, but got ${minutes}.`);
-
-    const rewardCondition = condition % 2 == 0 ? 'completion' : 'performance';
-    const totalSessions = Math.min(minutesToSessions(minutes), 2); // we don't pay for more than 2 sessions/day
-    let res = [];
-    if (totalSessions >= 1) {
-        res.push(earningsTypes.BREATH1);
-    }
-    if (totalSessions == 2) {
-        const rewardType = rewardCondition === 'completion' ? earningsTypes.COMPLETION_BREATH2 : earningsTypes.PERFORMANCE_BREATH2;
-        res.push(rewardType);
+export const trainingBonusRewards = (sqliteDb, latestBonusEarnings) => {
+    let startDay;
+    if (!latestBonusEarnings) {
+        startDay = dayjs('1970-01-01 00:00').tz('America/Los_Angeles');
+    } else {
+        startDay = dayjs(latestBonusEarnings.date).tz('America/Los_Angeles');
     }
 
-    return res;
-}
+    const minutesByDay = minutesPerDay(sqliteDb, startDay.startOf('day').unix());
+    const eligibleDays = minutesByDay.filter(mbd => mbd.minutes >= maxSessionMinutes).map(i => i.day);
+    if (eligibleDays.length == 0) return [];
 
-export const trainingQualityRewards = (sqliteDB, condition, latestQualityEarnings, eligibleSessions, priorCoherenceValues) => {
-    if (condition < 0 || condition > 63) throw new Error(`Expected condition to be between 0 and 63, but got ${condition}.`);
-    if (condition % 2 == 0) return completionQualityRewards(sqliteDB, latestQualityEarnings);
-    return performanceQualityRewards(eligibleSessions, priorCoherenceValues);
-}
+    const stmt = sqliteDb.prepare('select weighted_avg_coherence from emwave_sessions where stage = 3 and pulse_start_time <= ? order by weighted_avg_coherence desc');
+    const priorCoherenceVals = stmt.all(startDay.unix()).map(r => r.weighted_avg_coherence)
 
-const completionQualityRewards = (sqliteDb, latestQualityEarnings) => {
-    if (latestQualityEarnings && latestQualityEarnings.type !== earningsTypes.STREAK_BONUS) {
-        throw new Error(`Latest earning type is invalid for completion quality reward. Expected ${earningsTypes.STREAK_BONUS}, but got ${latestQualityEarnings.type}.`);
-    }
+    const newSessionsStmt = sqliteDb.prepare('select weighted_avg_coherence, pulse_start_time from emwave_sessions where pulse_start_time > ? and stage = 3 order by pulse_start_time asc');
+    const newSessions = newSessionsStmt.all(startDay.unix());
+    const bonusEarnings = []
+    for (const sess of newSessions) {
+        const sessDay = dayjs.unix(sess.pulse_start_time).tz('America/Los_Angeles').format('YYYY-MM-DD');
+        if (!eligibleDays.includes(sessDay)) continue;
 
-    const lastStreakDateStr = latestQualityEarnings ? latestQualityEarnings.date : '1970-01-01T00:00:00-07:00';
-    const lastStreakDate = dayjs(lastStreakDateStr);
-    const threeDaysAgo = dayjs().tz('America/Los_Angeles').subtract(2, 'days').startOf('day'); // can only earn a streak bonus every three days, including today
-    if (lastStreakDate.isSameOrAfter(threeDaysAgo, 'day')) {
-        return [];
-    }
-
-    const startDate = lastStreakDate.add(1, 'day');
-    const minutesByDay = minutesPerDay(sqliteDb, startDate.unix());
-    if (minutesByDay.length < 3) return [];
-
-    const earnings = [];
-    for (let i=1; i<minutesByDay.length-1; i+=3) {
-        const prevDay = dayjs.tz(minutesByDay[i-1].day, 'YYYY-MM-DD', 'America/Los_Angeles');
-        const curDay = dayjs.tz(minutesByDay[i].day, 'YYYY-MM-DD', 'America/Los_Angeles');
-        const nextDay = dayjs.tz(minutesByDay[i+1].day, 'YYYY-MM-DD', 'America/Los_Angeles');
-        if (curDay.diff(prevDay, 'day') == 1 && 
-            nextDay.diff(curDay, 'days') == 1 &&
-            minutesByDay[i-1].minutes >= maxSessionMinutes &&
-            minutesByDay[i].minutes >= maxSessionMinutes && 
-            minutesByDay[i+1].minutes >= maxSessionMinutes)
-        {
-            earnings.push({day: nextDay.format(), earnings: earningsTypes.STREAK_BONUS})
-        } else {
-            continue;
+        const top25 = Math.ceil(priorCoherenceVals.length * 0.25);
+        const top25Cutoff = priorCoherenceVals[top25 - 1];
+        if (top25Cutoff && sess.weighted_avg_coherence >= top25Cutoff) {
+            bonusEarnings.push({
+                date: dayjs.unix(sess.pulse_start_time).tz('America/Los_Angeles').format(), 
+                earnings: earningsTypes.BONUS
+            });
         }
+        priorCoherenceVals.push(sess.weighted_avg_coherence);
+        priorCoherenceVals.sort((a,b) => b - a);
     }
-    return earnings;
-}
-
-const performanceQualityRewards = (eligibleSessions, priorCoherenceValues) => {
-    const earnings = [];
-
-    const comparisonCoherenceValues = priorCoherenceValues.toSorted((a,b) => b - a); // sort descending
-    for (const s of eligibleSessions) {
-        if (comparisonCoherenceValues.length > 0) {
-            const earnDate = dayjs.unix(s.startDateTime).tz('America/Los_Angeles');
-            const sixSixIdx = Math.ceil(.66 * comparisonCoherenceValues.length) - 1;
-            const twoFiveIdx = Math.ceil(.25 * comparisonCoherenceValues.length) - 1;
-            if (twoFiveIdx < 0 || s.weightedAvgCoherence >= comparisonCoherenceValues[twoFiveIdx]) {
-                earnings.push({day: earnDate.format(), earnings: earningsTypes.TOP_25})
-            } else if (sixSixIdx < 0 || s.weightedAvgCoherence >= comparisonCoherenceValues[sixSixIdx]) {
-                earnings.push({day: earnDate.format(), earnings: earningsTypes.TOP_66});
-            }
-        }
-        
-        // add current weightedAvgCoherence to our priors so that it's included in next comparison
-        let insertIdx = comparisonCoherenceValues.findIndex(cv => cv < s.weightedAvgCoherence);
-        if (insertIdx == -1) insertIdx = comparisonCoherenceValues.length;
-        comparisonCoherenceValues.splice(insertIdx, 0, s.weightedAvgCoherence);
-    }
-
-    return earnings;
+    
+    return bonusEarnings;
 }
 
 export const visitRewards = (sqliteDb, visitNum) => {
     if (visitNum != 1 && visitNum != 2) throw new Error(`Invalid visit number. Expected 1 or 2 but got ${visitNum}.`);
-    const stage = visitNum == 1 ? 1 : 3;
+    const stage = visitNum == 1 ? 1 : 4;
 
-    const stmt = sqliteDb.prepare('select max(pulse_start_time) as pulseStartTime from emwave_sessions where stage = ?');
+    const stmt = sqliteDb.prepare('select max(pulse_start_time) as pulse_start_time from emwave_sessions where stage = ?');
     const res = stmt.get(stage);
-    if (res.pulseStartTime) {
+    if (res.pulse_start_time) {
         const earnType = stage == 1 ? earningsTypes.VISIT_1 : earningsTypes.VISIT_2;
-        return [ {day: dayjs.unix(res.pulseStartTime).tz('America/Los_Angeles').format(), earnings: earnType} ];
+        return [ {date: dayjs.unix(res.pulse_start_time).tz('America/Los_Angeles').format(), earnings: earnType} ];
     }
     return [];
 }
+

@@ -16,7 +16,7 @@ import { DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand, UpdateCo
 const dynClient = new DynamoDBClient({region: process.env.REGION, endpoint: process.env.DYNAMO_ENDPOINT, apiVersion: "2012-08-10"});
 const docClient = DynamoDBDocumentClient.from(dynClient);
 import Db from '../../../../common/db/db.js';
-import { earningsAmounts, statusTypes } from '../../../../common/types/types.js';
+import { earningsAmounts, earningsTypes, statusTypes } from '../../../../common/types/types.js';
 
 const originPrefix = 'emails';
 const emailKey = `${originPrefix}/7pweiur83jfjeif`;
@@ -27,7 +27,6 @@ const lumosAcctTable = process.env.LUMOS_ACCT_TABLE;
 const lumosPlaysTable = process.env.LUMOS_PLAYS_TABLE;
 const earningsTable = process.env.EARNINGS_TABLE;
 const toLATime = (dtStr) => dayjs(dtStr).tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss');
-const toLADayStart = (dtStr) => dayjs(dtStr).tz('America/Los_Angeles').startOf('day').format();
 
 afterEach(async () => {
     await th.s3.removeBucket(process.env.DEST_BUCKET);
@@ -148,31 +147,61 @@ describe("Processing reports from S3", () => {
             await confirmPlaysWritten(expectedPlays);
         });
 
-        test.only("should write earnings for days on which the user played all of ['Color Match Web', 'Lost in Migration Web', 'Familiar Faces Web']", async () => {
+        test("should write earnings for days on which the user played all of ['Color Match Web', 'Lost in Migration Web', 'Familiar Faces Web']", async () => {
             const playsData = [
                 { email_address: lumosAcct.email, game_name: 'Color Match Web', created_at_utc: '2022-05-07 12:09:34', game_lpi: 590 },
                 { email_address: lumosAcct.email, game_name: 'Lost in Migration Web', created_at_utc: '2022-05-07 12:14:17', game_lpi: 400 },
                 { email_address: lumosAcct.email, game_name: 'Familiar Faces Web', created_at_utc: '2022-05-07 12:19:08', game_lpi: 390 },
             ];
             await processGameReport(playsData);
-            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: toLADayStart(playsData[0].created_at_utc), amount: 2 }];
+            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: `${dayjs(playsData[0].created_at_utc.substring(0, 10)).tz('America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, amount: earningsAmounts[earningsTypes.LUMOSITY] }];
             await confirmEarningsWritten(expectedEarnings);
         });
 
         test("should write earnings for days on which the user played all of ['Memory Serves Web', 'Brain Shift Web', 'Raindrops Web', 'Ebb and Flow Web']", async () => {
-
+            const playsData = [
+                { email_address: lumosAcct.email, game_name: 'Memory Serves Web', created_at_utc: '2022-05-07 12:09:34', game_lpi: 590 },
+                { email_address: lumosAcct.email, game_name: 'Brain Shift Web', created_at_utc: '2022-05-07 12:14:17', game_lpi: 400 },
+                { email_address: lumosAcct.email, game_name: 'Raindrops Web', created_at_utc: '2022-05-07 12:19:08', game_lpi: 390 },
+                { email_address: lumosAcct.email, game_name: 'Ebb and Flow Web', created_at_utc: '2022-05-07 12:27:52', game_lpi: 270 },
+            ];
+            await processGameReport(playsData);
+            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: `${dayjs(playsData[0].created_at_utc.substring(0, 10)).tz('America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, amount: earningsAmounts[earningsTypes.LUMOSITY] }];
+            await confirmEarningsWritten(expectedEarnings);
         });
 
         test("should write earnings based on LA time day, not UTC time day", async () => {
-
-        })
-
-        test("should not write earnings for days on which the user played a subset of the required games", async () => {
-
+            const playsData = [
+                { email_address: lumosAcct.email, game_name: 'Color Match Web', created_at_utc: '2022-05-07 19:09:34', game_lpi: 590 },
+                { email_address: lumosAcct.email, game_name: 'Lost in Migration Web', created_at_utc: '2022-05-07 19:14:17', game_lpi: 400 },
+                { email_address: lumosAcct.email, game_name: 'Familiar Faces Web', created_at_utc: '2022-05-08 02:19:08', game_lpi: 390 },
+            ];
+            await processGameReport(playsData);
+            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: `${dayjs(playsData[0].created_at_utc.substring(0, 10)).tz('America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, amount: earningsAmounts[earningsTypes.LUMOSITY] }];
+            await confirmEarningsWritten(expectedEarnings);
         });
 
-        test("should not write earnings when the user played the required games across multiple days", async () => {
+        test("should not write earnings when the user played the required games across multiple days (LA time)", async () => {
+            const playsData = [
+                { email_address: lumosAcct.email, game_name: 'Memory Serves Web', created_at_utc: '2022-05-07 01:09:34', game_lpi: 590 },
+                { email_address: lumosAcct.email, game_name: 'Brain Shift Web', created_at_utc: '2022-05-07 12:14:17', game_lpi: 400 },
+                { email_address: lumosAcct.email, game_name: 'Raindrops Web', created_at_utc: '2022-05-07 12:19:08', game_lpi: 390 },
+                { email_address: lumosAcct.email, game_name: 'Ebb and Flow Web', created_at_utc: '2022-05-07 12:27:52', game_lpi: 270 },
+            ];
+            await processGameReport(playsData);
+            const expectedEarnings = [];
+            await confirmEarningsWritten(expectedEarnings);
+        });
 
+        test("should not write earnings for days on which the user played a subset of the required games", async () => {
+            const playsData = [
+                { email_address: lumosAcct.email, game_name: 'Memory Serves Web', created_at_utc: '2022-05-07 12:09:34', game_lpi: 590 },
+                { email_address: lumosAcct.email, game_name: 'Brain Shift Web', created_at_utc: '2022-05-07 12:14:17', game_lpi: 400 },
+                { email_address: lumosAcct.email, game_name: 'Raindrops Web', created_at_utc: '2022-05-07 12:19:08', game_lpi: 390 },
+            ];
+            await processGameReport(playsData);
+            const expectedEarnings = [];
+            await confirmEarningsWritten(expectedEarnings);
         });
 
         test("should not write game play data that is already in dynamodb", async () => {
@@ -379,20 +408,21 @@ function isValidReportData(reportItem) {
     reportItem.hasOwnProperty('game_name') && reportItem.hasOwnProperty('created_at_utc');
 }
 
-async function confirmTableContainsRows(tableName, expectedRows) {
+async function confirmTableContainsRows(tableName, expectedPlays) {
     const scan = await docClient.send(new ScanCommand({
         TableName: tableName
     }));
-    expect(scan.Items.length).toBe(expectedRows.length);
-    expectedRows.forEach(ep => expect(scan.Items).toContainEqual(ep));
+    expect(scan.Items.length).toBe(expectedPlays.length);
+    expectedPlays.forEach(ep => expect(scan.Items).toContainEqual(ep));
 }
 
+
 async function confirmPlaysWritten(expectedPlays) {
-    confirmTableContainsRows(lumosPlaysTable, expectedPlays);
+    await confirmTableContainsRows(lumosPlaysTable, expectedPlays);
 }
 
 async function confirmEarningsWritten(expectedEarnings) {
-    confirmTableContainsRows(earningsTable, expectedEarnings);
+    await confirmTableContainsRows(earningsTable, expectedEarnings);
 }
 
 async function confirmStage2Complete(userId) {
@@ -437,7 +467,7 @@ async function runReportsLambda(fileKey) {
         event: putEvent,
         lambdaPath: path.join(__dirname, '../process-lumosity-emails.js'),
         lambdaHandler: 'processreports',
-        verboseLevel: 3
+        verboseLevel: 0
     });
     return result;
 }

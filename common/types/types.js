@@ -26,4 +26,5 @@ export const statusTypes = Object.freeze({
 
 export const maxSessionMinutes = 18;
 export const minSessionSeconds = 30;
+export const maxDailyTimeEarnings = 6;
 export const stage2BreathingMinutes = 2;

@@ -13,13 +13,13 @@ dayjs.extend(utc);
 const lambdaLocal = require("lambda-local");
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
-import { maxSessionMinutes, earningsTypes, earningsAmounts, statusTypes } from '../../../../common/types/types';
+import { maxSessionMinutes, earningsTypes, earningsAmounts, statusTypes, maxDailyTimeEarnings } from '../../../../common/types/types';
+import { initSqliteDb, insertEmwaveSessions } from './sqlite-helper.js';
 const dynClient = new DynamoDBClient({region: process.env.REGION, endpoint: process.env.DYNAMO_ENDPOINT, apiVersion: "2012-08-10"});
 const docClient = DynamoDBDocumentClient.from(dynClient);
-const Database = require('better-sqlite3');
 
 const theUserId = 'abc345';
-const sqliteKey = `${theUserId}/us-west-2:1234567890abcdef/FDS.sqlite`;
+const sqliteKey = `${theUserId}/us-west-2:1234567890abcdef/CALM.sqlite`;
 let sqliteTestDbPath;
 
 const sessionsTable = process.env.SESSIONS_TABLE;
@@ -68,7 +68,7 @@ describe("Processing a sqlite file", () => {
     let db;
 
     beforeEach(async () => {
-        db = await initSqliteDb(db);
+        db = await initSqlite();
     });
 
     it("should save sessions from all stages", async () => {
@@ -105,74 +105,90 @@ describe("Processing a sqlite file", () => {
 
     it("should only save time-based earnings for sessions after the last time-based earning", async () => {
         const lastEarningsTime = dayjs().tz('America/Los_Angeles').subtract(2, 'days');
-        const prevEarnings = [{userId: theUserId, date: lastEarningsTime.startOf('day').format(), type: earningsTypes.BREATH1, amount: earningsAmounts[earningsTypes.BREATH1]}];
+        const prevEarnings = [{userId: theUserId, date: lastEarningsTime.format(), type: earningsTypes.PER_HOUR, amount: 3}];
         mockGetUserEarnings.mockReturnValueOnce(prevEarnings);
 
         const sessions = [
-            { emwave_session_id: 'adcd123', avg_coherence: 1.2, pulse_start_time: lastEarningsTime.subtract(2, 'hours').unix(), valid_status: 1, duration_seconds: maxSessionMinutes*60, stage: 2, weighted_avg_coherence:1.2 },
-            { emwave_session_id: 'abcf789', avg_coherence: 2.3, pulse_start_time: lastEarningsTime.add(1, 'hour').unix(), valid_status: 1, duration_seconds: maxSessionMinutes*60, stage: 2, weighted_avg_coherence: 2.3 },
+            { emwave_session_id: 'adcd123', avg_coherence: 1.2, pulse_start_time: lastEarningsTime.subtract(2, 'hours').unix(), valid_status: 1, duration_seconds: maxSessionMinutes*60, stage: 3, weighted_avg_coherence:1.2 },
+            { emwave_session_id: 'abcf789', avg_coherence: 2.3, pulse_start_time: lastEarningsTime.add(1, 'hour').unix(), valid_status: 1, duration_seconds: maxSessionMinutes*60, stage: 3, weighted_avg_coherence: 2.3 },
         ];
         await runLambdaTestWithSessions(db, sessions);
-        const dynamoEarnings = await getDynamoEarnings(theUserId);
-        const expectedEarningsCount = sessions.filter(s => dayjs.unix(s.pulse_start_time).isAfter(lastEarningsTime) && s.duration_seconds >= maxSessionMinutes * 60).length;
+        const dynamoEarnings = await getDynamoEarnings(theUserId, earningsTypes.PER_HOUR);
+        const expectedEarningsCount = sessions.filter(s => dayjs.unix(s.pulse_start_time).isAfter(lastEarningsTime)).length;
         expect(dynamoEarnings.length).toBe(expectedEarningsCount);
         expect(dynamoEarnings).toEqual(expect.arrayContaining([
-            {userId: theUserId, dateType: `${lastEarningsTime.add(1, 'hour').startOf('day').format()}|${earningsTypes.COMPLETION_BREATH2}`, amount: earningsAmounts[earningsTypes.COMPLETION_BREATH2]}
+            {userId: theUserId, dateType: `${lastEarningsTime.add(1, 'hour').format()}|${earningsTypes.PER_HOUR}`, amount: 3}
         ]));
     });
 
-    it("should combine shorter stage 2 sessions on the same day into complete, abstract sessions", async () => {
+    it("should not give more than $6 total in time earnings for a day when the upload contains new sessions that combined would exceed that limit", async () => {
+        mockGetUserEarnings.mockReturnValueOnce([]);
         const sessions = [
-            { emwave_session_id: 'cafe451', avg_coherence: 1.0, pulse_start_time: dayjs().subtract(6, 'hours').unix(), valid_status: 1, duration_seconds: 12*60, stage: 2, weighted_avg_coherence: (12/18)*1.0 },
-            { emwave_session_id: 'abdb900', avg_coherence: 2.0, pulse_start_time: dayjs().subtract(5, 'hours').unix(), valid_status: 1, duration_seconds: 6*60, stage: 2, weighted_avg_coherence: (6/18)*2.0 },
+            { emwave_session_id: 'adcd123', avg_coherence: 1.2, pulse_start_time: dayjs().add(20, 'minutes').unix(), valid_status: 1, duration_seconds: 13*60, stage: 3, weighted_avg_coherence:1.2 },
+            { emwave_session_id: 'abcf789', avg_coherence: 2.3, pulse_start_time: dayjs().add(50, 'minutes').unix(), valid_status: 1, duration_seconds: 13*60, stage: 3, weighted_avg_coherence: 2.3 },
+            { emwave_session_id: 'ged910', avg_coherence: 2.3, pulse_start_time: dayjs().add(80, 'minutes').unix(), valid_status: 1, duration_seconds: 13*60, stage: 3, weighted_avg_coherence: 2.3 },
         ];
         await runLambdaTestWithSessions(db, sessions);
-
-        const addedSessions = await getDynamoSessions(theUserId);
-        const absSessWeightedCoherence = (sessions[0].weighted_avg_coherence + sessions[1].weighted_avg_coherence) / 2;
-        expect(addedSessions.length).toBe(3);
-        expect(addedSessions.some(s => s.isComplete && s.isAbstract && s.durationSeconds == 18*60 && s.weightedAvgCoherence == absSessWeightedCoherence)).toBe(true);
-    });
-
-    it(`should mark sessions that are >= ${maxSessionMinutes} minutes long as complete`, async () => {
-        const sessions = [
-            { emwave_session_id: 'cafe451', avg_coherence: 1.6, pulse_start_time: dayjs().subtract(6, 'hours').unix(), valid_status: 1, duration_seconds: maxSessionMinutes*60, stage: 2, weighted_avg_coherence: 1.6 },
-        ];
-        await runLambdaTestWithSessions(db, sessions);
-
-        const addedSessions = await getDynamoSessions(theUserId);
-        expect(addedSessions.length).toBe(sessions.length);
-        expect(addedSessions.some(s => s.emWaveSessionId === sessions[0].emwave_session_id && s.isComplete)).toBe(true);
-    });
-
-    it("should include prior coherence values when calculating performance rewards", async () => {
-        const lastSessionTime = dayjs().subtract(4, 'days');
-        const dynamoSessions = [];
-        for (let i=0; i<4; i++) {
-            const startTime = lastSessionTime.add(i, 'days');
-            const weightedCoh = i == 3 ? 7 : 3;
-            dynamoSessions.push({emWaveSessionId: `cafe45${i}`, avgCoherence: 2.3, startDateTime: startTime.unix(), validStatus: 1, durationSeconds: maxSessionMinutes*60, stage: 2, weightedAvgCoherence: weightedCoh, isComplete: true})
+        const dynamoEarnings = await getDynamoEarnings(theUserId, earningsTypes.PER_HOUR);
+        expect(dynamoEarnings.length).toBe(sessions.length);
+        const expectedEarnings = [];
+        let totalEarnings = 0;
+        for (let i=0; i<sessions.length; i++) {
+            const s = sessions[i];
+            let sessMinutes = (s.duration_seconds / 60);
+            const earnings = Math.round(earningsAmounts[earningsTypes.PER_HOUR] * (sessMinutes/60) * 100) / 100;
+            if (totalEarnings + earnings > maxDailyTimeEarnings) {
+                const maxRemainingMinutes = ((maxDailyTimeEarnings - totalEarnings) / earningsAmounts[earningsTypes.PER_HOUR]) * 60;
+                sessMinutes = maxRemainingMinutes;
+            }
+            totalEarnings += Math.round(earningsAmounts[earningsTypes.PER_HOUR] * (sessMinutes/60) * 100) / 100;
+            expectedEarnings.push({
+                userId: theUserId,
+                dateType: `${dayjs.unix(s.pulse_start_time).tz('America/Los_Angeles').format()}|${earningsTypes.PER_HOUR}`,
+                amount: Math.round(earningsAmounts[earningsTypes.PER_HOUR] * (sessMinutes/60) * 100) / 100
+            });
         }
-        await insertDynamoItems(theUserId, dynamoSessions);
-
-        const sessTime = lastSessionTime.add(4, 'days').tz('America/Los_Angeles');
-         // with a weighted_avg_coherence of 5, this should score in the top 66% but not the top 25%
-        // of prior sessions given the test data created above
-        const sessions = [
-            { emwave_session_id: 'abcf789', avg_coherence: 2.3, pulse_start_time: sessTime.unix(), valid_status: 1, duration_seconds: maxSessionMinutes*60, stage: 2, weighted_avg_coherence: 5 },
-        ];
-        mockGetUser.mockReturnValueOnce({userId: theUserId, condition: 3}); // make sure we use a performance condition
-        await runLambdaTestWithSessions(db, sessions);
-
-        const addedEarnings = await getDynamoEarnings(theUserId);
-        expect(addedEarnings.length).toBe(sessions.length + 1); // they should get one time and one quality reward
-        expect(addedEarnings).toEqual(expect.arrayContaining([
-            {userId: theUserId, amount: earningsAmounts[earningsTypes.BREATH1], dateType: `${sessTime.startOf('day').format()}|${earningsTypes.BREATH1}`},
-            {userId: theUserId, amount: earningsAmounts[earningsTypes.TOP_66], dateType: `${sessTime.format()}|${earningsTypes.TOP_66}`}
-        ]));
+        expect(dynamoEarnings).toEqual(expect.arrayContaining(expectedEarnings));
     });
 
-    it.each([{visit: 1, stage: 1}, {visit: 2, stage: 3}])("should save visit $visit rewards when they have not yet been earned and stage $stage sessions exist", async ({visit, stage}) => {
+    it("should not give more than $6 total in time earnings for a day when previously rewarded sessions plus new sessions would exceed that limit", async () => {
+        const sessions = [
+            { emwave_session_id: 'adcd123', avg_coherence: 1.2, pulse_start_time: dayjs().add(20, 'minutes').unix(), valid_status: 1, duration_seconds: 13*60, stage: 3, weighted_avg_coherence:1.2 },
+            { emwave_session_id: 'abcf789', avg_coherence: 2.3, pulse_start_time: dayjs().add(50, 'minutes').unix(), valid_status: 1, duration_seconds: 13*60, stage: 3, weighted_avg_coherence: 2.3 },
+            { emwave_session_id: 'ged910', avg_coherence: 2.3, pulse_start_time: dayjs().add(80, 'minutes').unix(), valid_status: 1, duration_seconds: 13*60, stage: 3, weighted_avg_coherence: 2.3 },
+        ];
+        const prevEarnings = [{
+            userId: theUserId,
+            date: dayjs.unix(sessions[0].pulse_start_time).tz('America/Los_Angeles').format(),
+            type: earningsTypes.PER_HOUR,
+            amount: Math.round(earningsAmounts[earningsTypes.PER_HOUR] * (sessions[0].duration_seconds/3600) * 100) / 100
+        }];
+        mockGetUserEarnings.mockReturnValueOnce(prevEarnings);
+
+        await runLambdaTestWithSessions(db, sessions);
+        const dynamoEarnings = await getDynamoEarnings(theUserId, earningsTypes.PER_HOUR);
+        expect(dynamoEarnings.length).toBe(sessions.length - prevEarnings.length);
+        const expectedEarnings = [];
+        let totalEarnings = prevEarnings[0].amount;
+        for (let i=1; i<sessions.length; i++) {
+            const s = sessions[i];
+            let sessMinutes = (s.duration_seconds / 60);
+            const earnings = Math.round(earningsAmounts[earningsTypes.PER_HOUR] * (sessMinutes/60) * 100) / 100;
+            if (totalEarnings + earnings > maxDailyTimeEarnings) {
+                const maxRemainingMinutes = ((maxDailyTimeEarnings - totalEarnings) / earningsAmounts[earningsTypes.PER_HOUR]) * 60;
+                sessMinutes = maxRemainingMinutes;
+            }
+            totalEarnings += Math.round(earningsAmounts[earningsTypes.PER_HOUR] * (sessMinutes/60) * 100) / 100;
+            expectedEarnings.push({
+                userId: theUserId,
+                dateType: `${dayjs.unix(s.pulse_start_time).tz('America/Los_Angeles').format()}|${earningsTypes.PER_HOUR}`,
+                amount: Math.round(earningsAmounts[earningsTypes.PER_HOUR] * (sessMinutes/60) * 100) / 100
+            });
+        }
+        expect(dynamoEarnings).toEqual(expect.arrayContaining(expectedEarnings));
+    });
+
+    it.each([{visit: 1, stage: 1}, {visit: 2, stage: 4}])("should save visit $visit rewards when they have not yet been earned and stage $stage sessions exist", async ({visit, stage}) => {
         const sessDate = dayjs().subtract(6, 'hours');
         const sessions = [
             { emwave_session_id: 'cafe451', avg_coherence: 1.6, pulse_start_time: sessDate.unix(), valid_status: 1, duration_seconds: 300, stage: stage, weighted_avg_coherence: 1.6 },
@@ -185,7 +201,7 @@ describe("Processing a sqlite file", () => {
         expect(addedEarnings).toStrictEqual([{userId: theUserId, dateType: `${sessDate.tz('America/Los_Angeles').format()}|${earnType}`, amount: earningsAmounts[earnType]}]);
     });
 
-    it.each([{visit: 1, stage: 1}, {visit: 2, stage: 3}])("should not save visit $visit rewards when they have already been earned", async ({visit, stage}) => {
+    it.each([{visit: 1, stage: 1}, {visit: 2, stage: 4}])("should not save visit $visit rewards when they have already been earned", async ({visit, stage}) => {
         const earnType = visit == 1 ? earningsTypes.VISIT_1 : earningsTypes.VISIT_2;
         mockGetUserEarnings.mockReturnValueOnce([{type: earnType, date: dayjs().format(), userId: theUserId, amount: earningsAmounts[earnType]}]);
 
@@ -278,171 +294,6 @@ describe("Processing a sqlite file", () => {
 
 });
 
-describe("Building abstract sessions", () => {
-    const { forTesting } = require('../process-sqlite-dbs.js');
-
-    it("should return the weighted average coherence score for each 18 minute abstract session in a day", () => {
-        const data = [
-            {emWaveSessionId: 'a1', pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19)), durationSeconds: 18*60, weightedAvgCoherence: 2.0},
-            {emWaveSessionId: 'a2', pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 20)), durationSeconds: 18*60, weightedAvgCoherence: 3.0}
-        ];
-
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(data.length);
-        const expectedResults = sqliteSessionsToDynamoSessions(data);
-        expect(res).toEqual(expect.arrayContaining(expectedResults));
-    });
-
-    it("should combine sessions shorter than 18 minutes and use the average of their weighted averages", () => {
-        const data = [
-            {emWaveSessionId: 'a1', pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 10)), durationSeconds: 16*60, weightedAvgCoherence: 2.0},
-            {emWaveSessionId: 'a2', pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 29)), durationSeconds: 2*60, weightedAvgCoherence: 3.0}
-        ];
-
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(3);
-        const expectedResults = sqliteSessionsToDynamoSessions(data);
-        expectedResults.push({
-            weightedAvgCoherence: (data[0].weightedAvgCoherence + data[1].weightedAvgCoherence) / 2,
-            startDateTime: data[0].pulseStartTime,
-            isComplete: true,
-            isAbstract: true,
-            durationSeconds: data[0].durationSeconds + data[1].durationSeconds
-        })
-        expect(res).toEqual(expect.arrayContaining([]));
-    });
-
-    it("should not combine sessions shorter than 18 minutes that happen on different days", () => {
-        const data = [
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 10)), durationSeconds: 16*60, weightedAvgCoherence: 2.0},
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 20, 9, 29)), durationSeconds: 2*60, weightedAvgCoherence: 3.0}
-        ];
-
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(2);
-        const expectedResults = sqliteSessionsToDynamoSessions(data);
-        expect(res).toEqual(expect.arrayContaining(expectedResults));
-    });
-
-    it("should not error if a session is longer than 18 minutes", () => {
-        const data = [
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 10)), durationSeconds: 19*60, avgCoherence: 2.0, weightedAvgCoherence: 2.0},
-        ];
-
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(1);
-        expect(res).toEqual(expect.arrayContaining([{
-            avgCoherence: data[0].avgCoherence,
-            weightedAvgCoherence: data[0].weightedAvgCoherence,
-            startDateTime: data[0].pulseStartTime,
-            isComplete: true,
-            durationSeconds: data[0].durationSeconds
-        }]));
-    });
-
-    it("should not error if there are more than 36 minutes of training in a day", () => {
-        const data = [
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 10)), durationSeconds: 19*60, weightedAvgCoherence: 2.0},
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 30)), durationSeconds: 18*60, weightedAvgCoherence: 3.0}
-        ];
-
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(data.length);
-        const expectedResults = sqliteSessionsToDynamoSessions(data);
-        
-        expect(res).toEqual(expect.arrayContaining(expectedResults));
-    });
-
-    it("should return all original sessions and new abstract ones without marking original sessions < 18 minutes long as complete or abstract", () => {
-        const data = [
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 10)), durationSeconds: 1*60, avgCoherence: 36.0, weightedAvgCoherence: 2.0},
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 12)), durationSeconds: 3*60, avgCoherence: 21.3, weightedAvgCoherence: 7.1},
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 16)), durationSeconds: 14*60, avgCoherence: 8.23, weightedAvgCoherence: 6.4},
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 32)), durationSeconds: 17*60, avgCoherence: 3.18, weightedAvgCoherence: 3.0}
-        ];
-
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(5);
-        const expectedResults = sqliteSessionsToDynamoSessions(data);
-        expectedResults.push({
-            weightedAvgCoherence: (data[0].weightedAvgCoherence + data[3].weightedAvgCoherence) / 2,
-            startDateTime: data[0].pulseStartTime,
-            isComplete: true,
-            isAbstract: true,
-            durationSeconds: data[0].durationSeconds + data[3].durationSeconds
-        });
-        expect(res).toEqual(expect.arrayContaining(expectedResults));
-    });
-
-    it("should never combine the weighted average of a session 18 minutes or longer with the weighted average of a shorter session", () => {
-        const data = [
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 10)), durationSeconds: 1*60, weightedAvgCoherence: 2.0},
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 12)), durationSeconds: 3*60, weightedAvgCoherence: 7.1},
-            {pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 16)), durationSeconds: 18*60, weightedAvgCoherence: 6.4},
-        ];
-
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(3);
-        const expectedResults = sqliteSessionsToDynamoSessions(data);
-        expect(res).toEqual(expect.arrayContaining(expectedResults));
-    });
-
-    it("should keep the emWave session id on sessions that have it", () => {
-        const data = [
-            {emWaveSessionId: 'abc123', pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 10)), durationSeconds: 1*60, weightedAvgCoherence: 2.0},
-        ];
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(1);
-        const expectedResults = sqliteSessionsToDynamoSessions(data);
-        expect(res).toEqual(expect.arrayContaining(expectedResults));
-    });
-
-    it("should not give an emWave session id or average coherence to an abstract sessions", () => {
-        const data = [
-            {emWaveSessionId: 'abd153', pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 10)), durationSeconds: 1*60, avgCoherence: 36.0, weightedAvgCoherence: 2.0},
-            {emWaveSessionId: 'bce951', pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 16)), durationSeconds: 17*60, avgCoherence: 6.78, weightedAvgCoherence: 6.4},
-        ];
-
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(3);
-        const expectedResults = sqliteSessionsToDynamoSessions(data);
-        expectedResults.push({
-            weightedAvgCoherence: (data[0].weightedAvgCoherence + data[1].weightedAvgCoherence) / 2,
-            startDateTime: data[0].pulseStartTime,
-            isComplete: true,
-            isAbstract: true,
-            durationSeconds: data[0].durationSeconds + data[1].durationSeconds
-        });
-        expect(res).toEqual(expect.arrayContaining(expectedResults));
-    });
-
-    it("should keep the emopic name on sessions that have it", () => {
-        const data = [
-            {emoPicName: 'calm1.jpg', pulseStartTime: dateToEpochSeconds(new Date(2024, 3, 19, 9, 10)), durationSeconds: 1*60, weightedAvgCoherence: 2.0},
-        ];
-        const res = forTesting.realSessionsToAbstractSessions(data);
-        expect(res.length).toBe(1);
-        const expectedResults = sqliteSessionsToDynamoSessions(data);
-        expect(res).toEqual(expect.arrayContaining(expectedResults));
-    });
-});
-
-function dateToEpochSeconds(someDate) {
-    return Math.round(someDate.getTime() / 1000);
-}
-
-function sqliteSessionsToDynamoSessions(sessions) {
-    const results = [];
-    for (const s of sessions) {
-        const expected = Object.assign({}, s);
-        if (s.durationSeconds >= maxSessionMinutes * 60) expected.isComplete = true;
-        expected.startDateTime = s.pulseStartTime;
-        delete(expected.pulseStartTime);
-        results.push(expected);
-    }
-    return results;
-}
-
 async function runLambdaTestWithSessions(db, sessions, expectedStatus='success') {
     await insertSessions(db, sessions);
     const result = await runS3PutLambda();
@@ -463,18 +314,11 @@ async function runS3PutLambda() {
     return result;
 }
 
-async function initSqliteDb() {
+async function initSqlite() {
     const dbDir = await mkdtemp(os.tmpdir());
-    sqliteTestDbPath = path.join(dbDir, 'TestFDS.sqlite');
-    const db = new Database(sqliteTestDbPath);
-
-    const createSessionsTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS emwave_sessions(emwave_session_id TEXT PRIMARY KEY, avg_coherence FLOAT NOT NULL, pulse_start_time INTEGER NOT NULL, valid_status INTEGER NOT NULL, duration_seconds INTEGER NOT NULL, stage INTEGER NOT NULL, emo_pic_name TEXT, weighted_avg_coherence FLOAT NOT NULL DEFAULT 0.0)');
-    createSessionsTableStmt.run();
-
-    const createCogResultsTableStmt = db.prepare('CREATE TABLE IF NOT EXISTS cognitive_results(id INTEGER NOT NULL PRIMARY KEY, experiment TEXT NOT NULL, is_relevant INTEGER NOT NULL, date_time TEXT NOT NULL, results TEXT NOT NULL, stage INTEGER NOT NULL)');
-    createCogResultsTableStmt.run();
+    sqliteTestDbPath = path.join(dbDir, 'TestCALM.sqlite');
     
-    return db;
+    return await(initSqliteDb(sqliteTestDbPath))
 }
 
 async function insertDynamoItems(userId, items, table=sessionsTable) {
@@ -492,11 +336,7 @@ async function insertDynamoItems(userId, items, table=sessionsTable) {
 }
 
 async function insertSessions(db, sessions) {
-    const stmt = db.prepare('INSERT INTO emwave_sessions(emwave_session_id, avg_coherence, pulse_start_time, valid_status, duration_seconds, stage, emo_pic_name, weighted_avg_coherence) VALUES(?, ?, ?, ?, ?, ?, ?, ?)');
-    for (const s of sessions) {
-        if (!s.emo_pic_name) s.emo_pic_name = null;
-        stmt.run(s.emwave_session_id, s.avg_coherence, s.pulse_start_time, s.valid_status, s.duration_seconds, s.stage, s.emo_pic_name, s.weighted_avg_coherence);
-    }
+    insertEmwaveSessions(db, sessions);
     await th.s3.removeBucket(process.env.DATA_BUCKET);
     const sqliteFile = await readFile(sqliteTestDbPath);
     await th.s3.addFile(process.env.DATA_BUCKET, sqliteKey, sqliteFile);
@@ -516,8 +356,12 @@ async function getDynamoSessions(userId) {
    return await dynamoQueryByUserId(userId, sessionsTable);
 }
 
-async function getDynamoEarnings(userId) {
-   return await dynamoQueryByUserId(userId, earningsTable);
+async function getDynamoEarnings(userId, earningsType) {
+    const allEarnings = await dynamoQueryByUserId(userId, earningsTable);
+    if (earningsType) {
+        return allEarnings.filter(e => e.dateType.endsWith(earningsType));
+    }
+    return allEarnings;
 }
 
 async function getDynamoCogResults(userId) {
