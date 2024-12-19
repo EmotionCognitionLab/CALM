@@ -13,7 +13,17 @@ import sample_img from "./sample.png";
 import scene_img from "./scene.png";
 // fragments
 const instruction_0_html = (await import("./frag/instruction_0.html?raw")).default;
-const instruction_1_html = (await import("./frag/instruction_1.html?raw")).default;
+const instruction_1_html = `
+Look at the sample trial below.
+<img id="spatial-orientation-sample" src="${sample_img}"/>
+Imagine that you are standing at the <strong>bell</strong> facing the <strong>tree</strong>.
+Your task is to draw a line on the input circle indicating the direction to the <strong>drum</strong>.
+In the sample trial, this line has been drawn for you.
+In the actual trials, use your computer mouse to draw this line.
+Can you see that if you were at the <strong>bell</strong> facing the <strong>tree</strong> the <strong>drum</strong> would be in the direction shown by the dotted line?
+<br> <br>
+<em>Press the space bar to continue.</em>
+`
 const sample_instruction_html = (await import("./frag/sample_instruction.html?raw")).default;
 const practice_instruction_html = (await import("./frag/practice_instruction.html?raw")).default;
 const test_instruction_html = (await import("./frag/timed_instruction.html?raw")).default;

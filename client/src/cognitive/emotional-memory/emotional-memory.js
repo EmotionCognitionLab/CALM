@@ -1,9 +1,18 @@
 import htmlButtonResponse from "@jspsych/plugin-html-button-response"
 import htmlKeyboardResponse from "@jspsych/plugin-html-keyboard-response"
 import imageKeyboardResponse from "@jspsych/plugin-image-keyboard-response"
+import awsSettings from "../../../../common/aws-settings.json";
 
 const learningInstructions = (await import("./frag/instruction_learning.html?raw")).default
-const ratingPrompt = (await import("./frag/rating_prompt.html?raw")).default
+const ratingPrompt = `
+<div>
+    Please rate how positive, neutral, or negative you found the preceding picture. <br/>
+    (1 = very negative to 9 = very positive, with 5 = neutral)
+</div>
+<div>
+    <img src="${awsSettings.ImagesUrl}/assets/emotional-memory/scale.png"/>
+</div>
+`
 const ratingNagPrompt = (await import("./frag/rating_nag_prompt.html?raw")).default
 const recallInstructions = (await import("./frag/instruction_recall.html?raw")).default
 const recognitionInstructions = (await import("./frag/instruction_recognition.html?raw")).default
@@ -31,10 +40,10 @@ export class EmotionalMemory {
     getLearningTimeline() {
         const amuseImages = this.jsPsych.randomization
             .sampleWithoutReplacement(EmotionalMemory.images.pre.amuse, 4)
-            .map(i => ({imgType: 'AmC', stimulus: `/src/cognitive/emotional-memory/assets/${i}`}))
+            .map(i => ({imgType: 'AmC', stimulus: `${awsSettings.ImagesUrl}/assets/emotional-memory/${i}`}))
         const fearImages = this.jsPsych.randomization
             .sampleWithoutReplacement(EmotionalMemory.images.pre.fear, 4)
-            .map(i => ({imgType: 'F', stimulus: `/src/cognitive/emotional-memory/assets/${i}`}))
+            .map(i => ({imgType: 'F', stimulus: `${awsSettings.ImagesUrl}/assets/emotional-memory/${i}`}))
         const images = [...amuseImages, ...fearImages]
         return [
             {
@@ -127,8 +136,8 @@ export class EmotionalMemory {
 
     recognitionNode() {
         const preOrPost = this.setNum == 0 ? 'pre' : 'post'
-        const amuseImages = [...EmotionalMemory.images[preOrPost].amuse].map(i => ({imgType: 'AmC', stimulus: `/src/cognitive/emotional-memory/assets/${i}`}))
-        const fearImages = [...EmotionalMemory.images[preOrPost].fear].map(i => ({imgType: 'F', stimulus: `/src/cognitive/emotional-memory/assets/${i}`}))
+        const amuseImages = [...EmotionalMemory.images[preOrPost].amuse].map(i => ({imgType: 'AmC', stimulus: `${awsSettings.ImagesUrl}/assets/emotional-memory/${i}`}))
+        const fearImages = [...EmotionalMemory.images[preOrPost].fear].map(i => ({imgType: 'F', stimulus: `${awsSettings.ImagesUrl}/assets/emotional-memory/${i}`}))
         const images = [...amuseImages, ...fearImages]
         return {
             timeline: [
