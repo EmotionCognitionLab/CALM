@@ -4,16 +4,16 @@ import "jspsych/css/jspsych.css";
 import "../css/common.css";
 import "./style.css";
 import arrow_img from "./arrow.png"
-const instruction1_html = (await import("./frag/instruction-1.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
-const instruction2_html = (await import("./frag/instruction-2.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
-const instruction3_html = (await import("./frag/instruction-3.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
-const instruction4_html = (await import("./frag/instruction-4.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
-const instruction5_html = (await import("./frag/instruction-5.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
-const instruction6_html = (await import("./frag/instruction-6.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
-const comprehension1_html = (await import("./frag/comprehension-1.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
-const comprehension2_html = (await import("./frag/comprehension-2.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
-const comprehension3_html = (await import("./frag/comprehension-3.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
-const instruction1alt_html = (await import("./frag/instruction-1-alt.html?raw")).default.replace("/src/cognitive/flanker/arrow.png", arrow_img);
+const instruction1_html = (await import("./frag/instruction-1.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
+const instruction2_html = (await import("./frag/instruction-2.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
+const instruction3_html = (await import("./frag/instruction-3.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
+const instruction4_html = (await import("./frag/instruction-4.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
+const instruction5_html = (await import("./frag/instruction-5.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
+const instruction6_html = (await import("./frag/instruction-6.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
+const comprehension1_html = (await import("./frag/comprehension-1.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
+const comprehension2_html = (await import("./frag/comprehension-2.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
+const comprehension3_html = (await import("./frag/comprehension-3.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
+const instruction1alt_html = (await import("./frag/instruction-1-alt.html?raw")).default.replaceAll("/src/cognitive/flanker/arrow.png", arrow_img);
 
 
 
