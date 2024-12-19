@@ -20,7 +20,7 @@ import('electron-squirrel-startup').then(ess => {
 });
 
 app.setAboutPanelOptions({
-  applicationName: "Meditation Study",
+  applicationName: "CALM Study",
   applicationVersion: packageInfo.version,
   iconPath: assetsPath() + "logo.png"
 });
