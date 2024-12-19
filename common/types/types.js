@@ -10,8 +10,8 @@ export const earningsAmounts = Object.freeze({
     [earningsTypes.PER_HOUR]: 10,
     [earningsTypes.LUMOSITY]: 2,
     [earningsTypes.BONUS]: 6,
-    [earningsTypes.VISIT_1]: 25,
-    [earningsTypes.VISIT_2]: 25
+    [earningsTypes.VISIT_1]: 150,
+    [earningsTypes.VISIT_2]: 150
 
 });
 
