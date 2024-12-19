@@ -3,6 +3,7 @@ import htmlKeyboardResponse from "@jspsych/plugin-html-keyboard-response"
 import imageKeyboardResponse from "@jspsych/plugin-image-keyboard-response"
 import awsSettings from "../../../../common/aws-settings.json";
 
+import img_scale from "./assets/scale.png"
 const learningInstructions = (await import("./frag/instruction_learning.html?raw")).default
 const ratingPrompt = `
 <div>
@@ -10,10 +11,17 @@ const ratingPrompt = `
     (1 = very negative to 9 = very positive, with 5 = neutral)
 </div>
 <div>
-    <img src="${awsSettings.ImagesUrl}/assets/emotional-memory/scale.png"/>
+    <img src="${img_scale}"/>
 </div>
 `
-const ratingNagPrompt = (await import("./frag/rating_nag_prompt.html?raw")).default
+const ratingNagPrompt = `
+<div>
+    Please provide a rating (1 = very negative to 9 = very positive, with 5 = neutral).
+</div>
+<div>
+    <img src="${img_scale}"/>
+</div>
+`
 const recallInstructions = (await import("./frag/instruction_recall.html?raw")).default
 const recognitionInstructions = (await import("./frag/instruction_recognition.html?raw")).default
 const recognitionPrompt = (await import("./frag/recognition_prompt.html?raw")).default
@@ -21,6 +29,43 @@ const recognitionPrompt = (await import("./frag/recognition_prompt.html?raw")).d
 import memoryField from "../js/jspsych-memory-field.js";
 import "jspsych/css/jspsych.css";
 import "../css/common.css";
+
+import img_5780 from "./assets/5780.jpg";
+import img_Animals_219_h from "./assets/Animals_219_h.jpg";
+import img_1463 from "./assets/1463.jpg";
+import img_Landscapes_121_h from "./assets/Landscapes_121_h.jpg";
+import img_2304 from "./assets/2304.jpg";
+import img_1999 from "./assets/1999.jpg";
+import img_Animals_095_h from "./assets/Animals_095_h.jpg";
+import img_2216 from "./assets/2216.jpg";
+import img_2360 from "./assets/2360.jpg"
+import img_People_017_h from "./assets/People_017_h.jpg";
+import img_1022 from "./assets/1022.jpg";
+import img_2811 from "./assets/2811.jpg";
+import img_People_139_h from "./assets/People_139_h.jpg";
+import img_6560 from "./assets/6560.jpg";
+import img_9429 from "./assets/9429.jpg";
+import img_People_020_h from "./assets/People_020_h.jpg";
+import img_1525 from "./assets/1525.jpg";
+import img_6520 from "./assets/6520.jpg"
+import img_1441 from "./assets/1441.jpg";
+import img_2311 from "./assets/2311.jpg";
+import img_Landscapes_154_h from "./assets/Landscapes_154_h.jpg";
+import img_5830 from "./assets/5830.jpg";
+import img_Landscapes_054_h from "./assets/Landscapes_054_h.jpg";
+import img_Animals_166_v from "./assets/Animals_166_v.jpg";
+import img_8497 from "./assets/8497.jpg";
+import img_4700 from "./assets/4700.jpg";
+import img_7502 from "./assets/7502.jpg"
+import img_1321 from "./assets/1321.jpg";
+import img_1932 from "./assets/1932.jpg";
+import img_6313 from "./assets/6313.jpg";
+import img_8475 from "./assets/8475.jpg";
+import img_People_023_h from "./assets/People_023_h.jpg";
+import img_8485 from "./assets/8485.jpg";
+import img_Animals_007_h from "./assets/Animals_007_h.jpg";
+import img_9921 from "./assets/9921.jpg";
+import img_Faces_272_h from "./assets/Faces_272_h.jpg"
 
 export class EmotionalMemory {
     constructor(jsPsych, setNum) {
@@ -185,50 +230,50 @@ export class EmotionalMemory {
 EmotionalMemory.images = {
     pre: {
         amuse: [
-            "5780.jpg",
-            "Animals_219_h.jpg",
-            "1463.jpg",
-            "Landscapes_121_h.jpg",
-            "2304.jpg",
-            "1999.jpg",
-            "Animals_095_h.jpg",
-            "2216.jpg",
-            "2360.jpg"
+            img_5780,
+            img_Animals_219_h,
+            img_1463,
+            img_Landscapes_121_h,
+            img_2304,
+            img_1999,
+            img_Animals_095_h,
+            img_2216,
+            img_2360
         ],
         fear: [
-            "People_017_h.jpg",
-            "1022.jpg",
-            "2811.jpg",
-            "People_139_h.jpg",
-            "6560.JPG",
-            "9429.jpg",
-            "People_020_h.jpg",
-            "1525.jpg",
-            "6520.jpg"
+            img_People_017_h,
+            img_1022,
+            img_2811,
+            img_People_139_h,
+            img_6560,
+            img_9429,
+            img_People_020_h,
+            img_1525,
+            img_6520
         ]
     },
     post: {
         amuse: [
-            "1441.jpg",
-            "2311.jpg",
-            "Landscapes_154_h.jpg",
-            "5830.jpg",
-            "Landscapes_054_h.jpg",
-            "Animals_166_v.jpg",
-            "8497.jpg",
-            "4700.jpg",
-            "7502.jpg"
+            img_1441,
+            img_2311,
+            img_Landscapes_154_h,
+            img_5830,
+            img_Landscapes_054_h,
+            img_Animals_166_v,
+            img_8497,
+            img_4700,
+            img_7502
         ],
         fear: [
-            "1321.jpg",
-            "1932.jpg",
-            "6313.jpg",
-            "8475.jpg",
-            "People_023_h.jpg",
-            "8485.jpg",
-            "Animals_007_h.jpg",
-            "9921.jpg",
-            "Faces_272_h.jpg"
+            img_1321,
+            img_1932,
+            img_6313,
+            img_8475,
+            img_People_023_h,
+            img_8485,
+            img_Animals_007_h,
+            img_9921,
+            img_Faces_272_h
         ]
     }
 }
