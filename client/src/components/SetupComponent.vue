@@ -152,8 +152,6 @@
         if (stage == 1) {
             const paceSet = await setPace()
             if (!paceSet) return
-
-            await window.mainAPI.setKeyValue('setupComplete', 'true')
         }
         
         step.value += 1 // send them straight to upload; no need for them to click a button

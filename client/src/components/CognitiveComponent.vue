@@ -45,21 +45,22 @@
             return null
         }))
         tasksToDo = tasksMap.filter(i => i != null);
-        runExperiments()
+        await runExperiments()
     })
 
-    function runExperiments() {
+    async function runExperiments() {
         const t = tasksToDo.shift()
         if (!t) {
+            await window.mainAPI.setKeyValue('setupComplete', 'true')
             allDone.value = true
             return
         }
         const saver = (data) => saveResults(t.name, stage, data)
         const jsPsych = initJsPsych({
             on_data_update: saver, 
-            on_finish: function() {
+            on_finish: async function() {
                 saveResults(t.name, stage, [{v: version.v, taskCompleted: true}])
-                runExperiments()
+                await runExperiments()
             }
         })
         const task = buildTask(t, jsPsych)
@@ -106,7 +107,7 @@
         // get date of last verbal learning result and return it as a Date
         const lastVllResult = await window.mainAPI.latestExperimentResult('verbal-learning-learning', stage)
         const data = JSON.parse(lastVllResult.results)
-        if (!data.length || !data[0].completed) {
+        if (!data.length || !data[0].taskCompleted) {
             throw new Error(`Trying to start verbal-learning-recall, but final verbal-learning-learning result is not valid. (vll data: ${lastVllResult.results})`)
         }
         return Date.parse(lastVllResult.dateTime)
