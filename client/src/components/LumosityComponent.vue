@@ -24,9 +24,9 @@
     
     onBeforeMount(async () => {
         try {
+            const session = await SessionStore.getRendererSession()
+            const apiClient = new ApiClient(session)
             if (!props.stageNum) {
-                const session = await SessionStore.getRendererSession()
-                const apiClient = new ApiClient(session)
                 const data = await apiClient.getSelf()
                 if (data?.progress?.status == 'stage2Complete') {
                     doneDest = 'stage3'
