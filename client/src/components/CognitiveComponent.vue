@@ -61,7 +61,8 @@
             on_finish: async function() {
                 saveResults(t.name, stage, [{v: version.v, taskCompleted: true}])
                 await runExperiments()
-            }
+            },
+            override_safe_mode: true
         })
         const task = buildTask(t, jsPsych)
         const node = {

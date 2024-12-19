@@ -9,12 +9,13 @@ import "jspsych/css/jspsych.css";
 import "../css/jspsych-memory-field.css";
 import "../css/common.css";
 import "./style.css";
+import awsSettings from '../../../../common/aws-settings.json';
 // audio stimuli
-const pre_a_audio = "/src/cognitive/verbal-learning/pre-a.mp3";
-const pre_b_audio = "/src/cognitive/verbal-learning/pre-b.mp3";
-const post_a_audio = "/src/cognitive/verbal-learning/post-a.mp3";
-const post_b_audio = "/src/cognitive/verbal-learning/post-b.mp3";
-const check_audio = "/src/cognitive/verbal-learning/check.mp3";
+const pre_b_audio =  `${awsSettings.ImagesUrl}/assets/verbal-learning/pre-b.mp3`;
+const post_a_audio = `${awsSettings.ImagesUrl}/assets/verbal-learning/post-a.mp3`;
+const pre_a_audio =  `${awsSettings.ImagesUrl}/assets/verbal-learning/pre-a.mp3`;
+const post_b_audio = `${awsSettings.ImagesUrl}/assets/verbal-learning/post-b.mp3`;
+const check_audio =  `${awsSettings.ImagesUrl}/assets/verbal-learning/check.mp3`;
 // instruction fragments
 const instruction_check_start_html = (await import("./frag/instruction_check_start.html?raw")).default;
 const instruction_check_loop_html = (await import("./frag/instruction_check_loop.html?raw")).default;
