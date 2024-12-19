@@ -1,7 +1,6 @@
 import htmlButtonResponse from "@jspsych/plugin-html-button-response"
 import htmlKeyboardResponse from "@jspsych/plugin-html-keyboard-response"
 import imageKeyboardResponse from "@jspsych/plugin-image-keyboard-response"
-import awsSettings from "../../../../common/aws-settings.json";
 
 import img_scale from "./assets/scale.png"
 const learningInstructions = (await import("./frag/instruction_learning.html?raw")).default
@@ -85,10 +84,10 @@ export class EmotionalMemory {
     getLearningTimeline() {
         const amuseImages = this.jsPsych.randomization
             .sampleWithoutReplacement(EmotionalMemory.images.pre.amuse, 4)
-            .map(i => ({imgType: 'AmC', stimulus: `${awsSettings.ImagesUrl}/assets/emotional-memory/${i}`}))
+            .map(i => ({imgType: 'AmC', stimulus: i}))
         const fearImages = this.jsPsych.randomization
             .sampleWithoutReplacement(EmotionalMemory.images.pre.fear, 4)
-            .map(i => ({imgType: 'F', stimulus: `${awsSettings.ImagesUrl}/assets/emotional-memory/${i}`}))
+            .map(i => ({imgType: 'F', stimulus: i}))
         const images = [...amuseImages, ...fearImages]
         return [
             {
@@ -181,8 +180,8 @@ export class EmotionalMemory {
 
     recognitionNode() {
         const preOrPost = this.setNum == 0 ? 'pre' : 'post'
-        const amuseImages = [...EmotionalMemory.images[preOrPost].amuse].map(i => ({imgType: 'AmC', stimulus: `${awsSettings.ImagesUrl}/assets/emotional-memory/${i}`}))
-        const fearImages = [...EmotionalMemory.images[preOrPost].fear].map(i => ({imgType: 'F', stimulus: `${awsSettings.ImagesUrl}/assets/emotional-memory/${i}`}))
+        const amuseImages = [...EmotionalMemory.images[preOrPost].amuse].map(i => ({imgType: 'AmC', stimulus: i}))
+        const fearImages = [...EmotionalMemory.images[preOrPost].fear].map(i => ({imgType: 'F', stimulus: i}))
         const images = [...amuseImages, ...fearImages]
         return {
             timeline: [
