@@ -59,6 +59,10 @@
             on_data_update: saver, 
             on_finish: async function() {
                 saveResults(t.name, stage, [{v: version.v, taskCompleted: true}])
+                // #11 w/o a page reload every initJsPsych call adds a new
+                // wrapper to the page, so delete it before proceeding
+                const wrappers = document.getElementsByClassName('jspsych-content-wrapper')
+                if (wrappers.length > 0) wrappers[0].remove()
                 await runExperiments()
             },
             override_safe_mode: true
