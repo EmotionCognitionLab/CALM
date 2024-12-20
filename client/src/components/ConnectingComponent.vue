@@ -11,17 +11,26 @@
     </div>
 </template>
 <script setup>
-    import { ref } from 'vue'
+    import { ref, onBeforeMount } from 'vue'
     import { useRouter } from "vue-router"
 
     const router = useRouter()
     const connectionError = ref(false)
+    const connKey = 'emwwaveConnected'
+
+    onBeforeMount(() => {
+        if (window.sessionStorage.getItem(connKey) == 'true') {
+            router.push({path: '/setup/1'})
+        }
+    })
 
     function handleEmWaveStatusEvent(_event, message) {
         if (message === 'ConnectionFailure') {
             connectionError.value = true
+            window.sessionStorage.removeItem(connKey)
         } else if (message === 'Connected') {
             router.push({path: '/setup/1'})
+            window.sessionStorage.setItem(connKey, 'true')
         }
     }
 
