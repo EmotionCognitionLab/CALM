@@ -26,19 +26,18 @@
     let stage
     let tasksToDo
 
-    const taskInfo = [
-        {name: 'verbal-learning-learning', setNum: 1},
-        {name: 'flanker-1', setNum: 3},
-        {name: 'emomem-learning', setNum: 0},
-        {name: 'spatial-orientation', setNum: 0},
-        {name: 'flanker-2', setNum: 5},
-        {name: 'verbal-learning-recall', setNum: 8},
-        {name: 'task-switching', setNum: 0},
-        {name: 'emomem-recall', setNum: 1}
-    ]
-
     onMounted(async () => {
         stage = Number.parseInt(props.stageNum)
+        const taskInfo = [
+            {name: 'verbal-learning-learning', setNum: stage == 1 ? 1 : 8},
+            {name: 'flanker-1', setNum: 3},
+            {name: 'emomem-learning', setNum: 0},
+            {name: 'spatial-orientation', setNum: 0},
+            {name: 'flanker-2', setNum: 5},
+            {name: 'verbal-learning-recall', setNum: stage == 1 ? 1 : 8},
+            {name: 'task-switching', setNum: 0},
+            {name: 'emomem-recall', setNum: 1}
+        ]
         const tasksMap = await Promise.all(taskInfo.map(async (ti) => {
             const done = await hasDoneCognitiveExperiment(ti.name, stage)
             if (!done) return ti
