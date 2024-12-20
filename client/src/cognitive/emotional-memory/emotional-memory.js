@@ -10,7 +10,7 @@ const ratingPrompt = `
     (1 = very negative to 9 = very positive, with 5 = neutral)
 </div>
 <div>
-    <img src="${img_scale}"/>
+    <img class="emomem-scale" src="${img_scale}"/>
 </div>
 `
 const ratingNagPrompt = `
@@ -18,7 +18,7 @@ const ratingNagPrompt = `
     Please provide a rating (1 = very negative to 9 = very positive, with 5 = neutral).
 </div>
 <div>
-    <img src="${img_scale}"/>
+    <img class="emomem-scale" src="${img_scale}"/>
 </div>
 `
 const recallInstructions = (await import("./frag/instruction_recall.html?raw")).default
@@ -28,6 +28,7 @@ const recognitionPrompt = (await import("./frag/recognition_prompt.html?raw")).d
 import memoryField from "../js/jspsych-memory-field.js";
 import "jspsych/css/jspsych.css";
 import "../css/common.css";
+import "./style.css";
 
 import img_5780 from "./assets/5780.jpg";
 import img_Animals_219_h from "./assets/Animals_219_h.jpg";
