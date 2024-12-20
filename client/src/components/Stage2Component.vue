@@ -7,17 +7,24 @@
                 </template>
             </TimerComponent>
         </div>
-        <div id="breathing" v-show="waitOver">
+        <div id="breathing" v-show="waitOver && !doUpload">
             <RestComponent :key="heartMeasurementCount" :secondsDuration="120" @timerFinished="resetWait">
                 <template #preText>
                     Now you will be asked to sit quietly for two minutes with a pulse sensor on your ear to measure your heart rate.
                 </template>
                 <template #postText>
-                    You're all done for today! For this part of the study, you will repeat what you did today: play brain games and have your heart rate measured twice daily. When we're done with these baseline measurements, you will begin the next part of the study: brain training plus daily mindfulness practice focusing on the breath.
-                    <br/>
-                    <button class="button"  @click="quit">Quit</button>
+                    One moment while we save the data...
                 </template>
             </RestComponent>
+        </div>
+        <div id="upload" v-if="doUpload">
+            <UploadComponent>
+                <template #postUploadText>
+                    <div class="instruction">You're all done for today! For this part of the study, you will repeat what you did today: play brain games and have your heart rate measured twice daily. When we're done with these baseline measurements, you will begin the next part of the study: brain training plus daily mindfulness practice focusing on the breath.</div>
+                    <br/>
+                    <button class="button" @click="quit">Quit</button>
+                </template>
+            </UploadComponent>
         </div>
     </div>
 </template>
@@ -26,6 +33,7 @@
     import TimerComponent from './TimerComponent.vue'
     import RestComponent from './RestComponent.vue';
     import { quit, saveEmWaveSessionData } from '../utils'
+    import UploadComponent from './UploadComponent.vue';
 
     const { mustWait = true } = defineProps({mustWait: Boolean})
     let endWaitAt = ref(futureMinutes(10))
@@ -34,6 +42,7 @@
     const waitOver = ref(!mustWait)
     let waitMessage = 'Please wait at least 10 minutes before your next task, which is to rest for 2 minutes while measuring your resting heart rate.'
     const heartMeasurementCount = ref(0)
+    const doUpload = ref(false)
 
     onMounted(async() => {
         timer.value.running = true
@@ -48,6 +57,8 @@
     }
     
     async function resetWait() {
+        await saveEmWaveSessionData(2) 
+
         if (heartMeasurementCount.value == 0) {
             waitMessage = "Your first resting heart rate measurement is complete. As before, please wait at least 10 minutes before completing another 2 minutes of heart rate measurement."
             endAtKey = 'stage2Wait2'
@@ -59,8 +70,9 @@
                 timer.value.running = true
             }, 100)
             heartMeasurementCount.value = 1 // reset the RestComponent
-        }
-        await saveEmWaveSessionData(2)        
+        } else {
+            doUpload.value = true
+        }     
     }
 
 </script>
