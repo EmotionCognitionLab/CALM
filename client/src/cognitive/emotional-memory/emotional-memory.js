@@ -59,7 +59,7 @@ import img_4700 from "./assets/4700.jpg";
 import img_7502 from "./assets/7502.jpg"
 import img_1321 from "./assets/1321.jpg";
 import img_1932 from "./assets/1932.jpg";
-import img_6313 from "./assets/6313.jpg";
+import img_5973 from "./assets/5973.jpg";
 import img_8475 from "./assets/8475.jpg";
 import img_People_023_h from "./assets/People_023_h.jpg";
 import img_8485 from "./assets/8485.jpg";
@@ -267,7 +267,7 @@ EmotionalMemory.images = {
         fear: [
             img_1321,
             img_1932,
-            img_6313,
+            img_5973,
             img_8475,
             img_People_023_h,
             img_8485,
