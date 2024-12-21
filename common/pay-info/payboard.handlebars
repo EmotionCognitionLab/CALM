@@ -2,6 +2,7 @@
     <tr class="pay-info-row">
         <td class="pay-info-study-activity">{{this.day}}</td>
         <td>${{#if this.visits}}{{this.visits}}{{else}}0{{/if}}</td>
+        <td>${{#if this.lumosity}}{{this.lumosity}}{{else}}0{{/if}}</td>
         <td>${{#if this.sessions}}{{this.sessions}}{{else}}0{{/if}}</td>
         <td>${{#if this.bonuses}}{{this.bonuses}}{{else}}0{{/if}}</td>
         <td>${{this.total}}</td>
@@ -13,7 +14,8 @@
         <tr>
             <th>Date</th>
             <th>Lab Visits</th>
-            <th>Breathing Sessions</th>
+            <th>Brain Games</th>
+            <th>Mindfulness Practice</th>
             <th>Bonuses</th>
             <th>Total</th>
         </tr>
@@ -22,7 +24,14 @@
        {{#each earnings}}
             {{> earnings-row this}}
        {{/each}}
-       <td>Total</td><td></td><td></td><td></td><td>${{overallTotal}}</td>
+       <tr>
+        <td>Total</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>${{overallTotal}}</td>
+       </tr>
     </tbody>
 </table>
 <br/>
