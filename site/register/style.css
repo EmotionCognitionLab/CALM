@@ -21,7 +21,6 @@ input:not(input[type="checkbox"], input[type="radio"]), select {
 }
 
 select {
-    padding: 8px 4px 30px 4px;
     width: 228px;
 }
 
