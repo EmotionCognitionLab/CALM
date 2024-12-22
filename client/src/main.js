@@ -185,8 +185,9 @@ app.on('second-instance', () => {
   }
 });
 
-ipcMain.on('current-user', (_event, user) => {
-  new Logger(true, user);
+ipcMain.on('current-user', async (_event, user) => {
+  const l = new Logger(true, user);
+  await l.init();
 });
 
 
