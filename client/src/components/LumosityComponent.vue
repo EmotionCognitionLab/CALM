@@ -1,6 +1,6 @@
 <template>
     <div>
-        <button @click="done">All done with Brain Games</button>
+        <button @click="done">I'm all done with Brain Games</button>
         <dialog ref="confirm">
             <form method="dialog">
                 Have you played all of today's Brain Games?
