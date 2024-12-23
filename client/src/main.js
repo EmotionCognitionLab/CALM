@@ -60,6 +60,8 @@ const createWindow = async () => {
 const EARNINGS_MENU_ID = 'earnings'
 const TRAINING_MENU_ID = 'training'
 const LAB_VISIT_MENU_ID = 'lab-visit'
+const INFO_MENU_ID = 'info'
+const FAQ_MENU_ID = 'faq'
 
 function buildMenuTemplate(window) {
   const isMac = process.platform === 'darwin'
@@ -119,8 +121,8 @@ function buildMenuTemplate(window) {
         { type: 'separator' },
         { label: 'Earnings', id: EARNINGS_MENU_ID, click: () => window.webContents.send('go-to', '/earnings')},
         { label: 'Daily Training', id: TRAINING_MENU_ID, click: () => window.webContents.send('go-to', '/current-stage')},
-        { label: 'General Study Info', click: () => window.webContents.send('go-to', '/info')},
-        { label: 'FAQ', click: () => window.webContents.send('go-to', '/faq')},
+        { label: 'General Study Info', id: INFO_MENU_ID, click: () => window.webContents.send('go-to', '/info')},
+        { label: 'FAQ', id: FAQ_MENU_ID, click: () => window.webContents.send('go-to', '/faq')},
         { label: 'Lab Visit 2', id: LAB_VISIT_MENU_ID, click: () => window.webContents.send('go-to', '/setup/3'), visible: false, accelerator: 'CmdOrCtrl+Shift+L'}
       ]
     },
@@ -170,6 +172,8 @@ ipcMain.handle('disable-menus', () => {
   const m = Menu.getApplicationMenu();
   m.getMenuItemById(EARNINGS_MENU_ID).enabled = false;
   m.getMenuItemById(TRAINING_MENU_ID).enabled = false;
+  m.getMenuItemById(INFO_MENU_ID).enabled = false;
+  m.getMenuItemById(FAQ_MENU_ID).enabled = false;
 });
 
 // Prevent multiple instances of the app
