@@ -41,7 +41,8 @@ import DoneTodayComponent from './components/DoneTodayComponent.vue'
 import OauthRedirectComponent from './components/OauthRedirectComponent.vue'
 import ConnectingComponent from './components/ConnectingComponent.vue'
 import CognitiveComponent from './components/CognitiveComponent.vue';
-
+import StudyInfoComponent from './components/StudyInfoComponent.vue';
+import FAQComponent from './components/FAQComponent.vue';
 
 import { isAuthenticated, getAuth } from '../../common/auth/auth'
 import { SessionStore } from './session-store'
@@ -74,10 +75,12 @@ const routes = [
     { path: '/', name: 'landing-page', component: ConnectingComponent},
     { path: '/cognitive/:stageNum', component: CognitiveComponent, props: true },
     { path: '/current-stage', redirect: '/setup/1' },
-    { path: '/lumosity/:stageNum', component: LumosityComponent, props: true }
+    { path: '/lumosity/:stageNum', component: LumosityComponent, props: true },
+    { path: '/info', component: StudyInfoComponent },
+    { path: '/faq', component: FAQComponent }
 ]
 
-const noAuthRoutes = ['/signin', '/login', '/']
+const noAuthRoutes = ['/signin', '/login', '/', '/info', '/faq']
 const dbRequiredRoutes = ['/earnings', '/current-stage', '/setup/1', '/setup/3', '/cognitive/1', '/cognitive/4', '/lumosity/2', '/lumosity/3', '/stage2', '/stage3']
 let stage2Complete = false
 

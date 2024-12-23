@@ -119,6 +119,8 @@ function buildMenuTemplate(window) {
         { type: 'separator' },
         { label: 'Earnings', id: EARNINGS_MENU_ID, click: () => window.webContents.send('go-to', '/earnings')},
         { label: 'Daily Training', id: TRAINING_MENU_ID, click: () => window.webContents.send('go-to', '/current-stage')},
+        { label: 'General Study Info', click: () => window.webContents.send('go-to', '/info')},
+        { label: 'FAQ', click: () => window.webContents.send('go-to', '/faq')},
         { label: 'Lab Visit 2', id: LAB_VISIT_MENU_ID, click: () => window.webContents.send('go-to', '/setup/3'), visible: false, accelerator: 'CmdOrCtrl+Shift+L'}
       ]
     },
