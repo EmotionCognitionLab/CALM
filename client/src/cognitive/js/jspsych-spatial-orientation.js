@@ -139,7 +139,7 @@ class SpatialOrientationPlugin {
                 ...paramsData,
                 completionReason: "skipped",
             };
-            jsPsych.finishTrial(data);
+            this.jsPsych.finishTrial(data);
         } else {
             // build and show display HTML
             {
