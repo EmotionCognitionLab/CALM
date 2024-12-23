@@ -30,12 +30,10 @@ const test_instruction_html = (await import("./frag/timed_instruction.html?raw")
 
 export class SpatialOrientation {
     constructor(jsPsych, setNum) {
-        if (setNum === 5 || setNum === 11) {
+        if (setNum !== 0 && setNum !== 1) {
             throw new Error("invalid setNum");
-        } else if (Number.isInteger(setNum) && setNum > 0) {
-            this.setNum = setNum;
         } else {
-            throw new Error("setNum must be a strictly positive integer");
+            this.setNum = setNum;
         }
         this.jsPsych = jsPsych;
     }
@@ -61,7 +59,8 @@ export class SpatialOrientation {
             ...practiceStim.map(s => t(s.center, s.facing, s.target, "practice")),
         ];
         // test
-        const testSet = stimulus["test-sets"][String(this.setNum)];
+        const preOrPost = this.setNum == 0 ? "pre" : "post"
+        const testSet = stimulus["test-sets"][preOrPost];
         const testStim = (
             testSet.order === "random" ?
             this.jsPsych.randomization.shuffle(testSet.trials) :
@@ -72,7 +71,7 @@ export class SpatialOrientation {
             i(test_instruction_html),
             {
                 type: callFunction,
-                func: () => { endTime = Date.now() + 100 * 1000; }  // 100 seconds after instruction shown
+                func: () => { endTime = Date.now() + 5 * 60 * 1000; }  // 5 minutes after instruction shown
             },
             ...testStim.map(s => t(s.center, s.facing, s.target, "test", null, () => endTime)),
         ];
@@ -80,8 +79,8 @@ export class SpatialOrientation {
         return [
             i(instruction_0_html),
             i(instruction_1_html),
-            ...(this.setNum === 1 || this.setNum === 7 ? exampleBlock : []),
-            ...(this.setNum === 1 || this.setNum === 7 ? practiceBlock : []),
+            ...exampleBlock,
+            ...practiceBlock,
             ...testBlock,
         ];
     }
