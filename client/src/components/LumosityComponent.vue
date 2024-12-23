@@ -36,6 +36,11 @@
             } else {
                 doneDest = props.stageNum == 2 ? 'stage2' : 'stage3'
             }
+
+            // #23 disable menus - loading earnings or other pages
+            // while the Lumosity frame is active replaces 
+            // the "I'm all done with brain games" button
+            await window.mainAPI.disableMenus()
             
             let lumosInfo = await window.mainAPI.getKeyValue('lumos')
             if (!lumosInfo) {
