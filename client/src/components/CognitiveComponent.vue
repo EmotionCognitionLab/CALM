@@ -31,12 +31,12 @@
         const taskInfo = [
             {name: 'verbal-learning-learning', setNum: stage == 1 ? 1 : 8},
             {name: 'flanker-1', setNum: 3},
-            {name: 'emomem-learning', setNum: 0},
-            {name: 'spatial-orientation', setNum: 0},
+            {name: 'emomem-learning', setNum: stage == 1 ? 0 : 2},
+            {name: 'spatial-orientation', setNum: stage == 1 ? 0 : 1},
             {name: 'flanker-2', setNum: 5},
             {name: 'verbal-learning-recall', setNum: stage == 1 ? 1 : 8},
             {name: 'task-switching', setNum: 0},
-            {name: 'emomem-recall', setNum: 1}
+            {name: 'emomem-recall', setNum: stage == 1 ? 1 : 3}
         ]
         const tasksMap = await Promise.all(taskInfo.map(async (ti) => {
             const done = await hasDoneCognitiveExperiment(ti.name, stage)
