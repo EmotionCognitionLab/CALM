@@ -1,13 +1,13 @@
 <template>
     <div>
-        <div id="waiting" v-show="!waitOver">
+        <div id="waiting" v-show="!waitOver && !reloadNeeded">
             <TimerComponent @timerFinished="waitDone" :endAtTime=endWaitAt :endAtKey="endAtKey" :showButtons=false :countBy="'seconds'" ref="timer">
                 <template #text>
                     <div class="instruction">{{ waitMessage }}</div>
                 </template>
             </TimerComponent>
         </div>
-        <div id="breathing" v-show="waitOver && !doUpload">
+        <div id="breathing" v-show="waitOver && !doUpload && !reloadNeeded">
             <RestComponent :key="heartMeasurementCount" :secondsDuration="120" @timerFinished="resetWait">
                 <template #preText>
                     Now you will be asked to sit quietly for two minutes with a pulse sensor on your ear to measure your heart rate.
@@ -17,7 +17,7 @@
                 </template>
             </RestComponent>
         </div>
-        <div id="upload" v-if="doUpload">
+        <div id="upload" v-if="doUpload && !reloadNeeded">
             <UploadComponent>
                 <template #postUploadText>
                     <div class="instruction">You're all done for today! For this part of the study, you will repeat what you did today: play brain games and have your heart rate measured twice daily. When we're done with these baseline measurements, you will begin the next part of the study: brain training plus daily mindfulness practice focusing on the breath.</div>
@@ -26,13 +26,18 @@
                 </template>
             </UploadComponent>
         </div>
+        <div class="instruction" :class="{hidden: !reloadNeeded}">
+            It looks like the CALM Study application has been left running overnight. Please quit and restart before resuming your practice.
+            <br/>
+            <button class="button" @click="quit">Quit</button>
+        </div>
     </div>
 </template>
 <script setup>
     import { ref, onMounted } from '@vue/runtime-core'
     import TimerComponent from './TimerComponent.vue'
     import RestComponent from './RestComponent.vue';
-    import { quit, saveEmWaveSessionData } from '../utils'
+    import { notifyOnDayChange, quit, saveEmWaveSessionData } from '../utils'
     import UploadComponent from './UploadComponent.vue';
 
     const { mustWait = true } = defineProps({mustWait: Boolean})
@@ -43,9 +48,11 @@
     let waitMessage = 'Please wait at least 10 minutes before your next task, which is to rest for 2 minutes while measuring your resting heart rate.'
     const heartMeasurementCount = ref(0)
     const doUpload = ref(false)
+    const reloadNeeded = ref(false)
 
     onMounted(async() => {
         timer.value.running = true
+        notifyOnDayChange(() => reloadNeeded.value = true)
     })
 
     async function waitDone() {
@@ -76,3 +83,8 @@
     }
 
 </script>
+<style scoped>
+.hidden {
+    display: none;
+}
+</style>

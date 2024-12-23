@@ -143,3 +143,16 @@ export function saveEmWaveSessionData(stage) {
         resolve()
     }, 1000) );
 }
+
+export function notifyOnDayChange(callbackFn) {
+    const startDay = yyyymmddString(new Date());
+    dateCheckInterval = setInterval(() => {
+        const today = yyyymmddString(new Date());
+        if (today != startDay) {
+            // they've crossed into a new day
+            // call the callback function
+            callbackFn();
+            clearInterval(dateCheckInterval);
+        }
+    }, 60000);
+}

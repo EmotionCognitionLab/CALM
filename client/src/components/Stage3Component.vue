@@ -1,7 +1,7 @@
 <template>
     <div>
 
-        <div id="waiting" v-show="!waitOver">
+        <div id="waiting" v-show="!waitOver && !reloadNeeded">
             <TimerComponent @timerFinished="waitDone" :endAtTime=endWaitAt :endAtKey="endAtKey" :showButtons=false :countBy="'seconds'" ref="timer">
                 <template #text>
                     You're done with today's brain games! Come back in a few minutes to start today's first mindfulness practice.
@@ -9,7 +9,7 @@
             </TimerComponent>
         </div>
 
-        <div id="first-time-instructions" class="instruction" v-show="waitOver && !firstTimeInstructionsRead">
+        <div id="first-time-instructions" class="instruction" v-show="waitOver && !firstTimeInstructionsRead && !reloadNeeded">
             <p>
                 We are now finished with the part of the study measuring your resting heart rate. Great job! Today you will start your first mindfulness practice.
             </p>
@@ -27,7 +27,7 @@
             <button @click="firstTimeInstructionsRead = true">Continue</button>
         </div>
 
-        <div id="audio-selection" class="instruction" v-show="waitOver && firstTimeInstructionsRead && shouldChooseAudio && !sessionDone">
+        <div id="audio-selection" class="instruction" v-show="waitOver && firstTimeInstructionsRead && shouldChooseAudio && !sessionDone && !reloadNeeded">
             <fieldset>
                 <legend>Please select one of the following audio guides for your practice today. Over time, you should try out the different options and observe which one leads to the best calmness scores for you.</legend>
                 <div>
@@ -54,7 +54,7 @@
             <button @click="setAudioGuide">Continue</button>
         </div>
 
-        <div id="breathing" v-show="waitOver && firstTimeInstructionsRead && !shouldChooseAudio && !sessionDone">
+        <div id="breathing" v-show="waitOver && firstTimeInstructionsRead && !shouldChooseAudio && !sessionDone && !reloadNeeded">
             <div class="instruction" :class="{hidden: instructionsRead}">
                 <div class="header">
                     <h2>Get ready for your mindfulness practice!</h2>
@@ -89,7 +89,7 @@
             </div>
         </div>
 
-        <div v-if="sessionDone">
+        <div v-if="sessionDone && !reloadNeeded">
             <UploadComponent @uploadComplete="showEndOfSessionText">
                 <template #preUploadText>
                     <div class="instruction">Terrific! Please wait while we upload your data...</div>
@@ -118,6 +118,11 @@
                 </template>
             </UploadComponent>
         </div>
+        <div class="instruction" :class="{hidden: !reloadNeeded}">
+            It looks like the CALM Study application has been left running overnight. Please quit and restart before resuming your practice.
+            <br/>
+            <button class="button" @click="quit">Quit</button>
+        </div>
     </div>
 </template>
 <script setup>
@@ -125,7 +130,7 @@
     import TimerComponent from './TimerComponent.vue'
     import TrainingComponent from './TrainingComponent.vue'
     import UploadComponent from './UploadComponent.vue'
-    import { defaultBreathsPerMinute, quit, saveEmWaveSessionData } from '../utils'
+    import { defaultBreathsPerMinute, notifyOnDayChange, quit, saveEmWaveSessionData } from '../utils'
     import { SessionStore } from '../session-store.js'
     import ApiClient from '../../../common/api/client';
     import { maxSessionMinutes } from '../../../common/types/types.js'
@@ -144,6 +149,7 @@
     const doneForToday = ref(false)
     const sessionDone = ref(false)
     const pace = ref(defaultBreathsPerMinute)
+    const reloadNeeded = ref(false)
 
     const stage = 3
     const condition = ref(null)
@@ -214,6 +220,9 @@
         }
         
         sessionDurationMs.value = Math.min(maxSessionMinutes, remainingMinutes) * 60 * 1000
+
+        // make sure they can't continue overnight
+        notifyOnDayChange(() => reloadNeeded.value = true)
     })
 
     onMounted(async() => {
