@@ -146,6 +146,7 @@ export function saveEmWaveSessionData(stage) {
 
 export function notifyOnDayChange(callbackFn) {
     const startDay = yyyymmddString(new Date());
+    let dateCheckInterval;
     dateCheckInterval = setInterval(() => {
         const today = yyyymmddString(new Date());
         if (today != startDay) {
