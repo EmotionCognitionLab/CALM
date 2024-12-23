@@ -11,7 +11,13 @@ export const SessionStore = {
             return this.session;
         }
 
-        if (!this.session || !this.session.getRefreshToken() || !this.session.getRefreshToken().getToken()) {        
+        if (!this.session || !this.session.getRefreshToken() || !this.session.getRefreshToken().getToken()) {  
+            const cognitoAuth = getAuth();
+            const tempSess = cognitoAuth.getCachedSession();
+            if (tempSess.isValid()) {
+                SessionStore.session = tempSess;
+                return this.session;
+            }
             return null;
         }
 

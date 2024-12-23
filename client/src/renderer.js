@@ -174,6 +174,8 @@ router.beforeEach(async (to) => {
 
         const session = await p
         await handleLoginSuccess(session)
+    } else if (sess) {
+        await handleLoginSuccess(sess)
     }
     return true
 })
