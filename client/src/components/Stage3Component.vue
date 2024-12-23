@@ -16,7 +16,7 @@
             <p>
                 Throughout your practice, you will see a "calmness" score. This score shows whether your body is relaxed, according to your heart rate.  The higher the score the better!
             </p>
-            <div v-if="condition=='A'">
+            <div v-if="condition == 'A'">
                 Some helpful tips:
                 <ul>
                     <li>If you start to feel lightheaded or dizzy, try breathing less deeply. </li>
@@ -31,15 +31,16 @@
             <fieldset>
                 <legend>Please select one of the following audio guides for your practice today. Over time, you should try out the different options and observe which one leads to the best calmness scores for you.</legend>
                 <div>
-                    <input type="radio" id="belly" v-model="audioGuide" value="belly-focus.mp3" />
+                    <input type="radio" id="belly" v-model="audioGuide" value="CALM_Belly_18min.mp4" />
                     <label for="belly">Belly Focus</label>
                 </div>
                 <div>
-                    <input type="radio" id="lip" v-model="audioGuide" value="lip-focus.mp3" />
+                    <input type="radio" id="lip" v-model="audioGuide" value="CALM_LipNostril_18min.mp4" />
                     <label for="lip">Lip Focus</label>
                 </div>
                 <div>
-                    <input type="radio" id="eyes" v-model="audioGuide" value="eyes-shut.mp3" />
+                    <input v-if="condition == 'A'" type="radio" id="eyes" v-model="audioGuide" value="CALM_EyesClosed_Osc+_18min.mp4" />
+                    <input v-else type="radio" id="eyes" v-model="audioGuide" value="CALM_EyesClosed_Osc-_18min.mp4" />
                     <label for="eyes">Eyes closed</label>
                 </div>
                 <div v-if="condition == 'A'">
@@ -66,8 +67,8 @@
                                 <li>Sit on a chair with your feet flat on the floor.</li>
                                 <li>Attach the ear sensor to your ear.</li>
                                 <li>Rest your hands in your lap.</li>
-                                <li v-if="condition=='A'">Following the ball pacer, breathe in as the ball goes up and breathe out as it goes down.</li>
-                                <li v-if="condition=='A'">Breathe in through your nose and breathe out through your nose or mouth.</li>
+                                <li v-if="condition == 'A'">Following the ball pacer, breathe in as the ball goes up and breathe out as it goes down.</li>
+                                <li v-if="condition == 'A'">Breathe in through your nose and breathe out through your nose or mouth.</li>
                             </ul>
                         </h3>
                     </div>
@@ -81,7 +82,7 @@
                 <div>
                     <TrainingComponent 
                         :regimes="[{durationMs: sessionDurationMs, breathsPerMinute: pace, randomize: false}]"
-                        :factors="{showHeartRate: true, showPacer: condition=='A', showScore: true, audioGuideUrl: audioGuideUrl}"
+                        :factors="{showHeartRate: true, showPacer: condition == 'A', showScore: true, audioGuideUrl: audioGuideUrl}"
                         @pacerFinished="pacerFinished"
                         @sessionRestart="saveEmWaveSessionData(stage)">
                     </TrainingComponent>
@@ -198,13 +199,17 @@
         } else {
             switch (stage3Sessions.length) {
                 case 0:
-                    audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/belly-focus.mp3`
+                    audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/CALM_Belly_18min.mp4`
                     break;
                 case 1:
-                    audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/lip-focus.mp3`
+                    audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/CALM_LipNostril_18min.mp4`
                     break;
                 case 2:
-                    audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/eyes-shut.mp3`
+                    if (condition.value == 'A') {
+                        audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/CALM_EyesClosed_Osc+_18min.mp4`
+                    } else {
+                        audioGuideUrl.value = `${awsSettings.ImagesUrl}/assets/CALM_EyesClosed_Osc-_18min.mp4`
+                    }
                     break;
                 default:
                     audioGuideUrl.value = null
