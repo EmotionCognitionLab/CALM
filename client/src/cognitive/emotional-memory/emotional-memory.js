@@ -70,24 +70,25 @@ import img_Faces_272_h from "./assets/Faces_272_h.jpg"
 export class EmotionalMemory {
     constructor(jsPsych, setNum) {
         this.jsPsych = jsPsych
-        if (Number.isInteger(setNum) && (setNum == 0 || setNum == 1)) {
+        if (Number.isInteger(setNum) && setNum >= 0 && setNum <= 3) {
             this.setNum = setNum
         } else {
-            throw new Error("setNum must be either 0 or 1.")
+            throw new Error("setNum must be  0, 1, 2 or 3.")
         }
     }
 
     getTimeline() {
-        if (this.setNum == 0) return this.getLearningTimeline()
+        if (this.setNum == 0 || this.setNum == 2) return this.getLearningTimeline()
         return this.getMemoryTestsTimeline()
     }
 
     getLearningTimeline() {
+        const preOrPost = (this.setNum == 0 || this.setNum == 1) ? 'pre' : 'post' // shouldn't be called with setNum == 1, but if we are it's pre
         const amuseImages = this.jsPsych.randomization
-            .sampleWithoutReplacement(EmotionalMemory.images.pre.amuse, 4)
+            .sampleWithoutReplacement(EmotionalMemory.images[preOrPost].amuse, 4)
             .map(i => ({imgType: 'AmC', stimulus: i}))
         const fearImages = this.jsPsych.randomization
-            .sampleWithoutReplacement(EmotionalMemory.images.pre.fear, 4)
+            .sampleWithoutReplacement(EmotionalMemory.images[preOrPost].fear, 4)
             .map(i => ({imgType: 'F', stimulus: i}))
         const images = [...amuseImages, ...fearImages]
         return [
@@ -180,7 +181,7 @@ export class EmotionalMemory {
     }
 
     recognitionNode() {
-        const preOrPost = this.setNum == 0 ? 'pre' : 'post'
+        const preOrPost = (this.setNum == 0 || this.setNum == 1) ? 'pre' : 'post' // shouldn't be called with setNum = 0, but if we are it's pre
         const amuseImages = [...EmotionalMemory.images[preOrPost].amuse].map(i => ({imgType: 'AmC', stimulus: i}))
         const fearImages = [...EmotionalMemory.images[preOrPost].fear].map(i => ({imgType: 'F', stimulus: i}))
         const images = [...amuseImages, ...fearImages]
