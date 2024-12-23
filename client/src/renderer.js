@@ -93,7 +93,7 @@ async function practiceOrSetup(to) {
         console.error(`Database is not initialized; unable to tell if participant requires setup.`)
         return false // TODO should we just send them through signup again?
     }
-    if (to.params.stageNum == 3) return true; // TODO probably obsolete; look into deleting
+    if (to.params.stageNum == 4) return true; // then we're trying to get to final lab visit; go there
 
     if (await window.mainAPI.getKeyValue('setupComplete') == 'true') {    
         if (await window.mainAPI.getLumosityDoneToday()) {

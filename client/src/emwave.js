@@ -217,8 +217,8 @@ export default {
     },
 
     setStage(newStage) {
-        if (!Number.isInteger(newStage) || newStage < 1 || newStage > 3) {
-            throw new Error(`Expected stage to be 1, 2 or 3, but got ${newStage}.`)
+        if (!Number.isInteger(newStage) || newStage < 1 || newStage > 4) {
+            throw new Error(`Expected stage to be 1, 2, 3 or 4, but got ${newStage}.`)
         }
         stage = newStage
     }
