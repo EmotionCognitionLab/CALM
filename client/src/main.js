@@ -253,9 +253,15 @@ ipcMain.on('show-login-window', async () => {
         if (curUrl.indexOf(awsSettings.AppWebDomain) > -1) {
           // then we're currently showing an amazon login page and need to load
           // our app to proceed
-          await mainWin.loadFile(appFileEntry);
+          // we should be able to do:
+          // mainWin.loadFile(appFileEntry, {hash: '/login', query: {code: 'foo', state: 'bar'}})
+          // but when we do that vue router doesn't get the query string, so we'll build the URL
+          // manually following loadFile's example:
+          const indexPath = path.resolve(app.getAppPath(), appFileEntry);
+          await mainWin.loadURL(`file://${indexPath}#login${query}`);
+        } else {
+          await mainWin.webContents.send('go-to', `/login${query}`);
         }
-        await mainWin.webContents.send('go-to', `/login${query}`);
       }
     }) 
     
