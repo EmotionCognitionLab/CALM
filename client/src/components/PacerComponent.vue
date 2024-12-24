@@ -82,7 +82,7 @@
 <style scoped>
     canvas {
         background-color: mintcream;
-        width: 1200px;
-        height: 400px;
+        width: 750px;
+        height: 250px;
     }
 </style>

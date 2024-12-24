@@ -144,7 +144,7 @@ async function updateRegimeStatus(startTime, regime) {
     }
     #main {
         display: flex;
-        height: 450px;
+        height:300px;
         justify-content: center;
     }
     #pacer-animation {
