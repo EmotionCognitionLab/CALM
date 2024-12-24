@@ -13,11 +13,33 @@ class MemoryFieldPlugin {
         html += `<div id="jspsych-memory-field-button-wrapper">`;
         html += `<input type="button" id="jspsych-memory-field-button" class="jspsych-btn" value="${trial.button_label}">`;
         html += `</div>`;
+        html += '<div>';
+        html += '<dialog id="jspsych-memory-field-dialog">';
+        html += `<p>${trial.confirm_text}</p>`;
+        html += '<div>'
+        html += '<button id="jspsych-memory-field-ok" value="default" class="jspsych-btn">OK</button>';
+        html += '<button id="jspsych-memory-field-cancel" value="cancel" formmethod="dialog" class="jspsych-btn">Cancel</button>';
+        html += '</div>';
+        html += '</dialog>';
+        html += '</div>';
         display_element.innerHTML = html;
         
         // find important elements
         const field = display_element.querySelector("#jspsych-memory-field-field");
         const button = display_element.querySelector("#jspsych-memory-field-button");
+        const dialog = display_element.querySelector("#jspsych-memory-field-dialog");
+        const okBtn = display_element.querySelector("#jspsych-memory-field-ok");
+        okBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            dialog.close("confirmed");
+        });
+        const cancelBtn = display_element.querySelector("#jspsych-memory-field-cancel");
+        cancelBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            dialog.close("canceled");
+        }); 
+
+        
         // add field listener
         const memory = [];
         field.addEventListener("keyup", event => {
@@ -33,10 +55,10 @@ class MemoryFieldPlugin {
                 }, 250);
             }
         });
-        // add button listener
-        button.addEventListener("click", () => {
-            const allDone = confirm(trial.confirm_text);
-            if (allDone) {
+
+        // check for dialog close and save if confirmed
+        dialog.addEventListener("close", event => {
+            if (event.target.returnValue === "confirmed") {
                 if (field.value) {
                     memory.push(field.value);
                 }
@@ -46,6 +68,11 @@ class MemoryFieldPlugin {
                 };
                 this.jsPsych.finishTrial(data);
             }
+        });
+
+        // add button listener
+        button.addEventListener("click", () => {
+            dialog.showModal();
         });
     }
 }
