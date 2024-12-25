@@ -105,7 +105,7 @@ function getDataForSessions(sessions) {
     const db = new Database(emWaveDbPath(), {fileMustExist: true });
     const sessionIds = sessions.map(s => `'${s}'`).join(",");
     try {
-        const stmt = db.prepare(`select SessionUuid as sessionUuid, PulseStartTime as pulseStartTime, AvgCoherence as avgCoherence, ValidStatus as validStatus, PulseEndTime-PulseStartTime as durationSec, LiveIBI from Session s where s.DeleteFlag is null and s.ValidStatus = 1 and SessionUuid in (${sessionIds})`);
+        const stmt = db.prepare(`select SessionUuid as sessionUuid, PulseStartTime as pulseStartTime, AvgCoherence as avgCoherence, ValidStatus as validStatus, PulseEndTime-PulseStartTime as durationSec, LiveIBI from Session s where s.DeleteFlag is null and s.ValidStatus = 1 and SessionUuid in (${sessionIds}) order by PulseStartTime asc`);
         const sessions = stmt.all();
         results = parseSessionData(sessions);
     } finally {

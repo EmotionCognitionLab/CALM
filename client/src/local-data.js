@@ -114,7 +114,7 @@ function saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, va
 }
 
 function getEmWaveSessionsForStage(stage) {
-    const stmt = db.prepare('SELECT * from emwave_sessions where stage = ?');
+    const stmt = db.prepare('SELECT * from emwave_sessions where stage = ? order by pulse_start_time asc');
     const res = stmt.all(stage);
     const resObjs = res.map(rowToObject).map(s => {
         s['emWaveSessionId'] = s['emwaveSessionId'];
@@ -122,6 +122,11 @@ function getEmWaveSessionsForStage(stage) {
         return s;
     })
     return resObjs;
+}
+
+function deleteEmWaveSessions(sessIds) {
+    const stmt = db.prepare(`DELETE FROM emwave_sessions WHERE emwave_session_id IN (${sessIds.map(() => '?').join(',')})`);
+    stmt.run(sessIds);
 }
 
 function getEmWaveSessionMinutesForDayAndStage(date, stage) {
@@ -241,6 +246,7 @@ export {
     setKeyValue,
     deleteKeyValue,
     saveEmWaveSessionData,
+    deleteEmWaveSessions,
     getEmWaveSessionsForStage,
     getEmWaveSessionMinutesForDayAndStage,
     getEmWaveWeightedAvgCoherencesForStage,
