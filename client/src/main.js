@@ -8,7 +8,7 @@ import { ipcMain } from 'electron';
 import Logger from 'logger';
 import emwave from './emwave';
 import { emWaveDbPath, deleteShortSessions as deleteShortEmwaveSessions, extractSessionData, getDataForSessions } from './emwave-data';
-import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, getEmWaveSessionsForStage, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue, getLumosityDoneToday, setLumosityDoneToday } from './local-data';
+import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, deleteEmWaveSessions, getEmWaveSessionsForStage, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue, getLumosityDoneToday, setLumosityDoneToday } from './local-data';
 import version from "../version.json";
 import packageInfo from "../package.json"
 import { SessionStore } from './session-store'
@@ -278,6 +278,10 @@ ipcMain.handle('emwave-extract-sessions', (event, sinceDateTime, includeLiveIBI)
 
 ipcMain.handle('save-emwave-session', (event, emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage) => {
   saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage);
+});
+
+ipcMain.handle('delete-emwave-sessions', (event, sessions) => {
+  deleteEmWaveSessions(sessions);
 });
 
 ipcMain.handle('get-emwave-sessions-for-stage', (event, stage) => {

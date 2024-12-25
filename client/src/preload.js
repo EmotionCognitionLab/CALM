@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('mainAPI', {
     handleEmWaveIBIEvent: (callback) => ipcRenderer.on('emwave-ibi', callback),
     handleEmWaveStatusEvent: (callback) => ipcRenderer.on('emwave-status', callback),
     extractEmWaveSessionData: async (sinceDateTime, includeLiveIBI) => await ipcRenderer.invoke('emwave-extract-sessions', sinceDateTime, includeLiveIBI),
+    deleteEmWaveSessions: (sessions) => ipcRenderer.invoke('delete-emwave-sessions', sessions),
     getEmWaveSessionData: async (sessionIds) => await ipcRenderer.invoke('get-emwave-session-data', sessionIds),
     saveEmWaveSessionData: (emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage) => ipcRenderer.invoke('save-emwave-session', emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage),
     getEmWaveSessionsForStage: async (stage) => await ipcRenderer.invoke('get-emwave-sessions-for-stage', stage),
