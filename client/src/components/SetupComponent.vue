@@ -154,7 +154,7 @@
             if (!paceSet) return
         }
         
-        step.value += 1 // send them straight to upload; no need for them to click a button
+        step.value += 1
         await window.mainAPI.setKeyValue(stepKey, step.value)
     }
 
@@ -162,18 +162,19 @@
         const paceData = {}
         const hrvResults = []
         let personalPace
+        let sessIds
 
         try {
             // ensure we have data to calculate personalized pace
             const stage1Sessions = await window.mainAPI.getEmWaveSessionsForStage(stage)
-            const sessIds = stage1Sessions.map(s => s.emWaveSessionId)
+            sessIds = stage1Sessions.map(s => s.emWaveSessionId)
             const sessData = await window.mainAPI.getEmWaveSessionData(sessIds)
             const ibiData = sessData.map(s => s.liveIBI)
             if (ibiData.length !== 4) {
                 const verb = ibiData.length == 1 ? 'was' : 'were'
                 errorText.value = `An error has occurred. Please ask the experimenter for assistance.
                 Experimenter: Four sessions with IBI data were expected, but ${ibiData.length} ${verb} found. Please 
-                quit the app, delete the fd-breath-study.sqlite file, and restart the app.
+                quit the app, delete the calm-study.sqlite file, and restart the app.
                 `
                 errorRequiresQuit.value = true
                 return
@@ -194,8 +195,26 @@
             await apiClient.updateSelf(paceData)
             return true
         } catch (err) {
+            // we should figure out which sessions we didn't get hrv peaks for
+            // everything from the first missing one forward will have to be redone
+            const successfulSessionCount = hrvResults.length
+            if (successfulSessionCount == 4) {
+                // then we must have failed to save the paces to their record
+                errorText.value = `An error has occurred. Please ask the experimenter for assistance.
+                Experimenter: Please note this information for manual entry to the database: ${JSON.stringify(paceData)}
+                `
+                errorRequiresQuit.value = false
+                return true
+            }
+
+            // delete the session we lack an hrv peak for and all subsequent ones
+            const failedSessionIds = sessIds.slice(successfulSessionCount)
+            await window.mainAPI.deleteEmWaveSessions(failedSessionIds)
+
+            // reset the stage1Step key so that they're brought back to the right point on restart
+            await window.mainAPI.setKeyValue('stage1Step', successfulSessionCount + 2)
             errorText.value = `An error has occurred. Please ask the experimenter for assistance.
-            Experimenter: ${err.message}
+            Experimenter: You will need to quit and restart. ${err.message}
             `
             errorRequiresQuit.value = true
             return false
