@@ -295,6 +295,37 @@ describe("Processing reports from S3", () => {
             expect(user?.progress?.status).not.toBeDefined();
         });
 
+        test("should update the stage2Complete status for a user who has played each game three times even if they started less than seven days ago", async () => {
+            const newUserStartDate = dayjs().subtract(4, 'days').toISOString();
+            const newUser = {
+                userId: 'def456',
+                email: 'someone_else@example.com',
+                name: 'Pat',
+                phone_number: '010-098-2315',
+                sub: 'def456',
+                createdAt: newUserStartDate,
+                progress: {
+                    foo: 19
+                }
+            };
+            
+            const newLumosAcct = {
+                email: 'heartbeam2@example.com',
+                owner: newUser.userId
+            };
+            
+            await docClient.send(new PutCommand({TableName: usersTable, Item: newUser}));
+            await docClient.send(new PutCommand({TableName: lumosAcctTable, Item: newLumosAcct}));
+
+            const playsData = [0,1, 2].map( () => {
+                return allGames.map(g => {
+                    return { email_address: newLumosAcct.email, game_name: g, created_at_utc: randCreatedAt(), game_lpi: 492 };
+                });
+            }).flatMap(a => a);
+            await processGameReport(playsData);
+            await confirmStage2Complete(newLumosAcct.owner);
+        });
+
         test("should not undo a user's stage2Status", async () => {
             const progress = {};
             progress.status = statusTypes.STAGE_2_COMPLETE;

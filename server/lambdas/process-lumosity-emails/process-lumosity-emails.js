@@ -149,11 +149,15 @@ export async function processreports(event) {
 
     // find all the users who have a new stage2Complete status and save that to dynamo
     // stage2Complete is true when a user has played each of the available games at least twice
-    // and at least six days have elapsed since starting stage 1 (i.e., starting the study)
+    // AND
+    // ( at least six days have elapsed since starting stage 1
+    //   OR
+    //   the user has played each of the available games at least three times )
     const stage2StatusMap = {};
     for (const email of Object.keys(email2UserInfoMap)) {
       const forEmail = playsData.filter(r => r.email === email);
       let twoPlays = true;
+      let threePlays = true;
       let totalPlays = 0;
       for (const game of allGames) {
           const playsForGame = forEmail.where(r => r.game === game).count();
@@ -161,24 +165,24 @@ export async function processreports(event) {
           if (playsForGame < 2) {
               twoPlays = false;
               break;
+          }if (playsForGame < 3) {
+              threePlays = false;
           }
       }
-      stage2StatusMap[forEmail.first().email] = twoPlays;
+      stage2StatusMap[forEmail.first().email] = {twoPlays: twoPlays, threePlays: threePlays};
     }
 
-    for (const [email, stage2Complete] of Object.entries(stage2StatusMap)) {
-      if (stage2Complete && email2UserInfoMap[email].stage2Complete) continue;
-      if (!stage2Complete && email2UserInfoMap[email].stage2Complete) {
+    for (const [email, {twoPlays, threePlays}] of Object.entries(stage2StatusMap)) {
+      if (twoPlays && email2UserInfoMap[email].stage2Complete) continue;
+      if (!twoPlays && email2UserInfoMap[email].stage2Complete) {
         console.error(`Error: User ${email2UserInfoMap[email].userId} had previously completed stage 2 but now appears to not have completed it.`);
         continue;
       }
-      if (stage2Complete && !email2UserInfoMap[email].stage2Complete) {
+      if (twoPlays && !email2UserInfoMap[email].stage2Complete) {
         const stage1Start = dayjs(email2UserInfoMap[email].stage1StartedOn).tz('America/Los_Angeles')
         const today = dayjs().tz('America/Los_Angeles');
 
-        // check for 7 because if they started at 15:22 on 3/10/24 and
-        // it's now 02:17 on 3/16/24 dayjs will say 6 days have passed
-        if (today.diff(stage1Start, 'day') >= 7) {
+        if (today.diff(stage1Start, 'day') >= 7 || threePlays) {
           const progress = email2UserInfoMap[email].user.progress || {};
           progress.status = statusTypes.STAGE_2_COMPLETE;
           progress[statusTypes.STAGE_2_COMPLETED_ON] = today.format('YYYYMMDD');
