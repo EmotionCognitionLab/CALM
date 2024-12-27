@@ -43,6 +43,7 @@ import ConnectingComponent from './components/ConnectingComponent.vue'
 import CognitiveComponent from './components/CognitiveComponent.vue';
 import StudyInfoComponent from './components/StudyInfoComponent.vue';
 import FAQComponent from './components/FAQComponent.vue';
+import Logger from './client-logger.js'
 
 import { isAuthenticated, getAuth } from '../../common/auth/auth'
 import { SessionStore } from './session-store'
@@ -121,6 +122,8 @@ async function handleLoginSuccess(session) {
         stage2Complete = true
     }
     isDbInitialized = true
+    const l = new Logger(true, data.userId);
+    await l.init();
 }
 
 async function handleOauthRedirect(to) {
