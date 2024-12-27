@@ -244,7 +244,7 @@ describe("Processing reports from S3", () => {
             await confirmPlaysWritten(expectedPlays);
         });
 
-        test("should update the stage2Completed status for a user who has played each game twice and started at least six days ago", async () => {
+        test("should update the stage2Completed status for a user who has played each game twice and started at least seven days ago", async () => {
             // for stage2Completed to be true every game in allGames must be played at least twice
             const playsData = [0,1].map( () => {
                 return allGames.map(g => {
@@ -256,7 +256,7 @@ describe("Processing reports from S3", () => {
             await confirmStage2Complete(lumosAcct.owner);
         });
 
-        test("should not update the stage2Completed status if a user has played each game twice but started less than six days ago", async () => {
+        test("should not update the stage2Completed status if a user has played each game twice but started less than seven days ago", async () => {
             const newUserStartDate = dayjs().subtract(3, 'days').toISOString();
             const newUser = {
                 userId: 'def456',
