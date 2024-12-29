@@ -111,7 +111,7 @@ class Logger {
                 await this.cwLogs.send(cmd);
                 this.localStorage.setItem(streamKey, stream);
             } catch (err) {
-                if (err.name !== "ResourceAlreadyExistsException") {
+                if (err.name !== "ResourceAlreadyExistsException" && err.code !== "ENOTFOUND") {
                     this.error(err, err.stack);
                 } else {
                     this.localStorage.setItem(streamKey, stream);
