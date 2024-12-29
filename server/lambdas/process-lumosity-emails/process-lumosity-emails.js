@@ -25,7 +25,7 @@ import awsSettings from '../../../common/aws-settings.json';
 
 const allGames = [
   'Memory Serves Web',
-  'Color Match 2 Web',
+  'Color Match Web',
   'Raindrops Web',
   'Brain Shift Web',
   'Familiar Faces Web',
@@ -162,11 +162,12 @@ export async function processreports(event) {
       for (const game of allGames) {
           const playsForGame = forEmail.where(r => r.game === game).count();
           totalPlays += playsForGame;
+          if (playsForGame < 3) {
+            threePlays = false;
+          }
           if (playsForGame < 2) {
               twoPlays = false;
               break;
-          }if (playsForGame < 3) {
-              threePlays = false;
           }
       }
       stage2StatusMap[forEmail.first().email] = {twoPlays: twoPlays, threePlays: threePlays};

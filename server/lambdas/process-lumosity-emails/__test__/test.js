@@ -120,7 +120,7 @@ describe("Processing reports from S3", () => {
     const randCreatedAt = () => `2022-${randMaxNoZero(12)}-${randMaxNoZero(28)} ${randMaxNoZero(23)}:${randMaxNoZero(59)}:${randMaxNoZero(59)}.000`;
     const allGames = [
         'Memory Serves Web',
-        'Color Match 2 Web',
+        'Color Match Web',
         'Raindrops Web',
         'Brain Shift Web',
         'Familiar Faces Web',
