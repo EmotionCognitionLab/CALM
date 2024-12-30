@@ -29,7 +29,7 @@
     </div>
 </template>
 <script setup>
-import { ref, computed, inject, onBeforeMount } from '@vue/runtime-core'
+import { ref, computed, onBeforeMount, provide } from '@vue/runtime-core'
 import { isProxy, toRaw } from 'vue'
 import { pullAt } from 'lodash'
 import CBuffer from 'CBuffer';
@@ -49,8 +49,11 @@ const remainingRegimes = ref(props.regimes)
 let inProgressRegime
 const finishedRegimes = []
 let ep = ref(0)
-const invertIbi = inject('invertIbi', ref(false))
-const playAudioPacer = inject('playAudioPacer')
+const condition = window.sessionStorage.getItem('condition')
+const invertIbi = condition == 'A' ? false: true
+provide('invertIbi', invertIbi)
+const playAudioPacer = ref(window.sessionStorage.getItem('playAudioPacer'))
+provide('playAudioPacer', playAudioPacer)
 const secondsDuration = computed(() => {
     return (remainingRegimes.value.reduce((prev, cur) => prev + cur.durationMs, 0)) / 1000
 })
@@ -64,7 +67,7 @@ onBeforeMount(() => {
 const score = computed(() => {
     if (ep.value <= 0) return 0
 
-    if (invertIbi.value) {
+    if (invertIbi) {
         return ((epToCoherence(ep.value).toPrecision(2)) * -1) + 10
     }
 

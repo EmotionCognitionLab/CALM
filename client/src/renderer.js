@@ -45,6 +45,14 @@ import StudyInfoComponent from './components/StudyInfoComponent.vue';
 import FAQComponent from './components/FAQComponent.vue';
 import Logger from './client-logger.js'
 
+import WaitComponent from './components/stage3/WaitComponent.vue'
+import RoutingComponent from './components/stage3/RoutingComponent.vue'
+import FirstTimeInstructionsComponent from './components/stage3/FirstTimeInstructionsComponent.vue'
+import AudioSelectionComponent from './components/stage3/AudioSelectionComponent.vue'
+import InstructionsComponent from './components/stage3/InstructionsComponent.vue'
+import BreathingComponent from './components/stage3/BreathingComponent.vue';
+import EndComponent from './components/stage3/EndComponent.vue';
+
 import { isAuthenticated, getAuth } from '../../common/auth/auth'
 import { SessionStore } from './session-store'
 import LumosityComponent from './components/LumosityComponent.vue';
@@ -78,11 +86,23 @@ const routes = [
     { path: '/current-stage', redirect: '/setup/1' },
     { path: '/lumosity/:stageNum', component: LumosityComponent, props: true },
     { path: '/info', component: StudyInfoComponent },
-    { path: '/faq', component: FAQComponent }
+    { path: '/faq', component: FAQComponent },
+
+    {path: '/stage3/wait', component: WaitComponent},
+    {path: '/stage3/routing', component: RoutingComponent},
+    {path: '/stage3/instructions/1', component: FirstTimeInstructionsComponent},
+    {path: '/stage3/audio-selection', component: AudioSelectionComponent},
+    {path: '/stage3/instructions/2', component: InstructionsComponent},
+    {path: '/stage3/breathing', component: BreathingComponent},
+    {path: '/stage3/end/:doneForToday', component: EndComponent, name: 'stage3End', props: (route) => {
+        // apparently the router changes booleans to strings; change it back :-(
+        if (route.params.doneForToday == 'false') return { doneForToday: false }
+        if (route.params.doneForToday == 'true') return { doneForToday: true }
+        return {}
+    }}
 ]
 
 const noAuthRoutes = ['/signin', '/login', '/', '/info', '/faq']
-const dbRequiredRoutes = ['/earnings', '/current-stage', '/setup/1', '/setup/3', '/cognitive/1', '/cognitive/4', '/lumosity/2', '/lumosity/3', '/stage2', '/stage3']
 let stage2Complete = false
 
 const router = createRouter({
@@ -91,6 +111,18 @@ const router = createRouter({
 })
 
 let isDbInitialized = false
+
+function dbRequired(path) {
+    return path.startsWith('/setup') ||
+    path.startsWith('/upload') ||
+    path.startsWith('/earnings') ||
+    path.startsWith('/stage2') ||
+    path.startsWith('/stage3') ||
+    path.startsWith('/cognitive') ||
+    path.startsWith('/lumosity') ||
+    path.startsWith('/earnings') ||
+    path.startsWith('/current-stage')
+}
 
 async function practiceOrSetup(to) {
     if (!isDbInitialized) {
@@ -102,7 +134,7 @@ async function practiceOrSetup(to) {
     if (await window.mainAPI.getKeyValue('setupComplete') == 'true') {    
         if (await window.mainAPI.getLumosityDoneToday()) {
             if (stage2Complete) {
-                return { path: '/stage3/true' }
+                return { path: '/stage3/routing' }
             } else {
                 return { path: '/stage2/true' }
             }
@@ -159,9 +191,7 @@ router.beforeEach(async (to) => {
     if (!isAuthenticated() && !noAuthRoutes.includes(to.path)) {
         return { name: 'signin', query: { 'postLoginPath': to.path } }
     }
-
-    if (!dbRequiredRoutes.includes(to.path)) return true
-
+    if (!dbRequired(to.path)) return true
     // make sure we have a session and use it to announce login success
     // and initialize db
     const sess = await SessionStore.getRendererSession()

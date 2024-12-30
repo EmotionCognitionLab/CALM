@@ -69,7 +69,16 @@
     function gamesConfirmed() {
         window.mainAPI.closeLumosityView()
         window.mainAPI.setLumosityDoneToday()
-        router.push({name: doneDest, params: { mustWait: mustWaitBeforeNextStep }})
+        if (doneDest == 'stage3') {
+            if (mustWaitBeforeNextStep) {
+                router.push('/stage3/wait')
+            } else {
+                router.push('/stage3/routing')
+            }
+        } else {
+            router.push({name: doneDest, params: { mustWait: mustWaitBeforeNextStep }})
+        }
+        
     }
 
     function showLumosityView() {

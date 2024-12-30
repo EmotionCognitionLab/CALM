@@ -62,7 +62,7 @@
             offsetProportionY: props.offsetProportionY
         }
         const playAudioPacer = inject('playAudioPacer')
-        if (playAudioPacer.value) {
+        if (playAudioPacer.value && playAudioPacer.value !== 'false') {
             pacerConfig.audioInhaleUrl = `${awsSettings.ImagesUrl}/assets/breath_in.mp3`
             pacerConfig.audioExhaleUrl = `${awsSettings.ImagesUrl}/assets/breath_out.mp3`
         }
