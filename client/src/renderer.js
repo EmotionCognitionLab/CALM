@@ -43,6 +43,7 @@ import ConnectingComponent from './components/ConnectingComponent.vue'
 import CognitiveComponent from './components/CognitiveComponent.vue';
 import StudyInfoComponent from './components/StudyInfoComponent.vue';
 import FAQComponent from './components/FAQComponent.vue';
+import ReloadNeededComponent from './components/ReloadNeededComponent.vue';
 import Logger from './client-logger.js'
 
 import WaitComponent from './components/stage3/WaitComponent.vue'
@@ -59,6 +60,7 @@ import LumosityComponent from './components/LumosityComponent.vue';
 import Stage2Component from './components/Stage2Component.vue';
 import Stage3Component from './components/Stage3Component.vue'
 import ApiClient from "../../common/api/client"
+import { notifyOnDayChange } from './utils.js';
 
 
 const routes = [
@@ -87,6 +89,7 @@ const routes = [
     { path: '/lumosity/:stageNum', component: LumosityComponent, props: true },
     { path: '/info', component: StudyInfoComponent },
     { path: '/faq', component: FAQComponent },
+    { path: '/reload-needed', component: ReloadNeededComponent },
 
     {path: '/stage3/wait', component: WaitComponent},
     {path: '/stage3/routing', component: RoutingComponent},
@@ -102,7 +105,7 @@ const routes = [
     }}
 ]
 
-const noAuthRoutes = ['/signin', '/login', '/', '/info', '/faq']
+const noAuthRoutes = ['/signin', '/login', '/', '/info', '/faq', '/reload-needed']
 let stage2Complete = false
 
 const router = createRouter({
@@ -237,3 +240,4 @@ const app = createApp(App)
 app.use(router)
 
 app.mount('#app')
+notifyOnDayChange(() => router.push({path: '/reload-needed'}))
