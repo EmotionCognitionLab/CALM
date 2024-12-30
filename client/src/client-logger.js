@@ -122,7 +122,13 @@ class Logger {
 
     storeLogMsg(origLogFn, level, ...args) {
         if (args.length === 0) return;
-        const msg = sprintf(args[0], ...args.slice(1), "\n");
+        let msg
+        if (typeof args[0] !== "string" && args.length === 1) {
+            msg = sprintf("%j", args[0])
+        } else {
+            msg = sprintf(args[0], ...args.slice(1), "\n");
+        }
+        
         this.logEntries.push({message: JSON.stringify({message: msg, level: level, user: this.user}), timestamp: Date.now()});
 
         origLogFn.apply(this, args);
