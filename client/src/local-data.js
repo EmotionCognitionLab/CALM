@@ -12,6 +12,8 @@ import lte from 'semver/functions/lte';
 import semverSort from 'semver/functions/sort';
 import gt from 'semver/functions/gt';
 import { yyyymmddString } from './utils.js'
+import { trainingBonusRewards } from '../../common/earnings/index.js';
+import dayjs from 'dayjs';
 
 let db;
 let insertKeyValueStmt, getKeyValueStmt, insertCognitiveResultsStmt;
@@ -145,6 +147,14 @@ function getEmWaveWeightedAvgCoherencesForStage(stage) {
     return result.map(rowToObject);
 }
 
+function earnedStage3Bonus(lastCompletedSessionId) {
+    const stmt = db.prepare('SELECT pulse_start_time from emwave_sessions where emwave_session_id = ?');
+    const res = stmt.get(lastCompletedSessionId);
+    const bonusFilterDate = dayjs.unix(res.pulse_start_time - 1);
+    const bonusEarnings = trainingBonusRewards(db, {date: bonusFilterDate.format()});
+    return bonusEarnings.length > 0;
+}
+
 function hasDoneCognitiveExperiment(experiment, stage) {
     const stmt = db.prepare('SELECT COUNT(id) as count from cognitive_results WHERE experiment = ? AND stage = ? AND is_relevant = 1');
     const result = stmt.all(experiment, stage);
@@ -250,6 +260,7 @@ export {
     getEmWaveSessionsForStage,
     getEmWaveSessionMinutesForDayAndStage,
     getEmWaveWeightedAvgCoherencesForStage,
+    earnedStage3Bonus,
     hasDoneCognitiveExperiment,
     latestExperimentResult,
     saveCognitiveResults,

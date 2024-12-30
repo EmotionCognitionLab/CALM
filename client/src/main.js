@@ -8,7 +8,7 @@ import { ipcMain } from 'electron';
 import Logger from 'logger';
 import emwave from './emwave';
 import { emWaveDbPath, deleteShortSessions as deleteShortEmwaveSessions, extractSessionData, getDataForSessions } from './emwave-data';
-import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, deleteEmWaveSessions, getEmWaveSessionsForStage, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue, getLumosityDoneToday, setLumosityDoneToday } from './local-data';
+import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, deleteEmWaveSessions, getEmWaveSessionsForStage, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue, getLumosityDoneToday, setLumosityDoneToday, earnedStage3Bonus } from './local-data';
 import version from "../version.json";
 import packageInfo from "../package.json"
 import { SessionStore } from './session-store'
@@ -294,6 +294,10 @@ ipcMain.handle('get-emwave-session-data', (event, sessionIds) => {
 
 ipcMain.handle('get-emwave-session-minutes-for-day-and-stage', (event, date, stage) => {
   return getEmWaveSessionMinutesForDayAndStage(date, stage);
+});
+
+ipcMain.handle('earned-stage-3-bonus', (event, sessionId) => {
+  return earnedStage3Bonus(sessionId);
 });
 
 ipcMain.handle('has-done-cognitive-experiment', (_event, experiment, stage) => {
