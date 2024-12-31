@@ -1,6 +1,6 @@
 <template>
     <div class="container">
-        <div class="row">
+        <div class="row shadow">
             <div class="left">
                 <h2>Hi {{ firstName }}!</h2>
                 <p class="underline">Today's agenda:</p>
@@ -11,6 +11,21 @@
             </div>
             <div class="right">
                 <img :src="homeImg" alt="rock tower" />
+            </div>
+        </div>
+        <div class="shortrow" @click="showHelp">
+            <div class="infotip">?</div>
+        </div>
+        <div v-if="isModalVisible" class="modal">
+            <div class="modal-content">
+                <span class="close" @click="hideHelp">&times;</span>
+                <h3>Questions?</h3>
+                <p class="underline">Click 'View' on the menu bar for:</p>
+                <ul>
+                    <li>General study info</li>
+                    <li>Questions about the laptop, ear sensor, or the app</li>
+                    <li>Your earnings summary</li>
+                </ul>
             </div>
         </div>
     </div>
@@ -30,6 +45,15 @@
     const startButton = ref()
     const stage2Complete = props.stage2Complete !== 'false'
     const allDone = ref(false)
+    const isModalVisible = ref(false)
+
+    function showHelp() {
+        isModalVisible.value = true
+    }
+
+    function hideHelp() {
+        isModalVisible.value = false
+    }
 
     onBeforeMount(async() => {
         if (await window.mainAPI.getLumosityDoneToday()) {
@@ -113,9 +137,19 @@
     }
     .container {
         display: flex;
+        flex-wrap: wrap;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        padding-top: 10%;
+    }
+    .infotip {
+        display: flex;
+        background-color: lightgrey;
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
+        justify-content: center;
+        cursor: pointer;
     }
     .row {
         display: flex;
@@ -138,7 +172,48 @@
         height: 100%;
         background-color: #f0f0f0;
     }
+    .shadow {
+        box-shadow: 9px 16px 11px rgba(0, 0, 0, 0.2);
+    }
+    .shortrow {
+        display: flex;
+        justify-content: right;
+        width: 860px;
+        text-align: right;
+    }
     .underline {
         text-decoration: underline;
+    }
+    .modal {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+    .modal-content {
+        background-color: #538FE9;
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 500px;
+        text-align: center;
+        position: relative;
+    }
+    .close {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        color: white;
+        font-size: 30px;
+        font-weight: bold;
+        cursor: pointer;
     }
 </style>
