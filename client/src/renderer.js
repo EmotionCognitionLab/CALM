@@ -44,6 +44,7 @@ import CognitiveComponent from './components/CognitiveComponent.vue';
 import StudyInfoComponent from './components/StudyInfoComponent.vue';
 import FAQComponent from './components/FAQComponent.vue';
 import ReloadNeededComponent from './components/ReloadNeededComponent.vue';
+import HomeComponent from './components/HomeComponent.vue';
 import Logger from './client-logger.js'
 
 import WaitComponent from './components/stage3/WaitComponent.vue'
@@ -90,6 +91,7 @@ const routes = [
     { path: '/info', component: StudyInfoComponent },
     { path: '/faq', component: FAQComponent },
     { path: '/reload-needed', component: ReloadNeededComponent },
+    { path: '/home/:firstName/:stage2Complete', component: HomeComponent, name: 'home', props: true },
 
     {path: '/stage3/wait', component: WaitComponent},
     {path: '/stage3/routing', component: RoutingComponent},
@@ -107,6 +109,7 @@ const routes = [
 
 const noAuthRoutes = ['/signin', '/login', '/', '/info', '/faq', '/reload-needed']
 let stage2Complete = false
+let firstName = ''
 
 const router = createRouter({
     history: import.meta.env.PROD ? createWebHashHistory() : createWebHistory(),
@@ -124,7 +127,8 @@ function dbRequired(path) {
     path.startsWith('/cognitive') ||
     path.startsWith('/lumosity') ||
     path.startsWith('/earnings') ||
-    path.startsWith('/current-stage')
+    path.startsWith('/current-stage') || 
+    path.startsWith('/home')
 }
 
 async function practiceOrSetup(to) {
@@ -135,14 +139,7 @@ async function practiceOrSetup(to) {
     if (to.params.stageNum == 4) return true; // then we're trying to get to final lab visit; go there
 
     if (await window.mainAPI.getKeyValue('setupComplete') == 'true') {    
-        if (await window.mainAPI.getLumosityDoneToday()) {
-            if (stage2Complete) {
-                return { path: '/stage3/routing' }
-            } else {
-                return { path: '/stage2/true' }
-            }
-        }
-        return stage2Complete ? { path: '/lumosity/3' } : { path: '/lumosity/2' }
+        return {name: 'home', params: {firstName: firstName, stage2Complete: stage2Complete}}
     }
 
     return true
@@ -156,6 +153,7 @@ async function handleLoginSuccess(session) {
     if (data?.progress?.status == 'stage2Complete') {
         stage2Complete = true
     }
+    firstName = data.given_name
     isDbInitialized = true
     const l = new Logger(true, data.userId);
     await l.init();
