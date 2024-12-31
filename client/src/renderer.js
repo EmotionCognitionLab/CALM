@@ -76,7 +76,7 @@ const routes = [
     { path: '/', name: 'landing-page', component: ConnectingComponent},
     { path: '/cognitive/:stageNum', component: CognitiveComponent, props: true },
     { path: '/current-stage', redirect: '/setup/1' },
-    { path: '/lumosity/:stageNum', component: LumosityComponent, props: true },
+    { path: '/lumosity', component: LumosityComponent },
     { path: '/info', component: StudyInfoComponent },
     { path: '/faq', component: FAQComponent },
     { path: '/reload-needed', component: ReloadNeededComponent },

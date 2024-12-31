@@ -64,7 +64,7 @@
 
         //lumosity
         if (agenda.value[0].class == 'notdone') {
-            router.push(stage2Complete ? {path: '/lumosity/3'} : {path: '/lumosity/2'})
+            router.push({path: '/lumosity'})
             return
         }
         // first breathing

@@ -17,26 +17,11 @@
     import ApiClient from "../../../common/api/client.js"
 
     const router = useRouter()
-    const props = defineProps(['stageNum'])
-    let doneDest = null
     const confirm = ref(null)
     let mustWaitBeforeNextStep = true
     
     onBeforeMount(async () => {
         try {
-            const session = await SessionStore.getRendererSession()
-            const apiClient = new ApiClient(session)
-            if (!props.stageNum) {
-                const data = await apiClient.getSelf()
-                if (data?.progress?.status == 'stage2Complete') {
-                    doneDest = 'stage3'
-                } else {
-                    doneDest = 'stage2'
-                }
-            } else {
-                doneDest = props.stageNum == 2 ? 'stage2' : 'stage3'
-            }
-
             // #23 disable menus - loading earnings or other pages
             // while the Lumosity frame is active replaces 
             // the "I'm all done with brain games" button
@@ -66,17 +51,20 @@
         confirm.value.showModal()
     }
 
-    function gamesConfirmed() {
+    async function gamesConfirmed() {
         window.mainAPI.closeLumosityView()
         window.mainAPI.setLumosityDoneToday()
-        if (doneDest == 'stage3') {
+        const session = await SessionStore.getRendererSession()
+        const apiClient = new ApiClient(session)
+        const data = await apiClient.getSelf()
+        if (data?.progress?.status == 'stage2Complete') {
             if (mustWaitBeforeNextStep) {
                 router.push('/stage3/wait')
             } else {
                 router.push('/stage3/routing')
             }
         } else {
-            router.push({name: doneDest, params: { mustWait: mustWaitBeforeNextStep }})
+            router.push({name: 'stage2', params: { mustWait: mustWaitBeforeNextStep }})
         }
         
     }
