@@ -101,11 +101,13 @@
 
     window.mainAPI.handleEmWaveIBIEvent(handleEmWaveIbiEvent)
 
-    function handleEmWaveStatusEvent(_event, message) {
+    async function handleEmWaveStatusEvent(_event, message) {
         if (message === 'SensorError') {
             stopPulseSensor()
             sensorError.value = true
+            await window.mainAPI.beep()
         } else if (message === 'SessionEnded') {
+            await window.mainAPI.beep()
             endPulseSensorSession()
         }
     }
@@ -144,7 +146,8 @@
         clearTimeout(forcedRestartInterval)
     }
 
-    function forceSessionEnd() {
+    async function forceSessionEnd() {
+        await window.mainAPI.beep()
         sessionEnded.value = true
         emit('pulse-sensor-session-ended')
         stopPulseSensor()
@@ -152,8 +155,9 @@
 
     function startSignalLossTimer() {
         signalLossInterval = setTimeout(
-            () => { 
+            async () => { 
                 sensorError.value = true
+                await window.mainAPI.beep()
                 emit('pulse-sensor-signal-lost')
                 startForcedRestartTimer()
             }, 
@@ -162,8 +166,8 @@
     }
 
     function startForcedRestartTimer() {
-        forcedRestartInterval = setTimeout(() => {
-            forceSessionEnd()
+        forcedRestartInterval = setTimeout(async () => {
+            await forceSessionEnd()
         },
         forcedRestartTimeout()
        )
