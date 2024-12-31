@@ -14,6 +14,10 @@ import gt from 'semver/functions/gt';
 import { yyyymmddString } from './utils.js'
 import { trainingBonusRewards } from '../../common/earnings/index.js';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 let db;
 let insertKeyValueStmt, getKeyValueStmt, insertCognitiveResultsStmt;
@@ -150,7 +154,7 @@ function getEmWaveWeightedAvgCoherencesForStage(stage) {
 function earnedStage3Bonus(lastCompletedSessionId) {
     const stmt = db.prepare('SELECT pulse_start_time from emwave_sessions where emwave_session_id = ?');
     const res = stmt.get(lastCompletedSessionId);
-    const bonusFilterDate = dayjs.unix(res.pulse_start_time - 1);
+    const bonusFilterDate = dayjs.unix(res.pulse_start_time - 1).tz('America/Los_Angeles');
     const bonusEarnings = trainingBonusRewards(db, {date: bonusFilterDate.format()});
     return bonusEarnings.length > 0;
 }
