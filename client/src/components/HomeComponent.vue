@@ -65,14 +65,17 @@
         //lumosity
         if (agenda.value[0].class == 'notdone') {
             router.push(stage2Complete ? {path: '/lumosity/3'} : {path: '/lumosity/2'})
+            return
         }
         // first breathing
         if (agenda.value[1].class == 'notdone') {
             router.push(stage2Complete ? {path: '/stage3/wait'} : {path: '/stage2/true'})
+            return
         }
         // second breathing
         if (agenda.value[2].class == 'notdone') {
             router.push(stage2Complete ? {path: '/stage3/routing'} : {path: '/stage2/true'})
+            return
         }
     }
 </script>
