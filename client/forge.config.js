@@ -4,7 +4,7 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     ignore: (file) => {
-      return /node_modules\/(?!better-sqlite3)(?!bindings)(?!file-uri-to-path)/.test(file) ||
+      return /node_modules\/(?!better-sqlite3)(?!dayjs)(?!bindings)(?!file-uri-to-path)/.test(file) ||
       /test/.test(file) ||
       /__mocks__/.test(file) ||
       /src\/(?!powershell)/.test(file) ||
