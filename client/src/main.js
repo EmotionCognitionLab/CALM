@@ -9,7 +9,6 @@ import Logger from 'logger';
 import emwave from './emwave';
 import { emWaveDbPath, deleteShortSessions as deleteShortEmwaveSessions, extractSessionData, getDataForSessions } from './emwave-data';
 import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, deleteEmWaveSessions, getEmWaveSessionsForStage, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue, getLumosityDoneToday, setLumosityDoneToday, earnedStage3Bonus } from './local-data';
-import version from "../version.json";
 import packageInfo from "../package.json"
 import { SessionStore } from './session-store'
 import s3utils from './s3utils'
@@ -22,7 +21,8 @@ import('electron-squirrel-startup').then(ess => {
 app.setAboutPanelOptions({
   applicationName: "CALM Study",
   applicationVersion: packageInfo.version,
-  iconPath: assetsPath() + "logo.png"
+  iconPath: assetsPath() + "logo.png",
+  version: process.env.VITE_GIT_BRANCH_NAME == 'main' ? 'prod' : 'dev'
 });
 
 let mainWin = null
