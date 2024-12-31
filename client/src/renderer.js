@@ -35,9 +35,7 @@ import App from './App.vue';
 import SetupComponent from './components/SetupComponent.vue'
 import UploadComponent from './components/UploadComponent.vue'
 import LoginComponent from './components/LoginComponent.vue'
-import StudyCompleteComponent from './components/StudyCompleteComponent.vue'
 import EarningsComponent from './components/EarningsComponent.vue'
-import DoneTodayComponent from './components/DoneTodayComponent.vue'
 import OauthRedirectComponent from './components/OauthRedirectComponent.vue'
 import ConnectingComponent from './components/ConnectingComponent.vue'
 import CognitiveComponent from './components/CognitiveComponent.vue';
@@ -59,7 +57,6 @@ import { isAuthenticated, getAuth } from '../../common/auth/auth'
 import { SessionStore } from './session-store'
 import LumosityComponent from './components/LumosityComponent.vue';
 import Stage2Component from './components/Stage2Component.vue';
-import Stage3Component from './components/Stage3Component.vue'
 import ApiClient from "../../common/api/client"
 import { notifyOnDayChange } from './utils.js';
 
@@ -75,15 +72,7 @@ const routes = [
         if (route.params.mustWait == 'false') return { mustWait: false }
         if (route.params.mustWait == 'true') return { mustWait: true }
         return {}
-     }},
-     { path: '/stage3/:mustWait', name: 'stage3', component: Stage3Component, props: (route) => {
-        // apparently the router changes booleans to strings; change it back :-(
-        if (route.params.mustWait == 'false') return { mustWait: false }
-        if (route.params.mustWait == 'true') return { mustWait: true }
-        return {}
-     }},
-    { path: '/donetoday', component: DoneTodayComponent},
-    { path: '/alldone', component: StudyCompleteComponent},
+    }},
     { path: '/', name: 'landing-page', component: ConnectingComponent},
     { path: '/cognitive/:stageNum', component: CognitiveComponent, props: true },
     { path: '/current-stage', redirect: '/setup/1' },
