@@ -52,7 +52,7 @@ let ep = ref(0)
 const condition = window.sessionStorage.getItem('condition')
 const invertIbi = condition == 'A' ? false: true
 provide('invertIbi', invertIbi)
-const playAudioPacer = ref(window.sessionStorage.getItem('playAudioPacer'))
+const playAudioPacer = ref(window.sessionStorage.getItem('playAudioPacer') !== 'false')
 provide('playAudioPacer', playAudioPacer)
 const secondsDuration = computed(() => {
     return (remainingRegimes.value.reduce((prev, cur) => prev + cur.durationMs, 0)) / 1000
