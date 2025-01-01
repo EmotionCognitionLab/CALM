@@ -20,9 +20,8 @@ import('electron-squirrel-startup').then(ess => {
 
 app.setAboutPanelOptions({
   applicationName: "CALM Study",
-  applicationVersion: packageInfo.version,
+  applicationVersion: `${packageInfo.version}-${process.env.VITE_GIT_BRANCH_NAME == 'main' ? 'prod' : 'dev'}`,
   iconPath: assetsPath() + "logo.png",
-  version: process.env.VITE_GIT_BRANCH_NAME == 'main' ? 'prod' : 'dev'
 });
 
 let mainWin = null
