@@ -5,7 +5,7 @@ import { camelCase, zipObject } from 'lodash'
 import Database from 'better-sqlite3';
 import s3utils from './s3utils.js'
 import { SessionStore } from './session-store.js'
-import version from '../version.json'
+import packageInfo from "../package.json"
 import * as path from 'path'
 import { maxSessionMinutes } from '../../common/types/types.js';
 import lte from 'semver/functions/lte';
@@ -58,12 +58,12 @@ function rowToObject(result) {
 function checkVersion() {
     const curVerStmt = db.prepare('SELECT version from version ORDER BY date_time DESC LIMIT 1');
     const res = curVerStmt.get();
-    if (!res || res.version !== version.v) {
+    if (!res || res.version !== packageInfo.version) {
         const curVer = res ? res.version : '0.0.0';
-        runDbUpdates(curVer, version.v);
+        runDbUpdates(curVer, packageInfo.version);
         const updateVerStmt = db.prepare('INSERT INTO version(version, date_time) VALUES(?, ?)');
         const dateTime = (new Date()).toISOString();
-        updateVerStmt.run(version.v, dateTime);
+        updateVerStmt.run(packageInfo.version, dateTime);
     }
 }
 
@@ -73,8 +73,10 @@ function checkVersion() {
 // (as shown in client/version.json) and the value should be an array of DDL
 // strings.
 const dbUpdates = {
-    // example
-    // '0.1.0': ['ALTER TABLE emwave_sessions ADD weighted_avg_coherence FLOAT NOT NULL DEFAULT 0.0']
+    '1.1.0': [
+        'ALTER TABLE emwave_sessions ADD weighted_inverse_coherence FLOAT DEFAULT 0.0',
+        'UPDATE emwave_sessions SET weighted_inverse_coherence = (min(round(duration_seconds/60), 18)/18.0) * (10-avg_coherence)'
+    ]
 }
 
 /**
@@ -114,9 +116,10 @@ function deleteKeyValue(key) {
 function saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage) {
     const sessionMinutes = Math.min(Math.round(durationSec / 60), maxSessionMinutes); // participants don't get extra credit for doing sessions longer than max session length
     const weightedAvgCoherence = (sessionMinutes / maxSessionMinutes) * avgCoherence;
+    const weightedInverseCoherence = (sessionMinutes / maxSessionMinutes) * (10 - avgCoherence);
 
-    const insertStmt = db.prepare('INSERT INTO emwave_sessions(emwave_session_id, avg_coherence, weighted_avg_coherence, pulse_start_time, valid_status, duration_seconds, stage) VALUES (?, ?, ?, ?, ?, ?, ?)');
-    insertStmt.run(emWaveSessionId, avgCoherence, weightedAvgCoherence, pulseStartTime, validStatus, durationSec, stage);
+    const insertStmt = db.prepare('INSERT INTO emwave_sessions(emwave_session_id, avg_coherence, weighted_avg_coherence, weighted_inverse_coherence, pulse_start_time, valid_status, duration_seconds, stage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    insertStmt.run(emWaveSessionId, avgCoherence, weightedAvgCoherence, weightedInverseCoherence, pulseStartTime, validStatus, durationSec, stage);
 }
 
 function getEmWaveSessionsForStage(stage) {
