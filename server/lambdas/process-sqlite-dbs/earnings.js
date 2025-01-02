@@ -39,8 +39,8 @@ export const trainingTimeRewards = (sqliteDb, latestTimeEarnings) => {
     return newEarnings;
 }
 
-export const trainingBonusRewards = (sqliteDb, latestBonusEarnings) => {
-    return calculateBonusRewards(sqliteDb, latestBonusEarnings);
+export const trainingBonusRewards = (sqliteDb, latestBonusEarnings, condition) => {
+    return calculateBonusRewards(sqliteDb, latestBonusEarnings, condition);
 }
 
 export const visitRewards = (sqliteDb, visitNum) => {

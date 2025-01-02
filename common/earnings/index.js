@@ -23,7 +23,7 @@ const minutesPerDay = (sqliteDb, startTime) => {
     return Object.keys(minutesByDay).sort((a, b) => a - b).map(day => ({day: day, minutes: minutesByDay[day]}));
 }
 
-export const trainingBonusRewards = (sqliteDb, latestBonusEarnings) => {
+export const trainingBonusRewards = (sqliteDb, latestBonusEarnings, condition) => {
     let startDay;
     if (!latestBonusEarnings) {
         startDay = dayjs('1970-01-01 00:00').tz('America/Los_Angeles');
@@ -35,10 +35,17 @@ export const trainingBonusRewards = (sqliteDb, latestBonusEarnings) => {
     const eligibleDays = minutesByDay.filter(mbd => mbd.minutes >= maxSessionMinutes).map(i => i.day);
     if (eligibleDays.length == 0) return [];
 
-    const stmt = sqliteDb.prepare('select weighted_avg_coherence from emwave_sessions where stage = 3 and pulse_start_time <= ? order by weighted_avg_coherence desc');
-    const priorCoherenceVals = stmt.all(startDay.unix()).map(r => r.weighted_avg_coherence)
+    let coherence = 'weighted_avg_coherence';
+    if (condition == 'B') coherence = 'weighted_inverse_coherence';
+    const sessCoherence = (session) => {
+        if (condition == 'A') return session.weighted_avg_coherence;
+        return session.weighted_inverse_coherence;
+    }
 
-    const newSessionsStmt = sqliteDb.prepare('select weighted_avg_coherence, pulse_start_time from emwave_sessions where pulse_start_time > ? and stage = 3 order by pulse_start_time asc');
+    const stmt = sqliteDb.prepare(`select ${coherence} from emwave_sessions where stage = 3 and pulse_start_time <= ? order by ${coherence} desc`);
+    const priorCoherenceVals = stmt.all(startDay.unix()).map(r => sessCoherence(r));
+
+    const newSessionsStmt = sqliteDb.prepare(`select ${coherence}, pulse_start_time from emwave_sessions where pulse_start_time > ? and stage = 3 order by pulse_start_time asc`);
     const newSessions = newSessionsStmt.all(startDay.unix());
     const bonusEarnings = []
     for (const sess of newSessions) {
@@ -47,13 +54,13 @@ export const trainingBonusRewards = (sqliteDb, latestBonusEarnings) => {
 
         const top25 = Math.ceil(priorCoherenceVals.length * 0.25);
         const top25Cutoff = priorCoherenceVals[top25 - 1];
-        if (top25Cutoff && sess.weighted_avg_coherence >= top25Cutoff) {
+        if (top25Cutoff && sessCoherence(sess) >= top25Cutoff) {
             bonusEarnings.push({
                 date: dayjs.unix(sess.pulse_start_time).tz('America/Los_Angeles').format(), 
                 earnings: earningsTypes.BONUS
             });
         }
-        priorCoherenceVals.push(sess.weighted_avg_coherence);
+        priorCoherenceVals.push(sessCoherence(sess));
         priorCoherenceVals.sort((a,b) => b - a);
     }
     

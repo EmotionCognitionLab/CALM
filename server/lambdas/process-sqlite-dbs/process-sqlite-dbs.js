@@ -67,6 +67,8 @@ export async function handler(event) {
             progress[statusTypes.STAGE_1_COMPLETED_ON] = dayjs().tz('America/Los_Angeles').format('YYYYMMDD');
             await db.updateUser(userId, {progress: progress});
         }
+        // TODO this should be impossible and will potentially un-drop or un-complete someone
+        // if for some reason their db gets reprocessed after dropping/completing. Remove?
         if (sessionStages.has(3) && user?.progress?.status !== statusTypes.STAGE_2_COMPLETE) {
             const progress = Object.assign({}, user.progress);
             progress['status'] = statusTypes.STAGE_2_COMPLETE;
@@ -106,8 +108,12 @@ export async function handler(event) {
         }
 
         // get bonus earnings
-        const lastBonusEarnings = prevEarnings.findLast(e => e.type === earningsTypes.BONUS)
-        const bonusRewards = trainingBonusRewards(sqliteDb, lastBonusEarnings);
+        let bonusRewards = []
+        if (sessionStages.has(3)) {
+            const lastBonusEarnings = prevEarnings.findLast(e => e.type === earningsTypes.BONUS)
+            bonusRewards = trainingBonusRewards(sqliteDb, lastBonusEarnings, user.condition.assigned);
+        }
+        
 
         // get visit earnings
         let v1Rewards = [];

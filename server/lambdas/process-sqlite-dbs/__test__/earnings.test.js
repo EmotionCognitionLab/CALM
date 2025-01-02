@@ -137,11 +137,11 @@ describe("earnings", () => {
     describe("bonus rewards", () => {
         it("should use all stage 3 sessions if no latestBonusEarnings parameter is provided", () => {
             const newSessions = [
-                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.1, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, weighted_inverse_coherence: 9.0, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.1, weighted_inverse_coherence: 8.9, valid_status: 1 },
             ];
             insertEmwaveSessions(db, newSessions);
-            const res = trainingBonusRewards(db, null);
+            const res = trainingBonusRewards(db, null, 'A');
             const expectedResult =
                 {
                     date: dayjs.unix(newSessions[1].pulse_start_time).tz('America/Los_Angeles').format(), 
@@ -152,10 +152,10 @@ describe("earnings", () => {
 
         it("should use only stage 3 sessions later than the latestBonusEarnings date, when provided", () => {
             const newSessions = [
-                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.1, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-10 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.2, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-10 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.3, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, weighted_inverse_coherence: 9.0, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.1, weighted_inverse_coherence: 8.9, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-10 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.2, weighted_inverse_coherence: 8.8, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-10 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.3, weighted_inverse_coherence: 8.7, valid_status: 1 },
             ];
             insertEmwaveSessions(db, newSessions);
             const lastBonusEarning = 
@@ -163,7 +163,7 @@ describe("earnings", () => {
                     date: dayjs.unix(newSessions[1].pulse_start_time).tz('America/Los_Angeles').format(),
                     earnings: earningsTypes.BONUS
                 };
-            const res = trainingBonusRewards(db, lastBonusEarning);
+            const res = trainingBonusRewards(db, lastBonusEarning, 'A');
             const expectedResult = 
                 [
                     {
@@ -180,23 +180,23 @@ describe("earnings", () => {
 
         it("should only give a bonus if a session has a weighted_avg_coherence in the top 25% of previously completed sessions", () => {
             const newSessions = [
-                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 0.7, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, weighted_inverse_coherence: 9.0, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 0.7, weighted_inverse_coherence: 9.3, valid_status: 1 },
             ];
             insertEmwaveSessions(db, newSessions);
-            const res = trainingBonusRewards(db, null);
+            const res = trainingBonusRewards(db, null, 'A');
             expect(res.length).toEqual(0);
         });
 
         it("should only give bonuses for sessions that happened on days that included at least 18 minutes of breathing", () => {
             const newSessions = [
-                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.1, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-10 9:17', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 12*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 2.0, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-10 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 5*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 2.1, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.1, weighted_inverse_coherence: 8.9, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.0, weighted_inverse_coherence: 9.0, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-10 9:17', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 12*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 2.0, weighted_inverse_coherence: 8.0,valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-10 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 5*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 2.1, weighted_inverse_coherence: 7.9,valid_status: 1 },
             ];
             insertEmwaveSessions(db, newSessions);
-            const res = trainingBonusRewards(db, null);
+            const res = trainingBonusRewards(db, null, 'B');
             const expectedResult =
                 {
                     date: dayjs.unix(newSessions[1].pulse_start_time).tz('America/Los_Angeles').format(), 
@@ -207,12 +207,12 @@ describe("earnings", () => {
 
         it("should process multiple sessions correctly by adding qualifying earlier sessions to the top 25% when determining the cutoff for later sessions", () => {
             const newSessions = [
-                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-10 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.4, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-10 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-11 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-11 11:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, weighted_inverse_coherence: 9.0, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, weighted_inverse_coherence: 8.8, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-10 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.4, weighted_inverse_coherence: 8.6, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-10 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, weighted_inverse_coherence: 8.8, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-11 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, weighted_inverse_coherence: 8.8, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-11 11:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, weighted_inverse_coherence: 8.8, valid_status: 1 },
             ];
             insertEmwaveSessions(db, newSessions);
             const lastBonusEarning = 
@@ -220,7 +220,7 @@ describe("earnings", () => {
                     date: dayjs.unix(newSessions[2].pulse_start_time).tz('America/Los_Angeles').format(),
                     earnings: earningsTypes.BONUS
                 };
-            const res = trainingBonusRewards(db, lastBonusEarning);
+            const res = trainingBonusRewards(db, lastBonusEarning, 'A');
             const expectedResult = 
                 {
                     date: dayjs.unix(newSessions[5].pulse_start_time).tz('America/Los_Angeles').format(),
@@ -231,18 +231,18 @@ describe("earnings", () => {
 
         it("should not give a bonus for the very first stage 3 session", () => {
             const newSessions = [
-                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.1, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.1, weighted_inverse_coherence: 8.9, valid_status: 1 },
             ];
             insertEmwaveSessions(db, newSessions);
-            const res = trainingBonusRewards(db, null);
+            const res = trainingBonusRewards(db, null, 'A');
             expect(res.length).toEqual(0);
         });
 
         it("should include sessions from the same day that were already processed for bonuses when considering whether a new session belongs to a qualifying day", () => {
             const newSessions = [
-                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 13*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-09 11:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 15*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.4, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, weighted_inverse_coherence: 8.5, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 13*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.4, weighted_inverse_coherence: 8.6, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 11:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 15*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.2, weighted_inverse_coherence: 8.8, valid_status: 1 },
             ];
             insertEmwaveSessions(db, newSessions);
             const lastBonusEarning = 
@@ -250,7 +250,7 @@ describe("earnings", () => {
                     date: dayjs.unix(newSessions[0].pulse_start_time).tz('America/Los_Angeles').format(),
                     earnings: earningsTypes.BONUS
                 };
-            const res = trainingBonusRewards(db, lastBonusEarning);
+            const res = trainingBonusRewards(db, lastBonusEarning, 'B');
             const expectedResults = newSessions.slice(1).map(s => ({
                 date: dayjs.unix(s.pulse_start_time).tz('America/Los_Angeles').format(),
                 earnings: earningsTypes.BONUS
@@ -260,12 +260,12 @@ describe("earnings", () => {
 
         it("should pay a bonus for a qualifying session that is shorter than 18 minutes as long as the day had at least 18 minutes", () => {
             const newSessions = [
-                { pulse_start_time: dayjs('2024-03-06 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 13*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, valid_status: 1 },
-                { pulse_start_time: dayjs('2024-03-09 11:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.4, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-06 09:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.4, weighted_inverse_coherence: 8.6, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 10:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 13*60, stage: 3, avg_coherence: 0.9, weighted_avg_coherence: 1.2, weighted_inverse_coherence: 8.8, valid_status: 1 },
+                { pulse_start_time: dayjs('2024-03-09 11:00', 'YYYY-MM-DD HH:mm').unix(), duration_seconds: 19*60, stage: 3, avg_coherence: 1.0, weighted_avg_coherence: 1.0, weighted_inverse_coherence: 9.0, valid_status: 1 },
             ];
             insertEmwaveSessions(db, newSessions);
-            const res = trainingBonusRewards(db, null);
+            const res = trainingBonusRewards(db, null, 'B');
             const expectedResults = newSessions.slice(1).map(s => ({
                 date: dayjs.unix(s.pulse_start_time).tz('America/Los_Angeles').format(),
                 earnings: earningsTypes.BONUS

@@ -154,11 +154,11 @@ function getEmWaveWeightedAvgCoherencesForStage(stage) {
     return result.map(rowToObject);
 }
 
-function earnedStage3Bonus(lastCompletedSessionId) {
+function earnedStage3Bonus(lastCompletedSessionId, condition) {
     const stmt = db.prepare('SELECT pulse_start_time from emwave_sessions where emwave_session_id = ?');
     const res = stmt.get(lastCompletedSessionId);
     const bonusFilterDate = dayjs.unix(res.pulse_start_time - 1).tz('America/Los_Angeles');
-    const bonusEarnings = trainingBonusRewards(db, {date: bonusFilterDate.format()});
+    const bonusEarnings = trainingBonusRewards(db, {date: bonusFilterDate.format()}, condition);
     return bonusEarnings.length > 0;
 }
 

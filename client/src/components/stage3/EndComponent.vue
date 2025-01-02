@@ -33,7 +33,7 @@
 
      onBeforeMount(async() => {
         const mostRecentSession = (await window.mainAPI.getEmWaveSessionsForStage(3)).slice(-1)[0] // TODO if fetching all sessions and discarding all but the last is slow, add sorting and limiting to this call
-        earnedBonus = await window.mainAPI.earnedStage3Bonus(mostRecentSession.emWaveSessionId)
+        earnedBonus = await window.mainAPI.earnedStage3Bonus(mostRecentSession.emWaveSessionId, condition)
         const weightedAvgCoherence = mostRecentSession.weightedAvgCoherence
         const weightedInverseCoherence = mostRecentSession.weightedInverseCoherence
         const score = condition == 'A' ? weightedAvgCoherence : weightedInverseCoherence;

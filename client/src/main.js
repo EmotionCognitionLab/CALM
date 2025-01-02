@@ -295,8 +295,8 @@ ipcMain.handle('get-emwave-session-minutes-for-day-and-stage', (event, date, sta
   return getEmWaveSessionMinutesForDayAndStage(date, stage);
 });
 
-ipcMain.handle('earned-stage-3-bonus', (event, sessionId) => {
-  return earnedStage3Bonus(sessionId);
+ipcMain.handle('earned-stage-3-bonus', (event, sessionId, condition) => {
+  return earnedStage3Bonus(sessionId, condition);
 });
 
 ipcMain.handle('has-done-cognitive-experiment', (_event, experiment, stage) => {
