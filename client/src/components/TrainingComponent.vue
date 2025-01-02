@@ -68,10 +68,10 @@ const score = computed(() => {
     if (ep.value <= 0) return 0
 
     if (invertIbi) {
-        return ((epToCoherence(ep.value).toPrecision(2)) * -1) + 10
+        return (((epToCoherence(ep.value)) * -1) + 10).toFixed(1)
     }
 
-    return epToCoherence(ep.value).toPrecision(2)
+    return epToCoherence(ep.value).toFixed(1)
 })
 
 const feedbackColor = computed(() => {
