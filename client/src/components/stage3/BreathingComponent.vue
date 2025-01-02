@@ -1,6 +1,6 @@
 <template>
-    <TrainingComponent 
-        :regimes="[{durationMs: sessionDurationMs, breathsPerMinute: pace, randomize: false}]"
+    <TrainingComponent v-if="regimes.length > 0"
+        :regimes=regimes
         :factors="{showHeartRate: true, showPacer: condition == 'A', showScore: true, audioGuideUrl: audioGuideUrl}"
         @pacerFinished="pacerFinished"
         @sessionRestart="saveEmWaveSessionData(stage)">
@@ -17,8 +17,8 @@
     const audioGuideUrl = ref(window.sessionStorage.getItem('audioGuideUrl'))
     const condition = window.sessionStorage.getItem('condition')
     const pace = Number.parseFloat(window.sessionStorage.getItem('pace'))
-    const sessionDurationMs = ref(maxSessionMinutes*60*1000)
     const stage = 3
+    const regimes = ref([])
 
     onBeforeMount(async() => {
          // figure out how long this session should be
@@ -29,7 +29,8 @@
             router.push({name: 'stage3End', params: {doneForToday: true}})
         }
         
-        sessionDurationMs.value = Math.min(maxSessionMinutes, remainingMinutes) * 60 * 1000
+        const sessionDurationMs = Math.min(maxSessionMinutes, remainingMinutes) * 60 * 1000
+        regimes.value[0] = {durationMs: sessionDurationMs, breathsPerMinute: pace, randomize: false}
     })
 
     async function pacerFinished() {
