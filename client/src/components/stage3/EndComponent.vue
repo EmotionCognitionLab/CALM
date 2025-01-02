@@ -22,7 +22,6 @@
 </template>
 <script setup>
      import { ref, onBeforeMount } from '@vue/runtime-core'
-     import { maxSessionMinutes } from '../../../../common/types/types.js';
      import { quit } from '../../utils';
      import UploadComponent from '../UploadComponent.vue';
 
@@ -30,15 +29,16 @@
      let earnedBonus = false
      const readyToUpload = ref(false)
      const postUploadText = ref('')
+     const condition = window.sessionStorage.getItem('condition')
 
      onBeforeMount(async() => {
-        const mostRecentSession = (await window.mainAPI.extractEmWaveSessionData(-1, false))[0]
-        earnedBonus = await window.mainAPI.earnedStage3Bonus(mostRecentSession.sessionUuid)
-        const avgCoherence = mostRecentSession.avgCoherence
-        const sessionMinutes = Math.min(Math.round(mostRecentSession.durationSec / 60), maxSessionMinutes)
-        const weightedAvgCoherence = (sessionMinutes / maxSessionMinutes) * avgCoherence;
+        const mostRecentSession = (await window.mainAPI.getEmWaveSessionsForStage(3)).slice(-1)[0] // TODO if fetching all sessions and discarding all but the last is slow, add sorting and limiting to this call
+        earnedBonus = await window.mainAPI.earnedStage3Bonus(mostRecentSession.emWaveSessionId)
+        const weightedAvgCoherence = mostRecentSession.weightedAvgCoherence
+        const weightedInverseCoherence = mostRecentSession.weightedInverseCoherence
+        const score = condition == 'A' ? weightedAvgCoherence : weightedInverseCoherence;
 
-        postUploadText.value = `Upload complete. Your calmness score was ${weightedAvgCoherence.toFixed(2)}. `
+        postUploadText.value = `Upload complete. Your calmness score was ${score.toFixed(2)}. `
         if (earnedBonus) {
             postUploadText.value += 'Congratulations! Your score for this practice session was in the top 25% of all your scores. You will receive a bonus of $6. To see your earnings, go to View > Earnings. '
         }
