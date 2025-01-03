@@ -60,6 +60,8 @@ onBeforeMount(() => {
 
 
 const score = computed(() => {
+    if (ep.value <= 0) return 0
+
     if (invertIbi) {
         return (((epToCoherence(ep.value)) * -1) + 10).toFixed(1)
     }
