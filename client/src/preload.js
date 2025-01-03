@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('mainAPI', {
     regimesForSession: async(condition, stage) => await ipcRenderer.invoke('regimes-for-session', condition, stage),
     uploadEmWaveData: async(session) => ipcRenderer.invoke('upload-emwave-data', session),
     uploadBreathData: async(session) => ipcRenderer.invoke('upload-breath-data', session),
+    uploadComplete: () => ipcRenderer.send('upload-complete'),
     startPulseSensor: () => ipcRenderer.send('pulse-start'),
     stopPulseSensor: () => ipcRenderer.send('pulse-stop'),
     handleEmWaveIBIEvent: (callback) => ipcRenderer.on('emwave-ibi', callback),
