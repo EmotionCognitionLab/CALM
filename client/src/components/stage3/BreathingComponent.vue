@@ -3,7 +3,7 @@
         :regimes=regimes
         :factors="{showHeartRate: true, showPacer: condition == 'A', showScore: true, audioGuideUrl: audioGuideUrl}"
         @pacerFinished="pacerFinished"
-        @sessionRestart="saveEmWaveSessionData(stage)">
+        @sessionRestart="sessionRestarted">
     </TrainingComponent>
 </template>
 <script setup>
@@ -21,17 +21,30 @@
     const regimes = ref([])
 
     onBeforeMount(async() => {
+        await setRegimes()
+    })
+
+    async function setRegimes() {
          // figure out how long this session should be
-        const minutesDoneToday = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), stage)
-        const remainingMinutes = (2 * maxSessionMinutes) - minutesDoneToday
-        if (remainingMinutes < 1) {
-            // this shouldn't happen, but if it does just send them to the end
+         const sessionDurationMs = await getSessionDurationMs()
+        if (sessionDurationMs < 1000 * 60) {
+            // too short to bother with; just send them to the end
             router.push({name: 'stage3End', params: {doneForToday: true}})
         }
         
-        const sessionDurationMs = Math.min(maxSessionMinutes, remainingMinutes) * 60 * 1000
         regimes.value[0] = {durationMs: sessionDurationMs, breathsPerMinute: pace, randomize: false}
-    })
+    }
+
+    async function getSessionDurationMs() {
+        const minutesDoneToday = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), stage)
+        const remainingMinutes = (2 * maxSessionMinutes) - minutesDoneToday
+        return Math.min(maxSessionMinutes, remainingMinutes) * 60 * 1000
+    }
+
+    async function sessionRestarted() {
+        await saveEmWaveSessionData(stage)
+        await setRegimes()
+    }
 
     async function pacerFinished() {
         await saveEmWaveSessionData(stage)

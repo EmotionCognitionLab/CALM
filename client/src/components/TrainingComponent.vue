@@ -3,13 +3,13 @@
         <div id="main">
             <div id="pacer-animation" v-show="factors.showPacer">
                 <PacerComponent 
-                    :regimes="remainingRegimes"
+                    :regimes="regimes"
                     :offset-proportion-x="0.4"
                     :offset-proportion-y="0.9"
                     scale-h="320"
                     scale-t="0.05"
                     @pacerFinished="pacerFinished"
-                    @pacerRegimeChanged="updateRegimeStatus"
+                    :key="secondsDuration"
                     ref="pacer" />
             </div>
         </div>
@@ -30,8 +30,6 @@
 </template>
 <script setup>
 import { ref, computed, onBeforeMount, provide } from '@vue/runtime-core'
-import { isProxy, toRaw } from 'vue'
-import { pullAt } from 'lodash'
 import CBuffer from 'CBuffer';
 import EmWaveListener from './EmWaveListener.vue'
 import PacerComponent from './PacerComponent.vue'
@@ -45,9 +43,6 @@ const ibiData = new CBuffer(2).fill(1000) // we want the chart to show a HR of 6
 const pacer = ref(null)
 const emwaveListener = ref(null)
 const timer = ref(null)
-const remainingRegimes = ref(props.regimes)
-let inProgressRegime
-const finishedRegimes = []
 let ep = ref(0)
 const condition = window.sessionStorage.getItem('condition')
 const invertIbi = condition == 'A' ? false: true
@@ -55,7 +50,7 @@ provide('invertIbi', invertIbi)
 const playAudioPacer = ref(window.sessionStorage.getItem('playAudioPacer') !== 'false')
 provide('playAudioPacer', playAudioPacer)
 const secondsDuration = computed(() => {
-    return (remainingRegimes.value.reduce((prev, cur) => prev + cur.durationMs, 0)) / 1000
+    return (props.regimes.reduce((prev, cur) => prev + cur.durationMs, 0)) / 1000
 })
 let audioGuide
 
@@ -111,9 +106,6 @@ function resetDisplay() {
     pacer.value.pause = true
     timer.value.running = false
     if (audioGuide) audioGuide.currentTime = 0
-    inProgressRegime = null
-    const toPull = finishedRegimes.map(r => remainingRegimes.value.findIndex(elem => elem.id === r.id)).filter(idx => idx !== -1)
-    if (toPull.length > 0) pullAt(remainingRegimes.value, toPull)
     timer.value.reset()
     emit('session-restart')
 }
@@ -122,16 +114,6 @@ async function pacerFinished() {
     emwaveListener.value.stopSensor = true
     timer.value.running = false
     emit('pacer-finished')
-}
-
-async function updateRegimeStatus(startTime, regime) {
-    if (inProgressRegime) finishedRegimes.push(inProgressRegime)
-    inProgressRegime = regime
-    // if we don't do this we'll fail to emit regime-changed
-    // events b/c Object.clone (used by electron's ipc event system)
-    // doesn't work on vue proxies
-    const rawRegime = isProxy(regime) ? toRaw(regime) : regime
-    await window.mainAPI.pacerRegimeChanged(startTime, rawRegime)
 }
 
 </script>
