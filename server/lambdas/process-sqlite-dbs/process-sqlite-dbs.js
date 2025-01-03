@@ -209,7 +209,7 @@ async function saveSessionsAndEarnings(userId, sessions, earnings) {
         } else {
             amount = earningsAmounts[e.earnings];
         }  
-        if (!amount) throw new Error(`Unrecognized earnings type ${e.earnings}.`)
+        if (amount === undefined) throw new Error(`Unrecognized earnings type ${e.earnings}.`)
 
         return {
             PutRequest: {

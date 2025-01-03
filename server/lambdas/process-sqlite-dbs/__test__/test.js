@@ -121,6 +121,28 @@ describe("Processing a sqlite file", () => {
         ]));
     });
 
+    it("should not fail when existing earnings are exactly $6 and new time-based earnings will exceed the $6 limit", async () => {
+        const prevEarnings = [
+            {userId: theUserId, date: dayjs().add(5, 'minutes').tz('America/Los_Angeles').format(), type: earningsTypes.PER_HOUR, amount: 0.39},
+            {userId: theUserId, date: dayjs().add(10, 'minutes').tz('America/Los_Angeles').format(), type: earningsTypes.PER_HOUR, amount: 0.39},
+            {userId: theUserId, date: dayjs().add(15, 'minutes').tz('America/Los_Angeles').format(), type: earningsTypes.PER_HOUR, amount: 0.39},
+            {userId: theUserId, date: dayjs().add(20, 'minutes').tz('America/Los_Angeles').format(), type: earningsTypes.PER_HOUR, amount: 3.03},
+            {userId: theUserId, date: dayjs().add(45, 'minutes').tz('America/Los_Angeles').format(), type: earningsTypes.PER_HOUR, amount: 1.8},
+        ];
+        mockGetUserEarnings.mockReturnValueOnce(prevEarnings);
+        const sessions = [
+            { emwave_session_id: 'abcf789', avg_coherence: 1.2, pulse_start_time: dayjs().add(50, 'minutes').unix(), valid_status: 1, duration_seconds: 1092, stage: 3, weighted_avg_coherence: 2.3 },
+        ];
+        await runLambdaTestWithSessions(db, sessions);
+        const dynamoEarnings = await getDynamoEarnings(theUserId, earningsTypes.PER_HOUR);
+        const expectedEarnings = [{
+            userId: theUserId,
+            dateType: `${dayjs.unix(sessions[0].pulse_start_time).tz('America/Los_Angeles').format()}|${earningsTypes.PER_HOUR}`,
+            amount: 0
+        }];
+        expect(dynamoEarnings).toEqual(expect.arrayContaining(expectedEarnings));
+    });
+
     it("should not give more than $6 total in time earnings for a day when the upload contains new sessions that combined would exceed that limit", async () => {
         mockGetUserEarnings.mockReturnValueOnce([]);
         const sessions = [
