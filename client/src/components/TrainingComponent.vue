@@ -70,8 +70,13 @@ const score = computed(() => {
 })
 
 const feedbackColor = computed(() => {
-    if (score.value < 0.5) return 'red'
-    if (score.value >= 0.5 && score.value < 1.0) return 'blue'
+    if (condition == 'A') {
+        if (score.value < 0.5) return 'red'
+        if (score.value >= 0.5 && score.value < 1.0) return 'blue'
+        return 'green'
+    }
+    if (score.value <= 4) return 'red'
+    if (score.value >4 && score.value <= 7) return 'blue'
     return 'green'
 })
 
