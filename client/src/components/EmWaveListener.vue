@@ -37,8 +37,6 @@
     const invertIbi = inject('invertIbi', ref(false))
 
     const score = computed(() => {
-        if (ep.value <= 0) return 0
-
         if (invertIbi.value) {
             return ((epToCoherence(ep.value) * -1) + 10).toFixed(1)
         }
