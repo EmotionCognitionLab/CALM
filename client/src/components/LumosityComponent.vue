@@ -64,7 +64,7 @@
                 router.push('/stage3/routing')
             }
         } else {
-            router.push({name: 'stage2', params: { mustWait: mustWaitBeforeNextStep }})
+            router.push({path: '/stage2' })
         }
         
     }
