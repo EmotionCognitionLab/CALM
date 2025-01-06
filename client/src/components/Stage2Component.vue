@@ -47,23 +47,24 @@
         const restMinutesDoneToday = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), 2)
         let restSessionsDoneToday
         if (restMinutesDoneToday >= 4) {
-            restSessionsDoneToday = 2
-        } else if (restMinutesDoneToday >= 2) {
+            doUpload.value = true
+            return
+        }
+        if (restMinutesDoneToday >= 2) {
             restSessionsDoneToday = 1
         } else {
             restSessionsDoneToday = 0
         }
-        if (restSessionsDoneToday == 2) {
-            waitOver.value = 2
-            doUpload.value = true
-            return
-        }
 
-        heartMeasurementCount.value = Math.max(0, restSessionsDoneToday - 1)
+        heartMeasurementCount.value = restSessionsDoneToday
         const alreadyWaited = await window.mainAPI.getKeyValue(waitDoneKey())
         if (alreadyWaited !== 'true') {
             waitOver.value = false
-            timer.value.running = true
+            // need to give vue a moment to mount the timer
+            await new Promise(resolve => setTimeout(() => {
+                timer.value.running = true
+                resolve()
+            }), 500)
         }
     })
 
