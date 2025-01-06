@@ -1,13 +1,13 @@
 <template>
     <div>
-        <div id="waiting" v-show="!waitOver">
+        <div id="waiting" v-if="!waitOver">
             <TimerComponent @timerFinished="waitDone" :endAtTime=endWaitAt :endAtKey="endAtKey" :showButtons=false :countBy="'seconds'" ref="timer">
                 <template #text>
                     <div class="instruction">{{ waitMessage }}</div>
                 </template>
             </TimerComponent>
         </div>
-        <div id="breathing" v-show="waitOver && !doUpload">
+        <div id="breathing" v-if="waitOver && !doUpload">
             <RestComponent :key="heartMeasurementCount" :secondsDuration="120" @timerFinished="resetWait">
                 <template #preText>
                     Now you will be asked to sit quietly for two minutes with a pulse sensor on your ear to measure your heart rate.
@@ -38,7 +38,7 @@
     let endWaitAt = ref(futureMinutes(10))
     let endAtKey = 'stage2Wait1'
     const timer = ref(null)
-    const waitOver = ref(false)
+    const waitOver = ref(true)
     let waitMessage = 'Please wait at least 10 minutes before your next task, which is to rest for 2 minutes while measuring your resting heart rate.'
     const heartMeasurementCount = ref(0)
     const doUpload = ref(false)
@@ -61,9 +61,8 @@
 
         heartMeasurementCount.value = Math.max(0, restSessionsDoneToday - 1)
         const alreadyWaited = await window.mainAPI.getKeyValue(waitDoneKey())
-        if (alreadyWaited == 'true') {
-            waitOver.value = true
-        } else {
+        if (alreadyWaited !== 'true') {
+            waitOver.value = false
             timer.value.running = true
         }
     })
