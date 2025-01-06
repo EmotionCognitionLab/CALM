@@ -15,6 +15,7 @@
 
     const router = useRouter()
     const audioGuideUrl = ref(window.sessionStorage.getItem('audioGuideUrl'))
+    const playAudioPacer = window.sessionStorage.getItem('playAudioPacer')
     const condition = window.sessionStorage.getItem('condition')
     const pace = Number.parseFloat(window.sessionStorage.getItem('pace'))
     const stage = 3
@@ -42,14 +43,26 @@
     }
 
     async function sessionRestarted() {
-        await saveEmWaveSessionData(stage)
+        await saveEmWaveWithAudio()
         await setRegimes()
     }
 
     async function pacerFinished() {
-        await saveEmWaveSessionData(stage)
+        await saveEmWaveWithAudio()
         const todayMinutes = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), 3)
         const doneForToday = todayMinutes >= 36 // two 18-minute sessions/day
         router.push({name: 'stage3End', params: {doneForToday: doneForToday}})
+    }
+
+    async function saveEmWaveWithAudio() {
+        let audioFile = audioGuideUrl.value ? audioGuideUrl.value.split('/').slice(-1)[0] : null
+        if (!audioFile) {
+            if(playAudioPacer !== 'true') {
+                audioFile = 'no-audio'
+            } else {
+                audioFile = 'pacer-only'
+            }
+        }
+        await saveEmWaveSessionData(stage, audioFile)
     }
 </script>

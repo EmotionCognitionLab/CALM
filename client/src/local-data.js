@@ -70,12 +70,15 @@ function checkVersion() {
 // If there are db changes that need to happen with a particular version
 // (e.g., we've got active participants and need to upgrade their db's without
 // disturbing their data), add them here. The key should be the app version 
-// (as shown in client/version.json) and the value should be an array of DDL
+// (as shown in client/package.json) and the value should be an array of DDL
 // strings.
 const dbUpdates = {
     '1.1.0': [
         'ALTER TABLE emwave_sessions ADD weighted_inverse_coherence FLOAT DEFAULT 0.0',
         'UPDATE emwave_sessions SET weighted_inverse_coherence = (min(round(duration_seconds/60), 18)/18.0) * (10-avg_coherence)'
+    ],
+    '1.2.1': [
+        'ALTER TABLE emwave_sessions ADD audio TEXT'
     ]
 }
 
@@ -113,13 +116,13 @@ function deleteKeyValue(key) {
     stmt.run(key)
 }
 
-function saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage) {
+function saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, audio) {
     const sessionMinutes = Math.min(Math.round(durationSec / 60), maxSessionMinutes); // participants don't get extra credit for doing sessions longer than max session length
     const weightedAvgCoherence = (sessionMinutes / maxSessionMinutes) * avgCoherence;
     const weightedInverseCoherence = (sessionMinutes / maxSessionMinutes) * (10 - avgCoherence);
 
-    const insertStmt = db.prepare('INSERT INTO emwave_sessions(emwave_session_id, avg_coherence, weighted_avg_coherence, weighted_inverse_coherence, pulse_start_time, valid_status, duration_seconds, stage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-    insertStmt.run(emWaveSessionId, avgCoherence, weightedAvgCoherence, weightedInverseCoherence, pulseStartTime, validStatus, durationSec, stage);
+    const insertStmt = db.prepare('INSERT INTO emwave_sessions(emwave_session_id, avg_coherence, weighted_avg_coherence, weighted_inverse_coherence, pulse_start_time, valid_status, duration_seconds, stage, audio) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    insertStmt.run(emWaveSessionId, avgCoherence, weightedAvgCoherence, weightedInverseCoherence, pulseStartTime, validStatus, durationSec, stage, audio);
 }
 
 function getEmWaveSessionsForStage(stage) {

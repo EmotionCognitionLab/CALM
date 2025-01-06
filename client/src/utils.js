@@ -129,7 +129,7 @@ export function hzToBreathsPerMinute(hz) {
  * @param {Number} stage The stage the data should be associated with
  * @returns Promise
  */
-export function saveEmWaveSessionData(stage) {
+export function saveEmWaveSessionData(stage, audio) {
     return new Promise(resolve => setTimeout(async () => { // use setTimeout to give emWave a moment to save the session
         // if the session ended w/o emwave writing any data
         // (e.g., sensor wasn't attached at session start)
@@ -138,7 +138,7 @@ export function saveEmWaveSessionData(stage) {
         // it again
         const s = (await window.mainAPI.extractEmWaveSessionData(-1, false))[0]
         if (s.durationSec > minSessionSeconds) {
-            await window.mainAPI.saveEmWaveSessionData(s.sessionUuid, s.avgCoherence, s.pulseStartTime, s.validStatus, s.durationSec, stage)
+            await window.mainAPI.saveEmWaveSessionData(s.sessionUuid, s.avgCoherence, s.pulseStartTime, s.validStatus, s.durationSec, stage, audio)
         }
         resolve()
     }, 1000) );

@@ -302,8 +302,8 @@ ipcMain.handle('emwave-extract-sessions', (event, sinceDateTime, includeLiveIBI)
   return res;
 });
 
-ipcMain.handle('save-emwave-session', (event, emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage) => {
-  saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage);
+ipcMain.handle('save-emwave-session', (event, emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, audio) => {
+  saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, audio);
 });
 
 ipcMain.handle('delete-emwave-sessions', (event, sessions) => {

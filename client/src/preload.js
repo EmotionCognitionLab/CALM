@@ -28,7 +28,7 @@ contextBridge.exposeInMainWorld('mainAPI', {
     extractEmWaveSessionData: async (sinceDateTime, includeLiveIBI) => await ipcRenderer.invoke('emwave-extract-sessions', sinceDateTime, includeLiveIBI),
     deleteEmWaveSessions: (sessions) => ipcRenderer.invoke('delete-emwave-sessions', sessions),
     getEmWaveSessionData: async (sessionIds) => await ipcRenderer.invoke('get-emwave-session-data', sessionIds),
-    saveEmWaveSessionData: (emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage) => ipcRenderer.invoke('save-emwave-session', emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage),
+    saveEmWaveSessionData: (emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, audio) => ipcRenderer.invoke('save-emwave-session', emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, audio),
     getEmWaveSessionsForStage: async (stage) => await ipcRenderer.invoke('get-emwave-sessions-for-stage', stage),
     getEmWaveSessionMinutesForDayAndStage: async(date, stage) => await ipcRenderer.invoke('get-emwave-session-minutes-for-day-and-stage', date, stage),
     earnedStage3Bonus: async(sessionId, condition) => await ipcRenderer.invoke('earned-stage-3-bonus', sessionId, condition),
