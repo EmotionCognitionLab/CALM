@@ -71,13 +71,13 @@ const score = computed(() => {
 
 const feedbackColor = computed(() => {
     if (condition == 'A') {
-        if (score.value < 0.5) return 'red'
-        if (score.value >= 0.5 && score.value < 1.0) return 'blue'
-        return 'green'
+        if (score.value < 0.5) return 'low-score'
+        if (score.value >= 0.5 && score.value < 1.0) return 'mid-score'
+        return 'high-score'
     }
-    if (score.value <= 4) return 'red'
-    if (score.value >4 && score.value <= 7) return 'blue'
-    return 'green'
+    if (score.value <= 4) return 'low-score'
+    if (score.value >4 && score.value <= 7) return 'mid-score'
+    return 'high-score'
 })
 
 function savePulseData(hrData) {
@@ -143,13 +143,13 @@ async function pacerFinished() {
     #timer {
        width: 150px;
     }
-    .red {
+    .low-score {
         background-color: rgb(243, 103, 103);
     }
-    .blue {
+    .mid-score {
         background-color: rgb(130, 165, 242);
     }
-    .green {
+    .high-score {
         background-color: rgb(124, 231, 124);
     }
 </style>
