@@ -124,7 +124,11 @@ class Logger {
         if (args.length === 0) return;
         let msg
         if (typeof args[0] !== "string" && args.length === 1) {
-            msg = sprintf("%j", args[0])
+            if (typeof args[0] == "error") {
+                msg = sprintf("%s\n%s", args[0].message, args[0].stack)
+            } else {
+                msg = sprintf("%j", args[0])
+            }
         } else {
             msg = sprintf(args[0], ...args.slice(1), "\n");
         }
