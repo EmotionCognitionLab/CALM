@@ -27,6 +27,11 @@ app.setAboutPanelOptions({
 let mainWin = null
 const appFileEntry = path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
 
+// we default to true, then set them
+// to false when the sensor starts
+let emWaveDataUploaded = true;
+let breathDataUploaded = true;
+
 const createWindow = async () => {
   // Create the browser window.
   const win = new BrowserWindow({
@@ -195,14 +200,36 @@ ipcMain.on('current-user', async (_event, user) => {
   await l.init();
 });
 
+let quitOnUploadComplete = false;
+app.on('before-quit', async (event) => {
+  if (!breathDataUploaded || !emWaveDataUploaded) {
+    event.preventDefault();
+    emwave.stopPulseSensor();
+    // we have to send the status manually here because we're the ones stopping the sensor
+    mainWin.webContents.send('emwave-status', 'SessionEnded');
+    quitOnUploadComplete = true;
+    // give emWave a moment to save before quitting
+    await new Promise(resolve => setTimeout(() => {
+      mainWin.webContents.send('go-to', '/upload');
+      resolve()
+    }, 750));
+  } else {
+    emwave.stopEmWave();
+    closeDb();
+  }
+});
 
-app.on('before-quit', () => {
-  emwave.stopEmWave()
-  closeDb()
+ipcMain.on('upload-complete', () => {
+  if (quitOnUploadComplete) {
+    app.quit();
+  }
 })
 
 ipcMain.on('pulse-start', () => {
   emwave.startPulseSensor()
+  // reset upload flags - just assume that a sensor start means we'll have new data
+  breathDataUploaded = false
+  emWaveDataUploaded = false
 })
 
 ipcMain.on('pulse-stop', () => {
@@ -275,8 +302,8 @@ ipcMain.handle('emwave-extract-sessions', (event, sinceDateTime, includeLiveIBI)
   return res;
 });
 
-ipcMain.handle('save-emwave-session', (event, emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage) => {
-  saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage);
+ipcMain.handle('save-emwave-session', (event, emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, audio) => {
+  saveEmWaveSessionData(emWaveSessionId, avgCoherence, pulseStartTime, validStatus, durationSec, stage, audio);
 });
 
 ipcMain.handle('delete-emwave-sessions', (event, sessions) => {
@@ -311,33 +338,38 @@ ipcMain.handle('save-cognitive-results', (event, experiment, isRelevant, stage, 
   saveCognitiveResults(experiment, isRelevant, stage, results);
 });
 
+
 ipcMain.handle('upload-emwave-data', async (event, session) => {
   // give emWave a couple of seconds to save any lingering data before quitting
-  await new Promise(resolve => setTimeout(() => {
-    emwave.stopEmWave();
-    resolve();
-  }, 2000));
-  deleteShortEmwaveSessions();
-  const emWaveDb = emWaveDbPath();
-  const fullSession = SessionStore.buildSession(session);
-  await s3utils.uploadFile(fullSession, emWaveDb)
-  .catch(err => {
+  try {
+    await new Promise(resolve => setTimeout(() => {
+      emwave.stopEmWave();
+      resolve();
+    }, 2000));
+    deleteShortEmwaveSessions();
+    const emWaveDb = emWaveDbPath();
+    const fullSession = SessionStore.buildSession(session);
+    await s3utils.uploadFile(fullSession, emWaveDb);
+    emWaveDataUploaded = true;
+    return null;
+  } catch(err) {
     console.error(err);
     return (err.message);
-  });
-  return null;
+  }
 });
 
 ipcMain.handle('upload-breath-data', async (event, session) => {
-  closeDb();
-  const localDb = dbPath();
-  const fullSession = SessionStore.buildSession(session);
-  await s3utils.uploadFile(fullSession, localDb)
-  .catch(err => {
+  try {
+    closeDb();
+    const localDb = dbPath();
+    const fullSession = SessionStore.buildSession(session);
+    await s3utils.uploadFile(fullSession, localDb);
+    breathDataUploaded = true;
+    return null;
+  } catch (err) {
     console.error(err);
     return (err.message);
-  });
-  return null;
+  }
 });
 
 ipcMain.handle('get-key-value', (event, key) => {

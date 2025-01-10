@@ -29,6 +29,8 @@
             
             let lumosInfo = await window.mainAPI.getKeyValue('lumos')
             if (!lumosInfo) {
+                const session = await SessionStore.getRendererSession()
+                const apiClient = new ApiClient(session)
                 const lumosCreds = await apiClient.getLumosCredsForSelf()
                 lumosInfo = `${lumosCreds.email}:${lumosCreds.pw}`
                 await window.mainAPI.setKeyValue('lumos', lumosInfo)
@@ -64,7 +66,7 @@
                 router.push('/stage3/routing')
             }
         } else {
-            router.push({name: 'stage2', params: { mustWait: mustWaitBeforeNextStep }})
+            router.push({path: '/stage2' })
         }
         
     }

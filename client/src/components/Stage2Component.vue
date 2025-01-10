@@ -1,13 +1,13 @@
 <template>
     <div>
-        <div id="waiting" v-show="!waitOver">
+        <div id="waiting" v-if="!waitOver">
             <TimerComponent @timerFinished="waitDone" :endAtTime=endWaitAt :endAtKey="endAtKey" :showButtons=false :countBy="'seconds'" ref="timer">
                 <template #text>
                     <div class="instruction">{{ waitMessage }}</div>
                 </template>
             </TimerComponent>
         </div>
-        <div id="breathing" v-show="waitOver && !doUpload">
+        <div id="breathing" v-if="waitOver && !doUpload">
             <RestComponent :key="heartMeasurementCount" :secondsDuration="120" @timerFinished="resetWait">
                 <template #preText>
                     Now you will be asked to sit quietly for two minutes with a pulse sensor on your ear to measure your heart rate.
@@ -32,24 +32,49 @@
     import { ref, onMounted } from '@vue/runtime-core'
     import TimerComponent from './TimerComponent.vue'
     import RestComponent from './RestComponent.vue';
-    import { quit, saveEmWaveSessionData } from '../utils'
+    import { quit, saveEmWaveSessionData, yyyymmddString } from '../utils'
     import UploadComponent from './UploadComponent.vue';
 
-    const { mustWait = true } = defineProps({mustWait: Boolean})
     let endWaitAt = ref(futureMinutes(10))
     let endAtKey = 'stage2Wait1'
     const timer = ref(null)
-    const waitOver = ref(!mustWait)
+    const waitOver = ref(true)
     let waitMessage = 'Please wait at least 10 minutes before your next task, which is to rest for 2 minutes while measuring your resting heart rate.'
     const heartMeasurementCount = ref(0)
     const doUpload = ref(false)
 
     onMounted(async() => {
-        timer.value.running = true
+        const restMinutesDoneToday = await window.mainAPI.getEmWaveSessionMinutesForDayAndStage(new Date(), 2)
+        let restSessionsDoneToday
+        if (restMinutesDoneToday >= 4) {
+            doUpload.value = true
+            return
+        }
+        if (restMinutesDoneToday >= 2) {
+            restSessionsDoneToday = 1
+        } else {
+            restSessionsDoneToday = 0
+        }
+
+        heartMeasurementCount.value = restSessionsDoneToday
+        const alreadyWaited = await window.mainAPI.getKeyValue(waitDoneKey())
+        if (alreadyWaited !== 'true') {
+            waitOver.value = false
+            // need to give vue a moment to mount the timer
+            await new Promise(resolve => setTimeout(() => {
+                timer.value.running = true
+                resolve()
+            }), 500)
+        }
     })
 
     async function waitDone() {
+        await window.mainAPI.setKeyValue(waitDoneKey(), 'true')
         waitOver.value = true
+    }
+
+    function waitDoneKey() {
+        return `${yyyymmddString(new Date())}-lumos-wait-${heartMeasurementCount.value}-done`;
     }
 
     function futureMinutes(min) {
@@ -57,7 +82,7 @@
     }
     
     async function resetWait() {
-        await saveEmWaveSessionData(2) 
+        await saveEmWaveSessionData(2)
 
         if (heartMeasurementCount.value == 0) {
             waitMessage = "Your first resting heart rate measurement is complete. As before, please wait at least 10 minutes before completing another 2 minutes of heart rate measurement."

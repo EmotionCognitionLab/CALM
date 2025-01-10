@@ -23,6 +23,7 @@
             await window.mainAPI.uploadBreathData(sess)
             uploadComplete.value = true
             emit('upload-complete')
+            await window.mainAPI.uploadComplete()
         } catch (err) {
             console.error('Error uploading data', err)
         }
