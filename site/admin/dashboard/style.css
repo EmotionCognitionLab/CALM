@@ -117,14 +117,16 @@ label {
     transform: translateX(-50%);
     top: 20%;
     box-shadow: 5px 5px 2px lightgray;
+    max-height: 60%;
+    overflow-y: auto;
 }
 
 #close-button {
     position: absolute;
     color: black;
     font-size: 30px;
-    top: -10px;
-    right: -10px;
+    top: 10px;
+    right: 15px;
 }
 
 .pay-info {
