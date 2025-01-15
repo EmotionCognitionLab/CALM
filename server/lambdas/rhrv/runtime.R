@@ -184,50 +184,58 @@ log_info("Querying for events")
 while (TRUE) {
   tryCatch(
     {
-      event <- GET(url = next_invocation_endpoint)
+      event <- GET(url = next_invocation_endpoint, timeout(Inf))
       log_debug("Event received")
       handle_event(event)
     },
      api_error = function(e) {
       log_error(as.character(e))
-      aws_request_id <-
-        headers(event)[["lambda-runtime-aws-request-id"]]
-      if (exists("aws_request_id")) {
-        log_debug("POSTing invocation error for ID:", aws_request_id)
-        invocation_error_endpoint <- paste0(
-          "http://", lambda_runtime_api, "/2018-06-01/runtime/invocation/",
-          aws_request_id, "/error"
-        )
-        POST(
-          url = invocation_error_endpoint,
-          body = list(
-            statusCode = e$code,
-            error_message = as.character(e$message)),
-          encode = "json"
-        )
+      if (exists("event")) {
+        aws_request_id <-
+          headers(event)[["lambda-runtime-aws-request-id"]]
+        if (exists("aws_request_id")) {
+          log_debug("POSTing invocation error for ID:", aws_request_id)
+          invocation_error_endpoint <- paste0(
+            "http://", lambda_runtime_api, "/2018-06-01/runtime/invocation/",
+            aws_request_id, "/error"
+          )
+          POST(
+            url = invocation_error_endpoint,
+            body = list(
+              statusCode = e$code,
+              error_message = as.character(e$message)),
+            encode = "json"
+          )
+        } else {
+          log_debug("No invocation ID!",
+            "Can't clear this request from the queue.")
+        }
       } else {
-        log_debug("No invocation ID!",
-          "Can't clear this request from the queue.")
+        log_error("Failed to get event from next invocation call")
       }
     },
     error = function(e) {
       log_error(as.character(e))
-      aws_request_id <-
-        headers(event)[["lambda-runtime-aws-request-id"]]
-      if (exists("aws_request_id")) {
-        log_debug("POSTing invocation error for ID:", aws_request_id)
-        invocation_error_endpoint <- paste0(
-          "http://", lambda_runtime_api, "/2018-06-01/runtime/invocation/",
-          aws_request_id, "/error"
-        )
-        POST(
-          url = invocation_error_endpoint,
-          body = list(error_message = as.character(e)),
-          encode = "json"
-        )
+      if (exists("event")) {
+        aws_request_id <-
+          headers(event)[["lambda-runtime-aws-request-id"]]
+        if (exists("aws_request_id")) {
+          log_debug("POSTing invocation error for ID:", aws_request_id)
+          invocation_error_endpoint <- paste0(
+            "http://", lambda_runtime_api, "/2018-06-01/runtime/invocation/",
+            aws_request_id, "/error"
+          )
+          POST(
+            url = invocation_error_endpoint,
+            body = list(error_message = as.character(e)),
+            encode = "json"
+          )
+        } else {
+          log_debug("No invocation ID!",
+            "Can't clear this request from the queue.")
+        }
       } else {
-        log_debug("No invocation ID!",
-          "Can't clear this request from the queue.")
+        log_error("Failed to get event from next invocation call")
       }
     }
   )
