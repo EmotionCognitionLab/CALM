@@ -303,7 +303,7 @@ async function saveEarnings(data) {
         PutRequest: {
             Item: {
                 userId: r.userId,
-                dateType: `${dayjs(r.date).tz('America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`,
+                dateType: `${dayjs.tz(r.date, 'YYYY-MM-DD', 'America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, // although we don't use the dayjs CustomParseFormat, our data-forge dependency does. It overrides our configuration of dayjs, meaning we need to specify the date format here.
                 amount: earningsAmounts[earningsTypes.LUMOSITY]
             }
         }
