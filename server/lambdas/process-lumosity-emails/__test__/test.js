@@ -154,7 +154,7 @@ describe("Processing reports from S3", () => {
                 { email_address: lumosAcct.email, game_name: 'Familiar Faces Web', created_at_utc: '2022-05-07 12:19:08', game_lpi: 390 },
             ];
             await processGameReport(playsData);
-            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: `${dayjs(playsData[0].created_at_utc.substring(0, 10)).tz('America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, amount: earningsAmounts[earningsTypes.LUMOSITY] }];
+            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: `${dayjs.tz(playsData[0].created_at_utc.substring(0, 10), 'YYYY-MM-DD', 'America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, amount: earningsAmounts[earningsTypes.LUMOSITY] }];
             await confirmEarningsWritten(expectedEarnings);
         });
 
@@ -166,7 +166,7 @@ describe("Processing reports from S3", () => {
                 { email_address: lumosAcct.email, game_name: 'Ebb and Flow Web', created_at_utc: '2022-05-07 12:27:52', game_lpi: 270 },
             ];
             await processGameReport(playsData);
-            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: `${dayjs(playsData[0].created_at_utc.substring(0, 10)).tz('America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, amount: earningsAmounts[earningsTypes.LUMOSITY] }];
+            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: `${dayjs.tz(playsData[0].created_at_utc.substring(0, 10), 'YYYY-MM-DD', 'America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, amount: earningsAmounts[earningsTypes.LUMOSITY] }];
             await confirmEarningsWritten(expectedEarnings);
         });
 
@@ -177,7 +177,7 @@ describe("Processing reports from S3", () => {
                 { email_address: lumosAcct.email, game_name: 'Familiar Faces Web', created_at_utc: '2022-05-08 02:19:08', game_lpi: 390 },
             ];
             await processGameReport(playsData);
-            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: `${dayjs(playsData[0].created_at_utc.substring(0, 10)).tz('America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, amount: earningsAmounts[earningsTypes.LUMOSITY] }];
+            const expectedEarnings = [{ userId: lumosAcct.owner, dateType: `${dayjs.tz(playsData[0].created_at_utc.substring(0, 10), 'YYYY-MM-DD', 'America/Los_Angeles').format()}|${earningsTypes.LUMOSITY}`, amount: earningsAmounts[earningsTypes.LUMOSITY] }];
             await confirmEarningsWritten(expectedEarnings);
         });
 
