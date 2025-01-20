@@ -18,6 +18,7 @@
     import { SpatialOrientation } from '../cognitive/spatial-orientation/spatial-orientation'
     import { TaskSwitching } from '../cognitive/task-switching/task-switching'
     import { VerbalLearning } from '../cognitive/verbal-learning/verbal-learning'
+    import { EventSegmentation } from '../cognitive/event-segmentation/event-segmentation'
     import UploadComponent from './UploadComponent.vue'
     import version from '../../version.json'
 
@@ -36,7 +37,8 @@
             {name: 'flanker-2', setNum: 5},
             {name: 'verbal-learning-recall', setNum: stage == 1 ? 1 : 8},
             {name: 'task-switching', setNum: 0},
-            {name: 'emomem-recall', setNum: stage == 1 ? 1 : 3}
+            {name: 'emomem-recall', setNum: stage == 1 ? 1 : 3},
+            {name: 'event-segmentation', setNum: stage}
         ]
         const tasksMap = await Promise.all(taskInfo.map(async (ti) => {
             const done = await hasDoneCognitiveExperiment(ti.name, stage)
@@ -102,6 +104,9 @@
         }
         if (taskInfo.name == 'emomem-learning' || taskInfo.name == 'emomem-recall') {
             return new EmotionalMemory(jsPsych, taskInfo.setNum)
+        }
+        if (taskInfo.name == 'event-segmentation') {
+            return new EventSegmentation(jsPsych, taskInfo.setNum)
         }
             
         throw new Error(`No class found for task ${taskInfo.name}.`)
