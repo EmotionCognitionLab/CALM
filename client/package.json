@@ -1,7 +1,7 @@
 {
   "name": "calm-study",
   "productName": "CALM Study",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "An application that guides participants through the CALM Study",
   "main": ".vite/build/main.js",
   "scripts": {
