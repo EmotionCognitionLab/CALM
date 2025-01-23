@@ -20,7 +20,7 @@
     import { VerbalLearning } from '../cognitive/verbal-learning/verbal-learning'
     import { EventSegmentation } from '../cognitive/event-segmentation/event-segmentation'
     import UploadComponent from './UploadComponent.vue'
-    import version from '../../version.json'
+    import packageInfo from '../../package.json'
 
     const props = defineProps(['stageNum'])
     const allDone = ref(false)
@@ -60,7 +60,7 @@
         const jsPsych = initJsPsych({
             on_data_update: saver, 
             on_finish: async function() {
-                saveResults(t.name, stage, [{v: version.v, taskCompleted: true}])
+                saveResults(t.name, stage, [{v: packageInfo.version, taskCompleted: true}])
                 // #11 w/o a page reload every initJsPsych call adds a new
                 // wrapper to the page, so delete it before proceeding
                 const wrappers = document.getElementsByClassName('jspsych-content-wrapper')

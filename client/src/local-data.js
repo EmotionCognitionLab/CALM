@@ -84,7 +84,7 @@ const dbUpdates = {
 
 /**
  * Given the current version of the database (from the most recent row in the version table)
- * and the current version of the app (as shown in client/version.json), finds all of the
+ * and the current version of the app (as shown in package.json), finds all of the
  * keys in dbUpdates that are greater that the current db version and less than or equal
  * to the current app version and runs the associated DDL statements.
  * @param {string} curVersion 
