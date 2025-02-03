@@ -5,8 +5,10 @@ import "jspsych/css/jspsych.css";
 import "../css/common.css";
 import buildingBlocksMov from "./BuildingBlocks.mp4";
 
-const welcome_html = (await import("./frag/welcome.html?raw")).default;
-const visit2_html = (await import("./frag/visit2.html?raw")).default;
+const instruction1_html = (await import("./frag/instruction1.html?raw")).default;
+const instruction2_html = (await import("./frag/instruction2.html?raw")).default;
+const instruction3_html = (await import("./frag/instruction3.html?raw")).default;
+const instruction1_post_html = (await import("./frag/instruction1-post.html?raw")).default;
 
 
 export class EventSegmentation {
@@ -19,7 +21,9 @@ export class EventSegmentation {
         if (this.setNum == 1) {
             // return pre-intervention timeline
             return [
-                EventSegmentation.welcomeInstruction,
+                EventSegmentation.instruction(instruction1_html),
+                EventSegmentation.instruction(instruction2_html),
+                EventSegmentation.instruction(instruction3_html),
                 EventSegmentation.videoTrial,
                 EventSegmentation.difficultySurvey,
                 EventSegmentation.familiaritySurvey
@@ -28,8 +32,9 @@ export class EventSegmentation {
         } else {
             // return post-intervention timeline
             return [
-                EventSegmentation.welcomeInstruction,
-                EventSegmentation.visit2Instruction,
+                EventSegmentation.instruction(instruction1_post_html),
+                EventSegmentation.instruction(instruction2_html),
+                EventSegmentation.instruction(instruction3_html),
                 EventSegmentation.videoTrial,
                 EventSegmentation.memorySurvey,
                 EventSegmentation.difficultySurvey,
@@ -41,16 +46,12 @@ export class EventSegmentation {
 
 EventSegmentation.taskName = "event-segmentation";
 
-EventSegmentation.welcomeInstruction = {
-    type: htmlKeyboardResponse,
-    stimulus: welcome_html,
-    choices: [" "]
-};
-
-EventSegmentation.visit2Instruction = {
-    type: htmlKeyboardResponse,
-    stimulus: visit2_html,
-    choices: [" "]
+EventSegmentation.instruction = (stimulus) => {
+    return {
+        type: htmlKeyboardResponse,
+        stimulus: stimulus,
+        choices: [" "]
+    }
 }
 
 EventSegmentation.videoTrial = {
