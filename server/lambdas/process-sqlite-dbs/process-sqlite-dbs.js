@@ -180,7 +180,7 @@ async function saveCogResults(userId, results) {
         const params = { RequestItems: {} };
         params.RequestItems[cogResultsTable] = cogPuts.splice(0, 25);
         const resp = await docClient.send(new BatchWriteCommand(params));
-        if (resp.UnprocessedItems.length > 0) {
+        if (resp.UnprocessedItems[cogResultsTable] && resp.UnprocessedItems[cogResultsTable].length > 0) {
             await retrySaveWithBackoff(resp.UnprocessedItems);
         }
     }
@@ -245,10 +245,10 @@ async function retrySaveWithBackoff(unprocessedItems) {
     let curTry = 0;
     const delayMs = 100;
     const maxTries = 7;
-    while (curTry < maxTries && remainingItems.length > 0) {
+    while (curTry < maxTries && remainingItems[cogResultsTable] && remainingItems[cogResultsTable].length > 0) {
         await new Promise(resolve => setTimeout(resolve, delayMs * Math.pow(2, curTry)));
         console.log(`Got unprocessed items saving earnings and sessions, re-attempting try #${curTry}...`);
-        const resp = await docClient.send(new BatchWriteCommand(remainingItems));
+        const resp = await docClient.send(new BatchWriteCommand({ RequestItems: remainingItems }));
         remainingItems = resp.UnprocessedItems;
         curTry += 1;
     }
