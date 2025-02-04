@@ -127,7 +127,7 @@ function buildMenuTemplate(window) {
         { label: 'Daily Training', id: TRAINING_MENU_ID, click: () => window.webContents.send('go-to', '/current-stage')},
         { label: 'General Study Info', id: INFO_MENU_ID, click: () => window.webContents.send('go-to', '/info')},
         { label: 'FAQ', id: FAQ_MENU_ID, click: () => window.webContents.send('go-to', '/faq')},
-        { label: 'Lab Visit 2', id: LAB_VISIT_MENU_ID, click: () => window.webContents.send('go-to', '/setup/3'), visible: false, accelerator: 'CmdOrCtrl+Shift+L'}
+        { label: 'Lab Visit 2', id: LAB_VISIT_MENU_ID, click: () => window.webContents.send('go-to', '/setup/4'), visible: false, accelerator: 'CmdOrCtrl+Shift+L'}
       ]
     },
     // { role: 'windowMenu' }
