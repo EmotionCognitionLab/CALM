@@ -93,8 +93,7 @@
             return new Flanker(jsPsych, set)
         }
         if (taskInfo.name == 'spatial-orientation') {
-            const set = stage == 1 ? 1 : 7
-            return new SpatialOrientation(jsPsych, set)
+            return new SpatialOrientation(jsPsych, taskInfo.setNum)
         }
         if (taskInfo.name == 'task-switching') {
             return new TaskSwitching(jsPsych)
