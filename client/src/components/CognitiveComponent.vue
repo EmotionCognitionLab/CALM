@@ -89,8 +89,7 @@
             return new VerbalLearning(jsPsych, taskInfo.setNum, 1)
         }
         if (taskInfo.name == 'flanker-1' || taskInfo.name == 'flanker-2') {
-            const set = stage == 1 ? 3 : 5
-            return new Flanker(jsPsych, set)
+            return new Flanker(jsPsych, taskInfo.setNum)
         }
         if (taskInfo.name == 'spatial-orientation') {
             return new SpatialOrientation(jsPsych, taskInfo.setNum)
