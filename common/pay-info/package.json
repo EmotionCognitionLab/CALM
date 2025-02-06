@@ -1,6 +1,6 @@
 {
   "name": "pay-info",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "payment info dashboard and logic",
   "main": "dist/payinfo.bundle.js",
   "scripts": {

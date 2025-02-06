@@ -50,8 +50,14 @@ export class Payboard {
             const templateData = Object.entries(data).map(([k, v]) => {
                 const dateParts = k.split('-');
                 v['day'] = `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}`; // convert YYYY-MM-DD to MM/DD/YYYY
+                v['visits'] = Math.round(v['visits'] * 100) / 100;
+                v['lumosity'] = Math.round(v['lumosity'] * 100) / 100;
+                v['sessions'] = Math.round(v['sessions'] * 100) / 100;
+                v['bonuses'] = Math.round(v['bonuses'] * 100) / 100;
+                v['total'] = Math.round(v['total'] * 100) / 100;
                 return v
             });
+            overallTotal = Math.round(overallTotal * 100) / 100;
 
             this.rootDiv.innerHTML = payboardTempl({'earnings': templateData, 'overallTotal': overallTotal});
         } catch (err) {

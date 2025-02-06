@@ -18,8 +18,9 @@
     import { SpatialOrientation } from '../cognitive/spatial-orientation/spatial-orientation'
     import { TaskSwitching } from '../cognitive/task-switching/task-switching'
     import { VerbalLearning } from '../cognitive/verbal-learning/verbal-learning'
+    import { EventSegmentation } from '../cognitive/event-segmentation/event-segmentation'
     import UploadComponent from './UploadComponent.vue'
-    import version from '../../version.json'
+    import packageInfo from '../../package.json'
 
     const props = defineProps(['stageNum'])
     const allDone = ref(false)
@@ -36,7 +37,8 @@
             {name: 'flanker-2', setNum: 5},
             {name: 'verbal-learning-recall', setNum: stage == 1 ? 1 : 8},
             {name: 'task-switching', setNum: 0},
-            {name: 'emomem-recall', setNum: stage == 1 ? 1 : 3}
+            {name: 'emomem-recall', setNum: stage == 1 ? 1 : 3},
+            {name: 'event-segmentation', setNum: stage}
         ]
         const tasksMap = await Promise.all(taskInfo.map(async (ti) => {
             const done = await hasDoneCognitiveExperiment(ti.name, stage)
@@ -58,7 +60,7 @@
         const jsPsych = initJsPsych({
             on_data_update: saver, 
             on_finish: async function() {
-                saveResults(t.name, stage, [{v: version.v, taskCompleted: true}])
+                saveResults(t.name, stage, [{v: packageInfo.version, taskCompleted: true}])
                 // #11 w/o a page reload every initJsPsych call adds a new
                 // wrapper to the page, so delete it before proceeding
                 const wrappers = document.getElementsByClassName('jspsych-content-wrapper')
@@ -87,12 +89,10 @@
             return new VerbalLearning(jsPsych, taskInfo.setNum, 1)
         }
         if (taskInfo.name == 'flanker-1' || taskInfo.name == 'flanker-2') {
-            const set = stage == 1 ? 3 : 5
-            return new Flanker(jsPsych, set)
+            return new Flanker(jsPsych, taskInfo.setNum)
         }
         if (taskInfo.name == 'spatial-orientation') {
-            const set = stage == 1 ? 1 : 7
-            return new SpatialOrientation(jsPsych, set)
+            return new SpatialOrientation(jsPsych, taskInfo.setNum)
         }
         if (taskInfo.name == 'task-switching') {
             return new TaskSwitching(jsPsych)
@@ -102,6 +102,9 @@
         }
         if (taskInfo.name == 'emomem-learning' || taskInfo.name == 'emomem-recall') {
             return new EmotionalMemory(jsPsych, taskInfo.setNum)
+        }
+        if (taskInfo.name == 'event-segmentation') {
+            return new EventSegmentation(jsPsych, taskInfo.setNum)
         }
             
         throw new Error(`No class found for task ${taskInfo.name}.`)

@@ -65,6 +65,7 @@
         if (playAudioPacer.value) {
             pacerConfig.audioInhaleUrl = `${awsSettings.ImagesUrl}/assets/breath_in.mp3`
             pacerConfig.audioExhaleUrl = `${awsSettings.ImagesUrl}/assets/breath_out.mp3`
+            pacerConfig.audioVolume = 0.2
         }
         // if we don't do this we'll fail to emit regime-changed
         // events b/c Object.clone (used by electron's ipc event system)
