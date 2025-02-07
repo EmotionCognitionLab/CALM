@@ -71,7 +71,11 @@ const user = {
     name: 'Kim',
     phone_number: '012-345-6789',
     sub: 'abc123',
-    createdAt: '2022-03-19T08:17:37.381Z'
+    createdAt: '2022-03-19T08:17:37.381Z',
+    progress: {
+        status: statusTypes.STAGE_1_COMPLETE,
+        stage1CompletedOn: '20220319'
+    }
 };
 
 const lumosAcct = {
@@ -296,16 +300,17 @@ describe("Processing reports from S3", () => {
         });
 
         test("should update the stage2Complete status for a user who has played each game three times even if they started less than seven days ago", async () => {
-            const newUserStartDate = dayjs().subtract(4, 'days').toISOString();
+            const newUserStartDate = dayjs().subtract(4, 'days');
             const newUser = {
                 userId: 'def456',
                 email: 'someone_else@example.com',
                 name: 'Pat',
                 phone_number: '010-098-2315',
                 sub: 'def456',
-                createdAt: newUserStartDate,
+                createdAt: newUserStartDate.toISOString(),
                 progress: {
-                    foo: 19
+                    status: statusTypes.STAGE_1_COMPLETE,
+                    stage1CompletedOn: newUserStartDate.format('YYYYMMDD')
                 }
             };
             
@@ -326,7 +331,7 @@ describe("Processing reports from S3", () => {
             await confirmStage2Complete(newLumosAcct.owner);
         });
 
-        test("should not undo a user's stage2Status", async () => {
+        test("should not undo a user's stage2Status if the lumosity report indicates they have not completed stage 2", async () => {
             const progress = {};
             progress.status = statusTypes.STAGE_2_COMPLETE;
             progress[statusTypes.STAGE_2_COMPLETED_ON] = dayjs(new Date()).tz('America/Los_Angeles').format('YYYYMMDD');
@@ -348,6 +353,29 @@ describe("Processing reports from S3", () => {
 
             await confirmStage2Complete(lumosAcct.owner);
         });
+
+        test.each([[statusTypes.COMPLETE], [statusTypes.DROPPED]])("should not update the user's status to stage2Complete if they have a status of %s", async (status) => {
+            const progress = {};
+            progress.status = status;
+            progress[statusTypes.STAGE_2_COMPLETED_ON] = dayjs(new Date()).tz('America/Los_Angeles').format('YYYYMMDD');
+            const params = {
+                TableName: usersTable,
+                Key: { userId: lumosAcct.owner },
+                UpdateExpression: 'set progress = :progress',
+                ExpressionAttributeValues: {':progress': progress }
+            };
+            await docClient.send(new UpdateCommand(params));
+            
+            // for stage2Completed to be true every game in allGames must be played at least twice
+            const playsData = [0,1].map( () => {
+                return allGames.map(g => {
+                    return { email_address: lumosAcct.email, game_name: g, created_at_utc: randCreatedAt(), game_lpi: 492 };
+                });
+            }).flatMap(a => a);
+            await processGameReport(playsData);
+            await confirmStatus(lumosAcct.owner, status);
+        });
+
     });
 
     describe('A user engagement report', () => {
@@ -457,15 +485,20 @@ async function confirmEarningsWritten(expectedEarnings) {
 }
 
 async function confirmStage2Complete(userId) {
+    const res = await confirmStatus(userId, statusTypes.STAGE_2_COMPLETE);
+    const today = dayjs(new Date()).tz('America/Los_Angeles').format('YYYYMMDD');
+    expect(res.Items[0]['progress'][statusTypes.STAGE_2_COMPLETED_ON]).toBe(today);
+}
+
+async function confirmStatus(userId, expectedStatus) {
     const qParams = {
         TableName: usersTable,
         KeyConditionExpression: 'userId = :userId',
         ExpressionAttributeValues: { ':userId': userId }
     };
     const res = await docClient.send(new QueryCommand(qParams));
-    expect(res.Items[0]['progress']['status']).toBe(statusTypes.STAGE_2_COMPLETE);
-    const today = dayjs(new Date()).tz('America/Los_Angeles').format('YYYYMMDD');
-    expect(res.Items[0]['progress'][statusTypes.STAGE_2_COMPLETED_ON]).toBe(today);
+    expect(res.Items[0]['progress']['status']).toBe(expectedStatus);
+    return res;
 }
 
 async function runAttachmentLambda() {
