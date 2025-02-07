@@ -112,7 +112,7 @@ export async function processreports(event) {
         email: em,
         userId: userId,
         lastPlay: lastPlay,
-        stage2Complete: userInfo.progress?.status == statusTypes.STAGE_2_COMPLETE,
+        inStage2: userInfo.progress?.status == statusTypes.STAGE_1_COMPLETE,
         stage1StartedOn: userInfo.createdAt,
         user: userInfo
       };
@@ -174,12 +174,12 @@ export async function processreports(event) {
     }
 
     for (const [email, {twoPlays, threePlays}] of Object.entries(stage2StatusMap)) {
-      if (twoPlays && email2UserInfoMap[email].stage2Complete) continue;
-      if (!twoPlays && email2UserInfoMap[email].stage2Complete) {
+      if (twoPlays && !email2UserInfoMap[email].inStage2) continue;
+      if (!twoPlays && !email2UserInfoMap[email].inStage2) {
         console.error(`Error: User ${email2UserInfoMap[email].userId} had previously completed stage 2 but now appears to not have completed it.`);
         continue;
       }
-      if (twoPlays && !email2UserInfoMap[email].stage2Complete) {
+      if (twoPlays && email2UserInfoMap[email].inStage2) {
         const stage1Start = dayjs(email2UserInfoMap[email].stage1StartedOn).tz('America/Los_Angeles')
         const today = dayjs().tz('America/Los_Angeles');
 
