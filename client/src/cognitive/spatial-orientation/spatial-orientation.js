@@ -68,7 +68,7 @@ export class SpatialOrientation {
             i(test_instruction_html),
             {
                 type: callFunction,
-                func: () => { endTime = Date.now() + 5 * 60 * 1000; }  // 5 minutes after instruction shown
+                func: () => { endTime = Date.now() + 150 * 1000; }  // 150 seconds (2.5 minutes) after instruction shown
             },
             ...testStim.map(s => t(s.center, s.facing, s.target, "test", null, () => endTime)),
         ];
