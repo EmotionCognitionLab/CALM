@@ -34,7 +34,6 @@
             {name: 'flanker-1', setNum: 3},
             {name: 'emomem-learning', setNum: stage == 1 ? 0 : 2},
             {name: 'spatial-orientation', setNum: stage == 1 ? 0 : 1},
-            {name: 'verbal-learning-recall', setNum: stage == 1 ? 1 : 8},
             {name: 'task-switching', setNum: 0},
             {name: 'emomem-recall', setNum: stage == 1 ? 1 : 3},
             {name: 'event-segmentation', setNum: stage}
@@ -85,7 +84,7 @@
 
     function buildTask(taskInfo, jsPsych) {
         if (taskInfo.name == 'verbal-learning-learning') {
-            return new VerbalLearning(jsPsych, taskInfo.setNum, 1)
+            return new VerbalLearning(jsPsych, taskInfo.setNum)
         }
         if (taskInfo.name == 'flanker-1' || taskInfo.name == 'flanker-2') {
             return new Flanker(jsPsych, taskInfo.setNum)
@@ -96,9 +95,6 @@
         if (taskInfo.name == 'task-switching') {
             return new TaskSwitching(jsPsych)
         }
-        if (taskInfo.name == 'verbal-learning-recall') {
-            return new VerbalLearning(jsPsych, taskInfo.setNum, 2, verbalLearningEndTime)
-        }
         if (taskInfo.name == 'emomem-learning' || taskInfo.name == 'emomem-recall') {
             return new EmotionalMemory(jsPsych, taskInfo.setNum)
         }
@@ -107,16 +103,6 @@
         }
             
         throw new Error(`No class found for task ${taskInfo.name}.`)
-    }
-
-    async function verbalLearningEndTime() {
-        // get date of last verbal learning result and return it as a Date
-        const lastVllResult = await window.mainAPI.latestExperimentResult('verbal-learning-learning', stage)
-        const data = JSON.parse(lastVllResult.results)
-        if (!data.length || !data[0].taskCompleted) {
-            throw new Error(`Trying to start verbal-learning-recall, but final verbal-learning-learning result is not valid. (vll data: ${lastVllResult.results})`)
-        }
-        return Date.parse(lastVllResult.dateTime)
     }
 
     async function hasDoneCognitiveExperiment(experiment, stage) {
