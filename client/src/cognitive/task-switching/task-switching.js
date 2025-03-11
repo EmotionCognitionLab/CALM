@@ -15,14 +15,14 @@ export class TaskSwitching {
         const options = ["color", "number", "size"];
         const firstExercise = this.jsPsych.randomization.sampleWithoutReplacement(options, 1)[0];
         const exercises = [firstExercise];
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 8; i++) {
             const nextExercise = this.biasedPick(exercises[i], options);
             exercises.push(nextExercise);
         }
         const exerciseNodes = exercises.map(e => this.node("exercise", e, 1));
         const mixedNodes = [];
         for (let i = 0; i < 4; i++) {
-            const mixed = this.jsPsych.randomization.sampleWithReplacement(options, 34);
+            const mixed = this.jsPsych.randomization.sampleWithReplacement(options, 17);
             mixed.forEach(m => mixedNodes.push(this.node("mixed", m, 1, i + 1)));
             if (i < 3) {
                 mixedNodes.push(this.waitTimeline);
@@ -44,9 +44,9 @@ export class TaskSwitching {
         const numberIntro = genericIntro + this.singleBlockHtml("number");
 
         const singles = this.jsPsych.randomization.shuffle([
-            [this.constructor.instruction(colorIntro), this.node("single", "color", 16)], 
-            [this.constructor.instruction(sizeIntro), this.node("single", "size", 16)],
-            [this.constructor.instruction(numberIntro), this.node("single", "number", 16)]    
+            [this.constructor.instruction(colorIntro), this.node("single", "color", 8)], 
+            [this.constructor.instruction(sizeIntro), this.node("single", "size", 8)],
+            [this.constructor.instruction(numberIntro), this.node("single", "number", 8)]    
         ]).flat();
         
         const firstInst = this.constructor.instruction(this.instr1Html(2, "small"));
