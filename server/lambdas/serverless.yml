@@ -214,6 +214,23 @@ functions:
       DYNAMO_ENDPOINT: "https://dynamodb.${self:provider.region}.amazonaws.com"
     role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/unregistered}
 
+  participant-report:
+    handler: reports/intervention-participants.handler
+    events:
+      - schedule:
+          name: "${self:service}-${self:provider.stage}-participant-report"
+          rate: cron(30 19 8 * ? *)
+          enabled: ${self:custom.isProd.${self:provider.stage}}
+    environment:
+      EMAIL_SENDER: "uscemotioncognitionlab@gmail.com"
+      REGION: ${self:provider.region}
+      SES_ENDPOINT: "https://email.${self:provider.region}.amazonaws.com"
+      SESSIONS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/sessions}
+      STAFF_LABEL: ${ssm:/${self:service}/${self:provider.stage}/info/redcap/staff/rcid}
+      RECIPIENT_EMAILS: ${ssm:/${self:service}/${self:provider.stage}/info/report/status/recipients}
+
+    role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/dynamodb/sns/ses}
+
   rcid-exists:
     handler: register/register.rcidExists
     events:
