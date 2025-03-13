@@ -129,6 +129,13 @@ resource "aws_ssm_parameter" "staff-rcid" {
   value = var.redcap-staff-rcid
 }
 
+resource "aws_ssm_parameter" "participant-status-report-recipients" {
+  name = "/${var.project}/${var.env}/info/report/status/recipients"
+  description = "Recipients of participant status report"
+  type = "SecureString"
+  value = var.participant-status-report-recipients
+}
+
 # SES rules to write email to bucket
 resource "aws_ses_receipt_rule_set" "main" {
   rule_set_name = "${var.project}-ses-rules"

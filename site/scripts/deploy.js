@@ -2,7 +2,7 @@ const awsSettings = require("../../common/aws-settings.json");
 const S3 = require("aws-sdk/clients/S3");
 const CF = require("aws-sdk/clients/CloudFront");
 const AWS = require("aws-sdk");
-AWS.config.region = awsSettings.AWSRegion;
+AWS.config.region = 'us-east-2';
 const { readdirSync, readFileSync } =  require("fs");
 const path = require("path");
 const mime = require("mime-types");
@@ -33,6 +33,7 @@ function uploadFile(fpath, key) {
         Bucket: awsSettings.DeploymentBucket,
         Key: key,
         Body: contents,
+        ACL: "public-read",
         ContentType: contentType
     };
     const upload = new S3.ManagedUpload({params: params});

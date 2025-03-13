@@ -41,6 +41,11 @@ variable "redcap-staff-rcid" {
     sensitive = true
 }
 
+variable "participant-status-report-recipients" {
+    description = "Recipients of participant status reports"
+    sensitive = true
+}
+
 variable "data-bucket" {
     description =  "S3 bucket for participant data"
 }
