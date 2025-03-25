@@ -12,22 +12,16 @@ export class TaskSwitching {
     }
 
     getTimeline() {
-        const options = ["color", "number", "size"];
-        const firstExercise = this.jsPsych.randomization.sampleWithoutReplacement(options, 1)[0];
-        const exercises = [firstExercise];
-        for (let i = 0; i < 8; i++) {
-            const nextExercise = this.biasedPick(exercises[i], options);
-            exercises.push(nextExercise);
-        }
+        const exercises = this.jsPsych.randomization.shuffle(["color", "number", "size", "color", "number", "size", "color", "number", "size"]);
         const exerciseNodes = exercises.map(e => this.node("exercise", e, 1));
-        const mixedNodes = [];
-        for (let i = 0; i < 4; i++) {
-            const mixed = this.jsPsych.randomization.sampleWithReplacement(options, 17);
-            mixed.forEach(m => mixedNodes.push(this.node("mixed", m, 1, i + 1)));
-            if (i < 3) {
-                mixedNodes.push(this.waitTimeline);
-            }
+
+        const options = ["color", "number", "size"];
+        let mixedNodes = [];
+        for (let i = 0; i < 66; i++) {
+            mixedNodes.push(this.node("mixed", options[i % 3], 1, i + 1));
         }
+        mixedNodes = this.jsPsych.randomization.shuffle(mixedNodes);
+        
         // hack to remove the black background we use for this task
         const finalNode = mixedNodes[mixedNodes.length - 1];
         const finalTimeline = finalNode.timeline;
@@ -332,36 +326,6 @@ export class TaskSwitching {
         data: {
             isTraining: true
         }
-    }
-
-    /**
-     * Returns either curItem (50% chance)
-     * or one of allItems that is not curItem. curItem may appear in
-     * allItems, but no more than once. The items in allItems
-     * must be comparable using === so do not use this
-     * with an array of objects or an array of arrays.
-     */
-    biasedPick(curItem, allItems) {
-        if (Math.random() < 0.5) {
-            return curItem;
-        }
-        const alternates = this.jsPsych.randomization.sampleWithoutReplacement(allItems, 2);
-        if (alternates[0] === curItem) {
-            return alternates[1];
-        }
-        return alternates[0];
-    }
-
-    wait = {
-        type: htmlKeyboardResponse,
-        stimulus: () => { return `<div class="small"><p>Time for a short break!</p> <br/> ${this.jsPsych.evaluateTimelineVariable('timerVal')}</div>` },
-        trial_duration: 1000,
-        choices: "NO_KEYS"
-    }
-
-    waitTimeline = {
-        timeline: [this.wait],
-        timeline_variables: [15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, "READY", "SET", "GO"].map(i =>  ({timerVal: i}))
     }
 }
 
