@@ -28,3 +28,4 @@ export const maxSessionMinutes = 18;
 export const minSessionSeconds = 30;
 export const maxDailyTimeEarnings = 6;
 export const stage2BreathingMinutes = 2;
+export const bonusEligibilityMinutes = 360;

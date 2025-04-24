@@ -151,6 +151,12 @@ function getEmWaveSessionMinutesForDayAndStage(date, stage) {
     return Math.floor(result / 60);
 }
 
+function getEmWaveSessionMinutesForStage(stage) {
+    const stmt = db.prepare('SELECT sum(duration_seconds) as total_seconds FROM emwave_sessions where stage = ?');
+    const result = stmt.all(stage)[0].total_seconds;
+    return Math.floor(result / 60);
+}
+
 function getEmWaveWeightedAvgCoherencesForStage(stage) {
     const stmt = db.prepare('SELECT weighted_avg_coherence FROM emwave_sessions WHERE stage = ?');
     const result = stmt.all(stage);
@@ -269,6 +275,7 @@ export {
     deleteEmWaveSessions,
     getEmWaveSessionsForStage,
     getEmWaveSessionMinutesForDayAndStage,
+    getEmWaveSessionMinutesForStage,
     getEmWaveWeightedAvgCoherencesForStage,
     earnedStage3Bonus,
     hasDoneCognitiveExperiment,

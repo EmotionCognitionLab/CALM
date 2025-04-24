@@ -50,6 +50,7 @@ import RoutingComponent from './components/stage3/RoutingComponent.vue'
 import FirstTimeInstructionsComponent from './components/stage3/FirstTimeInstructionsComponent.vue'
 import AudioSelectionComponent from './components/stage3/AudioSelectionComponent.vue'
 import InstructionsComponent from './components/stage3/InstructionsComponent.vue'
+import BonusEligibleComponent from './components/stage3/BonusEligibleComponent.vue';
 import BreathingComponent from './components/stage3/BreathingComponent.vue';
 import EndComponent from './components/stage3/EndComponent.vue';
 
@@ -82,6 +83,7 @@ const routes = [
     {path: '/stage3/instructions/1', component: FirstTimeInstructionsComponent},
     {path: '/stage3/audio-selection', component: AudioSelectionComponent},
     {path: '/stage3/instructions/2', component: InstructionsComponent},
+    {path: '/stage3/bonus-eligible', component: BonusEligibleComponent},
     {path: '/stage3/breathing', component: BreathingComponent},
     {path: '/stage3/end/:doneForToday', component: EndComponent, name: 'stage3End', props: (route) => {
         // apparently the router changes booleans to strings; change it back :-(
