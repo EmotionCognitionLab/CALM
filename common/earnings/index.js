@@ -8,7 +8,7 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(customParseFormat);
 
-import { earningsTypes, maxSessionMinutes } from '../types/types';
+import { earningsTypes, maxSessionMinutes, bonusEligibilityMinutes } from '../types/types';
 
 const minutesPerDay = (sqliteDb, startTime) => {
     const stmt = sqliteDb.prepare('select pulse_start_time, duration_seconds from emwave_sessions where stage = 3 and pulse_start_time > ?');
@@ -23,15 +23,30 @@ const minutesPerDay = (sqliteDb, startTime) => {
     return Object.keys(minutesByDay).sort((a, b) => a - b).map(day => ({day: day, minutes: minutesByDay[day]}));
 }
 
+const bonusEligibilityStartDate = (sqliteDb) => {
+    const stmt = sqliteDb.prepare('select pulse_start_time, duration_seconds from emwave_sessions where stage = 3');
+    const results = stmt.all();
+    let totalSeconds = 0;
+    for (const r of results) {
+        totalSeconds += r.duration_seconds;
+        if (totalSeconds >= bonusEligibilityMinutes * 60) {
+            return dayjs.unix(r.pulse_start_time + r.duration_seconds).tz('America/Los_Angeles');
+        }
+    }
+
+    // return a date far in the future; they aren't eligible for bonus earnings
+    return dayjs('3000-01-01 00:00:00', 'America/Los_Angeles');
+}
+
 export const trainingBonusRewards = (sqliteDb, latestBonusEarnings, condition) => {
     let startDay;
     if (!latestBonusEarnings) {
-        startDay = dayjs('1970-01-01 00:00').tz('America/Los_Angeles');
+        startDay = bonusEligibilityStartDate(sqliteDb);
     } else {
-        startDay = dayjs(latestBonusEarnings.date).tz('America/Los_Angeles');
+        startDay = dayjs(latestBonusEarnings.date).tz('America/Los_Angeles').startOf('day');
     }
 
-    const minutesByDay = minutesPerDay(sqliteDb, startDay.startOf('day').unix());
+    const minutesByDay = minutesPerDay(sqliteDb, startDay.unix());
     const eligibleDays = minutesByDay.filter(mbd => mbd.minutes >= maxSessionMinutes).map(i => i.day);
     if (eligibleDays.length == 0) return [];
 
