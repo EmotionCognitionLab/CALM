@@ -97,7 +97,7 @@ export default {
         let retries = 0;
     
         client.on('error', async function() {
-            if (retries > 0) logger.log('network error') // we always get error on 1st try; don't log unless we are past that
+            if (retries > 0) logger.log('pulse sensor connection error') // we always get error on 1st try; don't log unless we are past that
             retries++;
             if (retries < 4) {
                 await new Promise(r => setTimeout(r, retries * 10000));
