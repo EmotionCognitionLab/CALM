@@ -25,6 +25,7 @@
 <script setup>
     import { useRouter } from "vue-router"
     import seatedIcon from '../../assets/seated-person.png'
+    import { bonusEligibilityMinutes } from '../../../../common/types/types'
 
     const router = useRouter()
     const condition = window.sessionStorage.getItem('condition')
@@ -32,6 +33,15 @@
     async function beginSession() {
         // prevent them from jumping to look at earnings from here on out
         await window.mainAPI.disableMenus()
+        const bonusAnnouncementSeen = await window.mainAPI.getKeyValue('bonus-announcement-seen')
+        if (!bonusAnnouncementSeen) {
+            const stage3SessionMinutes = await window.mainAPI.getEmWaveSessionMinutesForStage(3)
+            if (stage3SessionMinutes >= bonusEligibilityMinutes) {
+                router.push('/stage3/bonus-eligible')
+                return
+            }
+        }
+
         router.push('/stage3/audio-selection')
     }
 </script>

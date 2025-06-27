@@ -1,41 +1,53 @@
 <template>
-    <div class="container">
-        <div class="row shadow">
-            <div class="left">
-                <h2>Hi {{ firstName }}!</h2>
-                <p class="underline">Today's agenda:</p>
-                <ul>
-                    <li v-for="item in agenda" :class=item.class>{{ item.name }}</li>
-                </ul>
-                <div><button ref="startButton" @click="start(allDone)"></button></div>
+    <div>
+        <div class="container" v-if="!playVideo">
+            <div class="row shadow">
+                <div class="left">
+                    <h2>Hi {{ firstName }}!</h2>
+                    <p class="underline">Today's agenda:</p>
+                    <ul>
+                        <li v-for="item in agenda" :class=item.class>{{ item.name }}</li>
+                    </ul>
+                    <div><button ref="startButton" @click="start(allDone)"></button></div>
+                </div>
+                <div class="right">
+                    <img :src="homeImg" alt="rock tower" />
+                </div>
             </div>
-            <div class="right">
-                <img :src="homeImg" alt="rock tower" />
+            <div class="shortrow" @click="showHelp">
+                <div class="infotip">?</div>
+            </div>
+            <div v-if="isModalVisible" class="modal">
+                <div class="modal-content">
+                    <span class="close" @click="hideHelp">&times;</span>
+                    <h3>Questions?</h3>
+                    <p class="underline">Click 'View' on the menu bar for:</p>
+                    <ul>
+                        <li>General study info</li>
+                        <li>Questions about the laptop, ear sensor, or the app</li>
+                        <li>Your earnings summary</li>
+                    </ul>
+                </div>
             </div>
         </div>
-        <div class="shortrow" @click="showHelp">
-            <div class="infotip">?</div>
-        </div>
-        <div v-if="isModalVisible" class="modal">
-            <div class="modal-content">
-                <span class="close" @click="hideHelp">&times;</span>
-                <h3>Questions?</h3>
-                <p class="underline">Click 'View' on the menu bar for:</p>
-                <ul>
-                    <li>General study info</li>
-                    <li>Questions about the laptop, ear sensor, or the app</li>
-                    <li>Your earnings summary</li>
-                </ul>
-            </div>
+        <div v-if="playVideo">
+            <video-component :videoName="videoName" :nextDest="postVideoDest"/>
         </div>
     </div>
 </template>
 <script setup>
     import { ref, onBeforeMount } from 'vue'
+    import dayjs from 'dayjs'
+    import customParseFormat from 'dayjs/plugin/customParseFormat.js'
+    dayjs.extend(customParseFormat)
     import { maxSessionMinutes, stage2BreathingMinutes } from '../../../common/types/types'
-    import { quit } from '../utils'
+    import { getCondition, quit } from '../utils'
     import homeImg from '../assets/home-screen-rock-tower.png'
     import { useRouter } from "vue-router"
+    import { SessionStore } from '../session-store.js'
+    import ApiClient from "../../../common/api/client.js"
+
+    import VideoComponent from './VideoComponent.vue'
 
     const router = useRouter()
     const props = defineProps(['stage2Complete', 'firstName'])
@@ -46,6 +58,9 @@
     const stage2Complete = props.stage2Complete !== 'false'
     const allDone = ref(false)
     const isModalVisible = ref(false)
+    const postVideoDest = ref(null)
+    const videoName = ref(null)
+    const playVideo = ref(false)
 
     function showHelp() {
         isModalVisible.value = true
@@ -56,6 +71,26 @@
     }
 
     onBeforeMount(async() => {
+        const week1VideoDate =  await window.mainAPI.getKeyValue('week1VideoSeenDate')
+        if (week1VideoDate == null) {
+            // they need to see the week 1 video; figure out which one
+            const session = await SessionStore.getRendererSession()
+            const apiClient = new ApiClient(session)
+            const condition = await getCondition(apiClient);
+            if (condition.race !== 'black') {
+                videoName.value = 'week1EA'
+            } else {
+               videoName.value = 'week1AA'
+            }      
+        } else {
+            // figure out if they need to see the week 6 video
+            const week1Date = dayjs(week1VideoDate, "YYYYMMDD")
+            if (dayjs().diff(week1Date, 'day') >= 42) {
+                if (await window.mainAPI.getKeyValue('week6VideoSeenDate') == null) {
+                    videoName.value =  'week6'
+                }
+            }
+        }
         if (await window.mainAPI.getLumosityDoneToday()) {
             agenda.value[0].class = 'done'
         }
@@ -86,20 +121,22 @@
     function start(allDone) {
         if (allDone) quit()
 
+        let dest
         //lumosity
         if (agenda.value[0].class == 'notdone') {
-            router.push({path: '/lumosity'})
-            return
+            dest = {path: '/lumosity'}
+        } else if (agenda.value[1].class == 'notdone') {
+            // first breathing
+            dest = stage2Complete ? {path: '/stage3/wait'} : {path: '/stage2'}
+        } else if (agenda.value[2].class == 'notdone') {
+            // second breathing
+            dest = stage2Complete ? {path: '/stage3/routing'} : {path: '/stage2'}
         }
-        // first breathing
-        if (agenda.value[1].class == 'notdone') {
-            router.push(stage2Complete ? {path: '/stage3/wait'} : {path: '/stage2'})
-            return
-        }
-        // second breathing
-        if (agenda.value[2].class == 'notdone') {
-            router.push(stage2Complete ? {path: '/stage3/routing'} : {path: '/stage2'})
-            return
+        if (videoName.value) {
+            postVideoDest.value = dest
+            playVideo.value = true
+        } else {
+            router.push(dest)
         }
     }
 </script>
