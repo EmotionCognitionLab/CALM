@@ -7,7 +7,7 @@ import s3utils from './s3utils.js'
 import { SessionStore } from './session-store.js'
 import packageInfo from "../package.json"
 import * as path from 'path'
-import { maxSessionMinutes, bonusEligibilityMinutes } from '../../common/types/types.js';
+import { maxSessionMinutes, bonusEligibilityMinutes, earningsTypes } from '../../common/types/types.js';
 import lte from 'semver/functions/lte';
 import semverSort from 'semver/functions/sort';
 import gt from 'semver/functions/gt';
@@ -171,7 +171,8 @@ function earnedStage3Bonus(lastCompletedSessionId, condition) {
     const res = stmt.get(lastCompletedSessionId);
     const bonusFilterDate = dayjs.unix(res.pulse_start_time - 1).tz('America/Los_Angeles');
     const bonusEarnings = trainingBonusRewards(db, {date: bonusFilterDate.format()}, condition);
-    return bonusEarnings.length > 0;
+    const earningsDateStr = dayjs.unix(res.pulse_start_time).tz('America/Los_Angeles').format();
+    return bonusEarnings.some(e => e.date == earningsDateStr && e.earnings == earningsTypes.BONUS);
 }
 
 function hasDoneCognitiveExperiment(experiment, stage) {
