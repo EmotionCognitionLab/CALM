@@ -100,7 +100,7 @@ functions:
       - schedule:
           name: "${self:service}-${self:provider.stage}-rc-backup-daily"
           rate: cron(0 20 * * ? *)
-          enabled: true
+          enabled: ${self:custom.isProd.${self:provider.stage}}
     timeout: 60
     environment:
       OUTPUT_BUCKET: ${self:service}-${self:provider.stage}-rc-bkup
