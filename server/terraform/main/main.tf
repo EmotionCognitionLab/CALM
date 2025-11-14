@@ -29,6 +29,24 @@ resource "aws_s3_bucket_versioning" "data-bucket-versioning" {
   }
 }
 
+# S3 bucket for rc backups
+resource "aws_s3_bucket" "rc-backup-bucket" {
+  bucket = "${var.redcap-backup-bucket}"
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "rc-backup-bucket-lifecycle" {
+  bucket = aws_s3_bucket.rc-backup-bucket.id
+
+  rule {
+    id     = "ExpirationRule"
+    status = "Enabled"
+
+    expiration {
+      days = 90
+    }
+  }
+}
+
 resource "aws_s3_bucket" "ses-bucket" {
   bucket = "${var.ses-emailed-reports-bucket}"
 }
@@ -127,6 +145,27 @@ resource "aws_ssm_parameter" "staff-rcid" {
   description = "RCID placeholder for staff"
   type = "SecureString"
   value = var.redcap-staff-rcid
+}
+
+resource "aws_ssm_parameter" "rc-api-url" {
+  name = "/${var.project}/${var.env}/info/redcap/api/url"
+  description = "RC API URL"
+  type = "SecureString"
+  value = var.redcap-api-url
+}
+
+resource "aws_ssm_parameter" "rc-api-token-prod" {
+  name = "/${var.project}/${var.env}/info/redcap/api/token/prod"
+  description = "RC API token for prod"
+  type = "SecureString"
+  value = var.redcap-api-token-prod
+}
+
+resource "aws_ssm_parameter" "rc-api-token-dev" {
+  name = "/${var.project}/${var.env}/info/redcap/api/token/dev"
+  description = "RC API token for dev"
+  type = "SecureString"
+  value = var.redcap-api-token-dev
 }
 
 resource "aws_ssm_parameter" "participant-status-report-recipients" {

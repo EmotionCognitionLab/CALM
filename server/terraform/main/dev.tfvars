@@ -8,3 +8,4 @@ cognito-redirect-uri = "http://localhost:9000/login/index.html"
 
 data-bucket = "calm-dev-usr-data"
 ses-emailed-reports-bucket = "calm-dev-lumosity-reports"
+redcap-backup-bucket = "calm-dev-rc-bkup"

@@ -8,3 +8,4 @@ cognito-redirect-uri = "https://mindbodystudy.org/login/index.html"
 
 data-bucket = "calm-prod-usr-data"
 ses-emailed-reports-bucket = "calm-prod-lumosity-reports"
+redcap-backup-bucket = "calm-prod-rc-bkup"

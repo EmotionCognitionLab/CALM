@@ -41,6 +41,25 @@ variable "redcap-staff-rcid" {
     sensitive = true
 }
 
+variable "redcap-api-url" {
+    description = "URL for REDCap API"
+    sensitive = true
+}
+
+variable "redcap-api-token-prod" {
+    description = "API token for REDCap CALM prod project"
+    sensitive = true
+}
+
+variable "redcap-api-token-dev" {
+    description = "API token for REDCap CALM dev project"
+    sensitive = true
+}
+
+variable "redcap-backup-bucket" {
+    description = "S3 bucket to store REDCap backups"
+}
+
 variable "participant-status-report-recipients" {
     description = "Recipients of participant status reports"
     sensitive = true
