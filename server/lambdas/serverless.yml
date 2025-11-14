@@ -94,6 +94,20 @@ functions:
     timeout: 30
     provisionedConcurrency: 4
 
+  rc-backup:
+    handler: redcap/backup.handler
+    events:
+      - schedule:
+          name: "${self:service}-${self:provider.stage}-rc-backup-daily"
+          rate: cron(0 20 * * ? *)
+          enabled: true
+    timeout: 60
+    environment:
+      OUTPUT_BUCKET: ${self:service}-${self:provider.stage}-rc-bkup
+      RC_API_URL: ${ssm:/${self:service}/${self:provider.stage}/info/redcap/api/url}
+      RC_TOKEN: ${ssm:/${self:service}/${self:provider.stage}/info/redcap/api/token/${self:provider.stage}}
+    role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/rc/backup} 
+
   process-sqlite-dbs:
     handler: process-sqlite-dbs/process-sqlite-dbs.handler
     events:

@@ -71,6 +71,29 @@ resource "aws_iam_policy" "s3-read-experiment-data" {
 POLICY
 }
 
+# Policy to allow writes to rc-bkup folder
+resource "aws_iam_policy" "rc-write-backup" {
+  name = "${var.project}-${var.env}-rc-write-backup"
+  path = "/policy/s3/rcBackup/write/"
+  description = "Allows writing data to rc backup s3 folder"
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${var.redcap-backup-bucket}/*"
+      ]
+    }
+  ]
+}
+POLICY
+}
+
 data "aws_caller_identity" "current" {}
 
 # policy to allow reading/writing to dynamo
@@ -303,6 +326,39 @@ resource aws_iam_role_policy "data-bucket-read" {
       }
     ]
   })
+}
+
+resource "aws_iam_role" "lambda-rc-backup" {
+  name = "${var.project}-${var.env}-lambda-rc-backup"
+  path = "/role/lambda/rc/backup/"
+  description = "Role for lambda function doing rc backups"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+        Action =  [
+          "sts:AssumeRole"
+        ]
+      }
+    ]
+  })
+
+  managed_policy_arns = [
+    aws_iam_policy.cloudwatch-write.arn,
+    aws_iam_policy.rc-write-backup.arn
+  ]
+}
+
+# save above IAM role to SSM so serverless can reference it
+resource "aws_ssm_parameter" "lambda-rc-backup-role" {
+  name = "/${var.project}/${var.env}/role/lambda/rc/backup"
+  description = "ARN for lambda role that does rc backups"
+  type = "SecureString"
+  value = "${aws_iam_role.lambda-rc-backup.arn}"
 }
 
 resource "aws_iam_role" "lambda-sqlite-process" {
