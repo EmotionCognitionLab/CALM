@@ -10,8 +10,8 @@ RUN  dnf -y install R-core \
 RUN Rscript -e "install.packages(c('httr', 'jsonlite', 'RHRV', 'logger', 'pracma'), repos = 'https://cloud.r-project.org/')"
 
 RUN dnf remove -y R-devel \
-    && dnf -y remove openssl-devel \
     && dnf -y remove libcurl-devel \
+    && dnf -y remove openssl-devel \
     && dnf -y remove mpfr-devel \
     && dnf -y remove gmp-devel \
     && dnf clean all
