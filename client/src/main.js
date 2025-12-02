@@ -440,7 +440,7 @@ ipcMain.on('create-lumosity-view', async (_event, email, password, userAgent) =>
         lumosityView.webContents.executeJavaScript(lumosityLoginJS(email, password));
       }
   });
-  lumosityView.webContents.loadURL("https://www.lumosity.com/login", {userAgent: userAgent.replace(/heartbeam.* /, '').replace(/Electron.* /, '')});
+  lumosityView.webContents.loadURL("https://v1.lumosity.com/login", {userAgent: userAgent.replace(/heartbeam.* /, '').replace(/Electron.* /, '')});
 });
 
 ipcMain.on('hide-lumosity-view', (_event) => {
