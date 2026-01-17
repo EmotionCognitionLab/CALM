@@ -257,6 +257,18 @@ functions:
       STAFF_LABEL: ${ssm:/${self:service}/${self:provider.stage}/info/redcap/staff/rcid}
     role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/unregistered}
 
+  logger:
+    handler: logger/logger.handler
+    events:
+      - httpApi:
+          path: /logger
+          method: POST
+    environment:
+      CLOUDWATCH_ENDPOINT: "https://logs.${self:provider.region}.amazonaws.com"
+      CLOUDWATCH_LOG_GROUP: "${self:service}-${self:provider.stage}-console"
+      REGION: ${self:provider.region}
+    role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/unregistered}
+
 layers:
   BetterSqlite3:
     path: 'better-sqlite3-layer/layer'
