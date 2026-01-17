@@ -5,10 +5,8 @@
 </template>
 
 <script setup>
-// import 'logger'
 import { getCurrentUser } from '../../common/auth/auth.js'
 
-// new logger.Logger(true, getCurrentUser())
 
 window.mainAPI.onGetCurrentUser((event) => {
   event.sender.send('current-user', getCurrentUser())
