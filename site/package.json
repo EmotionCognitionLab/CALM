@@ -1,7 +1,6 @@
 {
   "scripts": {
     "test": "jest",
-    "test-all": "cd ../common/logger && npm run test && cd ../../site && npm run test",
     "start": "npx webpack serve --config webpack.dev.js",
     "start-external": "npm start -- --host 0.0.0.0",
     "build": "rm -rf dist/* && npx webpack --config webpack.prod.js",
@@ -14,7 +13,6 @@
     "dayjs": "^1.11.11",
     "db": "file:../common/db",
     "handlebars": "^4.7.8",
-    "logger": "file:../common/logger",
     "ua-parser-js": "^0.7.35"
   },
   "jest": {
