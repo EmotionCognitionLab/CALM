@@ -1,7 +1,7 @@
 {
   "name": "db",
-  "version": "2.0.1",
-  "description": "API for LipBelly db access",
+  "version": "2.1.0",
+  "description": "API for CALM db access",
   "main": "db.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -13,7 +13,6 @@
     "@aws-sdk/client-dynamodb": "^3.410.0",
     "@aws-sdk/credential-providers": "^3.410.0",
     "@aws-sdk/lib-dynamodb": "^3.410.0",
-    "logger": "file:../logger",
     "util": "^0.12.4"
   },
   "devDependencies": {

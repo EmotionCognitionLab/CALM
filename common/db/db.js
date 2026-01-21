@@ -6,7 +6,6 @@
  import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers';
  import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
  import { DynamoDBDocumentClient, ScanCommand, QueryCommand, UpdateCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
- import Logger from "logger";
  import { getAuth } from "../auth/auth.js";
  import { earningsAmounts, statusTypes } from "../types/types.js";
  
@@ -26,8 +25,6 @@ export default class Db {
             const dynClient = new DynamoDBClient({region: this.region});
             this.docClient = DynamoDBDocumentClient.from(dynClient);
         }
-        this.logger = new Logger(false);
-        this.logger.init(); // TODO figure out how we can await this
         this.isRefreshing = false; // credential/session refreshing flag
      }
 
@@ -59,7 +56,7 @@ export default class Db {
             const dynResults = await this.scan(params);
             return dynResults.Items;
         } catch (err) {
-            this.logger.error(err);
+            console.error(err);
             throw err;
         }
     }
@@ -76,7 +73,7 @@ export default class Db {
             const dynResults = await this.scan(params);
             return dynResults.Items;
         } catch (err) {
-            this.logger.error(err);
+            console.error(err);
             throw err;
         }
     }
@@ -97,7 +94,7 @@ export default class Db {
             const dynResults = await this.scan(params);
             return dynResults.Items;
         } catch (err) {
-            this.logger.error(err);
+            console.error(err);
             throw err;
         }
     }
@@ -116,7 +113,7 @@ export default class Db {
             const results = await this.query(params);
             return results.Items;
         } catch (err) {
-            this.logger.error(err);
+            console.error(err);
             throw err;
         }
     }
@@ -149,7 +146,7 @@ export default class Db {
                 };
             });
         } catch (err) {
-            this.logger.error(err);
+            console.error(err);
             throw err;
         }
     }
@@ -171,7 +168,7 @@ export default class Db {
             if (sessionId) params.Key.dateType += `|${sessionId}`;
             await this.update(params);
         } catch (err) {
-            this.logger.error(err);
+            console.error(err);
             throw err;
         }
     }
@@ -205,7 +202,7 @@ export default class Db {
             const dynResults = await this.update(params);
             return dynResults.Items;
         } catch (err) {
-            this.logger.error(err);
+            console.error(err);
             throw err;
         }
     }
@@ -277,18 +274,18 @@ export default class Db {
             } catch (err) {
                 curTry++;
                 if (err.code === 'ValidationException' ) {
-                    this.logger.error(err);
+                    console.error(err);
                 }
                 if (err.code === 'CredentialsError' || err.code === 'ValidationException') { // ValidationException is usually a sign that this.credentials.identityId is empty
                     await this.refreshPermissions();
                 } else {
-                    this.logger.error(err);
+                    console.error(err);
                 }
                 // sleep before retrying
                 await new Promise(resolve => setTimeout(resolve, sleepTime * curTry));
             }
         }
-        this.logger.error(`Max tries exceeded. Dynamo op: ${fnName}. Parameters: ${JSON.stringify(params)}`);
+        console.error(`Max tries exceeded. Dynamo op: ${fnName}. Parameters: ${JSON.stringify(params)}`);
     }
 
     async query(params) {
@@ -316,7 +313,7 @@ export default class Db {
 
     async refreshPermissions() {
         if (this.isRefreshing) {
-            this.logger.log('refreshPermissions called while refresh is already in progress; skipping');
+            console.log('refreshPermissions called while refresh is already in progress; skipping');
             return;
         }
 
@@ -328,11 +325,11 @@ export default class Db {
                 if (refreshErr.code === 'NotAuthorizedException') {
                     this.session = await this.refreshSession();
                 } else {
-                    this.logger.error("Unexpected error refreshing credentials", refreshErr);
+                    console.error("Unexpected error refreshing credentials", refreshErr);
                 }
             }
         } catch (err) {
-            this.logger.error("Error trying to refresh permissions", err);
+            console.error("Error trying to refresh permissions", err);
         } finally {
             this.isRefreshing = false;
         }
