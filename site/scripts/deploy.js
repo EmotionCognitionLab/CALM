@@ -70,7 +70,7 @@ async function invalidateCloudFrontDistribution(distId, CloudFrontClient, Create
 
 (async () => {
     const { S3Client, Upload, CloudFrontClient, CreateInvalidationCommand } = await initClients();
-    const s3Client = new S3Client({ region: 'us-west-2' });
+    const s3Client = new S3Client();
     await readDir(distDir, s3Client, Upload);
     await invalidateCloudFrontDistribution(awsSettings.CloudFrontDistributionId, CloudFrontClient, CreateInvalidationCommand);
 })().catch(err => console.error('Error:', err));
