@@ -1,51 +1,53 @@
-const awsSettings = require("../../common/aws-settings.json");
-const S3 = require("aws-sdk/clients/S3");
-const CF = require("aws-sdk/clients/CloudFront");
-const AWS = require("aws-sdk");
-AWS.config.region = 'us-east-2';
-const { readdirSync, readFileSync } =  require("fs");
+const { readdirSync, readFileSync } = require("fs");
 const path = require("path");
 const mime = require("mime-types");
+const awsSettings = require("../../common/aws-settings.json");
+
 const distDir = "dist";
 
+async function initClients() {
+    const { S3Client } = await import("@aws-sdk/client-s3");
+    const { Upload } = await import("@aws-sdk/lib-storage");
+    const { CloudFrontClient, CreateInvalidationCommand } = await import("@aws-sdk/client-cloudfront");
+    return { S3Client, Upload, CloudFrontClient, CreateInvalidationCommand };
+}
 
-function readDir(dirName) {
-    const files = readdirSync(dirName, {withFileTypes: true});
+async function readDir(dirName, s3Client, Upload) {
+    const files = readdirSync(dirName, { withFileTypes: true });
+    const promises = [];
     files.forEach(f => {
-        if (f.isFile()) {          
-            let key =  path.join(dirName, f.name);
-            key = key.substring(key.indexOf("/") + 1); // strip off the  'dist' directory
-            uploadFile(path.join(dirName, f.name), key);
+        if (f.isFile()) {
+            let key = path.join(dirName, f.name);
+            key = key.substring(key.indexOf("/") + 1); // strip off the 'dist' directory
+            promises.push(uploadFile(path.join(dirName, f.name), key, s3Client, Upload));
         } else if (f.isDirectory()) {
-            readDir(path.join(dirName, f.name));
+            promises.push(readDir(path.join(dirName, f.name), s3Client, Upload));
         } else {
             throw new Error(`${f.name}: Unsupported file type - only files and directories are supported.`);
         }
-        
     });
+    await Promise.all(promises);
 }
 
-function uploadFile(fpath, key) {
+async function uploadFile(fpath, key, s3Client, Upload) {
     console.log(`Uploading ${fpath}`);
     const contents = readFileSync(fpath);
     const contentType = mime.lookup(fpath);
-    const params = {
-        Bucket: awsSettings.DeploymentBucket,
-        Key: key,
-        Body: contents,
-        ACL: "public-read",
-        ContentType: contentType
-    };
-    const upload = new S3.ManagedUpload({params: params});
-    upload.send(function(err, data) {
-        if (err) {
-            throw(err);
+    const upload = new Upload({
+        client: s3Client,
+        params: {
+            Bucket: awsSettings.DeploymentBucket,
+            Key: key,
+            Body: contents,
+            ContentType: contentType,
+            Endpoint: `${awsSettings.DeploymentBucket}.s3-us-west-2.amazonaws.com`
         }
-        console.log(`${fpath} uploaded successfully.`);
     });
+    await upload.done();
+    console.log(`${fpath} uploaded successfully.`);
 }
 
-function invalidateCloudFrontDistribution(distId) {
+async function invalidateCloudFrontDistribution(distId, CloudFrontClient, CreateInvalidationCommand) {
     // because all of the bundles are fingerprinted we only invalidate index.html
     const params = {
         DistributionId: distId,
@@ -61,13 +63,17 @@ function invalidateCloudFrontDistribution(distId) {
             }
         }
     };
-    const cloudFront = new CF();
-    return cloudFront.createInvalidation(params).promise();
+    const cfClient = new CloudFrontClient({ region: 'us-east-1' });
+    const command = new CreateInvalidationCommand(params);
+    await cfClient.send(command);
 }
 
-readDir(distDir);
-invalidateCloudFrontDistribution(awsSettings.CloudFrontDistributionId)
-.catch(err => console.error('Error invalidating cloudfront distribution', err));
+(async () => {
+    const { S3Client, Upload, CloudFrontClient, CreateInvalidationCommand } = await initClients();
+    const s3Client = new S3Client({ region: 'us-west-2' });
+    await readDir(distDir, s3Client, Upload);
+    await invalidateCloudFrontDistribution(awsSettings.CloudFrontDistributionId, CloudFrontClient, CreateInvalidationCommand);
+})().catch(err => console.error('Error:', err));
 
 
 
