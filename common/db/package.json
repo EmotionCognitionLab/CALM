@@ -13,7 +13,6 @@
     "@aws-sdk/client-dynamodb": "^3.410.0",
     "@aws-sdk/credential-providers": "^3.410.0",
     "@aws-sdk/lib-dynamodb": "^3.410.0",
-    "logger": "file:../logger",
     "util": "^0.12.4"
   },
   "devDependencies": {
