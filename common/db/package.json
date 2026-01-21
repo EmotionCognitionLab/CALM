@@ -1,7 +1,7 @@
 {
   "name": "db",
-  "version": "2.0.1",
-  "description": "API for LipBelly db access",
+  "version": "2.1.0",
+  "description": "API for CALM db access",
   "main": "db.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
