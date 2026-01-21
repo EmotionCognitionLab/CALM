@@ -11,11 +11,6 @@ module.exports = {
         // 'pay-info': 'pay-info-page/index.js',
     },
     plugins: [
-        // here to quiet complaint about process.env not existing when util lib is loaded
-        // by logger
-        new webpack.DefinePlugin({
-            'process.env': JSON.stringify({'NODE_DEBUG': false}),
-        }),
         new HtmlWebpackPlugin({
             title: 'Admin - Dashboard',
             filename: 'admin/dashboard/index.html',
