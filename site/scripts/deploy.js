@@ -40,7 +40,7 @@ async function uploadFile(fpath, key, s3Client, Upload) {
             Key: key,
             Body: contents,
             ContentType: contentType,
-            Endpoint: `${awsSettings.DeploymentBucket}.s3-us-west-2.amazonaws.com`
+            Endpoint: awsSettings.DeploymentEndpoint
         }
     });
     await upload.done();
