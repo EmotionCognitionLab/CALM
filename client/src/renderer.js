@@ -96,6 +96,7 @@ const routes = [
 const noAuthRoutes = ['/signin', '/login', '/', '/info', '/faq', '/reload-needed']
 let stage2Complete = false
 let firstName = ''
+const l = new Logger(true);
 
 const router = createRouter({
     history: import.meta.env.PROD ? createWebHashHistory() : createWebHistory(),
@@ -141,8 +142,6 @@ async function handleLoginSuccess(session) {
     }
     firstName = data.given_name
     isDbInitialized = true
-    const l = new Logger(true, data.userId);
-    await l.init();
 }
 
 async function handleOauthRedirect(to) {

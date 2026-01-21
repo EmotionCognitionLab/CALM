@@ -184,7 +184,7 @@ log_info("Querying for events")
 while (TRUE) {
   tryCatch(
     {
-      event <- GET(url = next_invocation_endpoint, timeout(Inf))
+      event <- GET(url = next_invocation_endpoint, timeout(24 * 60 * 60))
       log_debug("Event received")
       handle_event(event)
     },

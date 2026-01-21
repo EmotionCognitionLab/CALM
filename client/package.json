@@ -1,7 +1,7 @@
 {
   "name": "calm-study",
   "productName": "CALM Study",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "An application that guides participants through the CALM Study",
   "main": ".vite/build/main.js",
   "scripts": {
@@ -60,7 +60,6 @@
     "electron-squirrel-startup": "^1.0.1",
     "jspsych": "^8.0.2",
     "lodash": "^4.17.21",
-    "logger": "file:../common/logger",
     "mathjs": "^13.2.0",
     "pay-info": "file:../common/pay-info",
     "pvs-breath-pacer": "github:EmotionCognitionLab/pvs-breath-pacer#semver:^1.2.0",

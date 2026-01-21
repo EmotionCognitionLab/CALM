@@ -4,6 +4,7 @@ import { DynamoDBDocumentClient} from '@aws-sdk/lib-dynamodb';
 import { SESClient } from '@aws-sdk/client-ses'
 import { S3Client } from '@aws-sdk/client-s3'
 import { SQS } from '@aws-sdk/client-sqs'
+import { CloudWatchLogsClient } from "@aws-sdk/client-cloudwatch-logs";
 
 const region = process.env.REGION;
 const dynClient = new DynamoDBClient({region: region, endpoint: process.env.DYNAMO_ENDPOINT, apiVersion: "2012-08-10"});
@@ -21,4 +22,6 @@ const s3Client = new S3Client({
 
 const sqsClient = new SQS({region: region});
 
-export { dynamoDocClient, sesClient, cognitoClient, s3Client, sqsClient }
+const cwClient = new CloudWatchLogsClient({region: process.env.REGION, endpoint: process.env.CLOUDWATCH_ENDPOINT});
+
+export { dynamoDocClient, sesClient, cognitoClient, s3Client, sqsClient, cwClient }

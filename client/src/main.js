@@ -4,8 +4,7 @@ import path from 'path';
 import * as AmazonCognitoIdentity from 'amazon-cognito-auth-js';
 import awsSettings from '../../common/aws-settings.json';
 import { ipcMain } from 'electron';
-// import * as Logger from 'logger'
-import Logger from 'logger';
+import Logger from './remote-logger';
 import emwave from './emwave';
 import { emWaveDbPath, deleteShortSessions as deleteShortEmwaveSessions, extractSessionData, getDataForSessions } from './emwave-data';
 import { dbPath, closeDb, getKeyValue, setKeyValue, saveEmWaveSessionData, deleteEmWaveSessions, getEmWaveSessionsForStage, getEmWaveSessionMinutesForStage, getEmWaveSessionMinutesForDayAndStage, hasDoneCognitiveExperiment, latestExperimentResult, saveCognitiveResults, deleteKeyValue, getLumosityDoneToday, setLumosityDoneToday, earnedStage3Bonus } from './local-data';
@@ -26,6 +25,8 @@ app.setAboutPanelOptions({
 
 let mainWin = null
 const appFileEntry = path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+
+const remoteLogger = new Logger(true);
 
 // we default to true, then set them
 // to false when the sensor starts
@@ -196,8 +197,11 @@ app.on('second-instance', () => {
 });
 
 ipcMain.on('current-user', async (_event, user) => {
-  const l = new Logger(true, user);
-  await l.init();
+  remoteLogger.user = user;
+});
+
+ipcMain.handle('log-message', async (_event, level, ...args) => {
+  remoteLogger[level](...args);
 });
 
 let quitOnUploadComplete = false;
@@ -252,8 +256,7 @@ if (typeof atob === 'undefined') {
 }
 
 ipcMain.on('show-login-window', async () => {
-  const remoteLogger = new Logger(false);
-  await remoteLogger.init()
+  
   try {
     const auth = new AmazonCognitoIdentity.CognitoAuth(awsSettings);
     auth.useCodeGrantFlow();

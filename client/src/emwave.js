@@ -4,11 +4,7 @@ import path from 'path';
 import { ipcMain, app } from 'electron';
 import CBuffer from 'CBuffer';
 import { epToCoherence } from './coherence.js';
-// import logger from 'logger';
-import Logger from 'logger'
 
-let logger = new Logger(false)
-logger.init() // TODO we should await this
 let emWavePid = null;
 const client = net.Socket();
 const artifactLimit = 60; // we alert if there are more than this many artifacts in 60s
@@ -67,15 +63,10 @@ ipcMain.handle('pacer-regime-changed', (_event, sessionStartTime, regime) => {
     coherenceValues = [];
 });
 
-ipcMain.on('current-user', async (_event, user) => {
-    logger = new Logger(false, user)
-    await logger.init()
-})
-
 function notifyAvgCoherence() {
     try {
         if (coherenceValues.length < min_coherence_values) {
-            // logger.error(`Regime ${JSON.stringify(curRegime)} starting at ${curSegmentStartMsOffset} has ended but there are less than three minutes of data (${coherenceValues.length} coherence values). Unable to report average coherence.`);
+            // console.error(`Regime ${JSON.stringify(curRegime)} starting at ${curSegmentStartMsOffset} has ended but there are less than three minutes of data (${coherenceValues.length} coherence values). Unable to report average coherence.`);
             return;
         }
 
@@ -97,11 +88,11 @@ export default {
         let retries = 0;
     
         client.on('error', async function() {
-            if (retries > 0) logger.log('pulse sensor connection error') // we always get error on 1st try; don't log unless we are past that
+            if (retries > 0) console.log('pulse sensor connection error') // we always get error on 1st try; don't log unless we are past that
             retries++;
             if (retries < 4) {
                 await new Promise(r => setTimeout(r, retries * 10000));
-                if (retries > 1) logger.log(`doing retry #${retries}`);
+                if (retries > 1) console.log(`doing retry #${retries}`);
                 client.connect(20480, '127.0.0.1', function() {
                     win.webContents.send('emwave-status', 'Connected');
                 });	
@@ -138,7 +129,7 @@ export default {
                     //     // we're not going to have enough coherence data for a valid average
                     //     // stop the session
                     //     win.webContents.send('emwave-status', 'SensorError');
-                    //     logger.error(`Stopping session for regime ${JSON.stringify(curRegime)} starting at ${curSegmentStartMsOffset}. It has only ${coherenceValues.length} coherence values and ${secondsRemaining} seconds remaining. Unable to collect enough coherence values to calculate average coherence.`);
+                    //     console.error(`Stopping session for regime ${JSON.stringify(curRegime)} starting at ${curSegmentStartMsOffset}. It has only ${coherenceValues.length} coherence values and ${secondsRemaining} seconds remaining. Unable to collect enough coherence values to calculate average coherence.`);
                     // }
                 }
             }
@@ -207,7 +198,7 @@ export default {
                 emWavePid = null;
             } else {
                 // TODO put in some wait/retry logic?
-                logger.log('killing emwave returned false');
+                console.log('killing emwave returned false');
             }
         }
     },

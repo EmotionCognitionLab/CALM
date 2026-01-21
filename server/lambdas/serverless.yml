@@ -10,7 +10,7 @@ package:
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs22.x
   stage: ${opt:stage, 'dev'}
   region: ${opt:region, 'us-west-2'}
   lambdaHashingVersion: 20201221
@@ -255,6 +255,18 @@ functions:
       DYNAMO_ENDPOINT: "https://dynamodb.${self:provider.region}.amazonaws.com"
       USERS_TABLE: ${ssm:/${self:service}/${self:provider.stage}/info/dynamo/table/users}
       STAFF_LABEL: ${ssm:/${self:service}/${self:provider.stage}/info/redcap/staff/rcid}
+    role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/unregistered}
+
+  logger:
+    handler: logger/logger.handler
+    events:
+      - httpApi:
+          path: /logger
+          method: POST
+    environment:
+      CLOUDWATCH_ENDPOINT: "https://logs.${self:provider.region}.amazonaws.com"
+      CLOUDWATCH_LOG_GROUP: "${self:service}-${self:provider.stage}-console"
+      REGION: ${self:provider.region}
     role: ${ssm:/${self:service}/${self:provider.stage}/role/lambda/unregistered}
 
 layers:
