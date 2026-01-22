@@ -1,5 +1,5 @@
-FROM amazon/aws-lambda-nodejs:18
-RUN yum update -y && yum install -y \
+FROM public.ecr.aws/lambda/nodejs:22
+RUN dnf install -y \
   python3 \
   make \
   gcc \

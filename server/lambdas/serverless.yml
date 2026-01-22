@@ -277,7 +277,7 @@ layers:
         - './**'
     description: Provides better-sqlite3 for nodejs-based Lambda functions
     compatibleRuntimes:
-      - nodejs20.x
+      - nodejs22.x
     allowedAccounts:
       - ${aws:accountId}
 
