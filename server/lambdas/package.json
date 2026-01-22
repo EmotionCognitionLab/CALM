@@ -14,8 +14,9 @@
   "author": "Noah Mercer",
   "license": "ISC",
   "devDependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.974.0",
     "@aws-sdk/client-cognito-identity-provider": "^3.238.0",
-    "@aws-sdk/client-dynamodb": "^3.49.0",
+    "@aws-sdk/client-dynamodb": "3.972",
     "@aws-sdk/client-s3": "^3.49.0",
     "@aws-sdk/client-ses": "^3.241.0",
     "@aws-sdk/client-sqs": "^3.241.0",
