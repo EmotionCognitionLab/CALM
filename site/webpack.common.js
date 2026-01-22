@@ -85,8 +85,6 @@ module.exports = {
             path.join(__dirname, "node_modules"),
             path.join(__dirname, "../", "common/api/node_modules"),
             path.join(__dirname, "../", "common/auth/node_modules"),
-            path.join(__dirname, "../", "common/db/node_modules"),
-            // path.join(__dirname, "../..", "common/pay-info/node_modules"),
         ],
     },
 };
