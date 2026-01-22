@@ -15,7 +15,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 const dynClient = new DynamoDBClient({region: process.env.REGION, endpoint: process.env.DYNAMO_ENDPOINT, apiVersion: "2012-08-10"});
 const docClient = DynamoDBDocumentClient.from(dynClient);
-import Db from '../../../../common/db/db.js';
+import Db from '../../common/db/db.js';
 import { earningsAmounts, earningsTypes, statusTypes } from '../../../../common/types/types.js';
 
 const originPrefix = 'emails';

@@ -9,6 +9,6 @@
   "author": "Noah Mercer",
   "license": "ISC",
   "dependencies": {
-    "db": "file:../../../common/db"
+    "db": "file:../common/db"
   }
 }
