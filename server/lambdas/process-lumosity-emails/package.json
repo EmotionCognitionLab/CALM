@@ -19,7 +19,7 @@
   "dependencies": {
     "data-forge": "^1.9.6",
     "dayjs": "^1.11.6",
-    "db": "file:../../../common/db",
+    "db": "file:../common/db",
     "mailparser": "^3.2.0"
   }
 }
