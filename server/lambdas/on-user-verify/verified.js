@@ -9,7 +9,7 @@ const usersTable = process.env.USERS_TABLE;
 import { dynamoDocClient as docClient } from '../common/aws-clients';
 import { PutCommand, ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 
-import Db from '../../../common/db/db.js';
+import Db from '../common/db/db.js';
 const db = new Db({usersTable: usersTable});
 db.docClient = docClient;
 

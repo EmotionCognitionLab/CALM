@@ -2,12 +2,12 @@
  * API for reading from and writing to the LipBelly DynamoDB database.
  */
 
- import awsSettings from '../aws-settings.json';
+ import awsSettings from '../../../../common/aws-settings.json';
  import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers';
  import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
  import { DynamoDBDocumentClient, ScanCommand, QueryCommand, UpdateCommand, BatchWriteCommand } from '@aws-sdk/lib-dynamodb';
- import { getAuth } from "../auth/auth.js";
- import { earningsAmounts, statusTypes } from "../types/types.js";
+ import { getAuth } from "../../../../common/auth/auth.js";
+ import { earningsAmounts, statusTypes } from "../../../../common/types/types.js";
  
  
  'use strict';

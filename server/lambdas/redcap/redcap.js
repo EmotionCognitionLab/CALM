@@ -1,6 +1,6 @@
 import { dynamoDocClient as docClient } from '../common/aws-clients';
 import { ScanCommand } from '@aws-sdk/lib-dynamodb';
-import Db from '../../../common/db/db.js';
+import Db from '../common/db/db.js';
 import { statusTypes } from '../../../common/types/types.js';
 
 const usersTable = process.env.USERS_TABLE;

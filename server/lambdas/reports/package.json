@@ -11,6 +11,6 @@
   "description": "",
   "dependencies": {
     "dayjs": "^1.11.13",
-    "db": "file:../../../common/db"
+    "db": "file:../common/db"
   }
 }

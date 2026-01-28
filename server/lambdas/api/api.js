@@ -2,7 +2,7 @@ import { ScanCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { dynamoDocClient as docClient } from "../common/aws-clients.js";
 const usersTable = process.env.USERS_TABLE;
 const lumosAcctTable = process.env.LUMOS_ACCT_TABLE;
-import Db from '../../../common/db/db.js';
+import Db from '../common/db/db.js';
 
 exports.handler = async (event) => {
     const path = event.requestContext.http.path;
