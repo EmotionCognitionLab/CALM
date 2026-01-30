@@ -19,8 +19,7 @@
   "homepage": "https://github.com/EmotionCognitionLab/pvs#readme",
   "dependencies": {
     "dayjs": "^1.11.9",
-    "db": "file:../common/db",
-    "logger": "file:../../../common/logger"
+    "db": "file:../common/db"
   },
   "devDependencies": {
     "@aws-sdk/client-ses": "^3.391.0",
