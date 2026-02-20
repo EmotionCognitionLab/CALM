@@ -24,6 +24,11 @@ class Logger {
     }
 
     logToMain(origLogFn, level, ...args) {
+        for (let i=0; i < args.length; i++) {
+            if (typeof args[i] !== "string" && (args[i].message || args[i].stack)) {
+                args[i] = `${args[i].message} ${args[i].stack}`;
+            }
+        }
         window.mainAPI.log(level, ...args);
         origLogFn.apply(this, args);
     }

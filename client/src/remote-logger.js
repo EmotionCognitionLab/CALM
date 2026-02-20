@@ -31,7 +31,7 @@
  */
 
 import awsSettings from '../../common/aws-settings.json';
-import { sprintf } from 'sprintf-js';
+import util from 'node:util';
 
 class Logger {
     /**
@@ -50,15 +50,14 @@ class Logger {
 
     storeLogMsg(origLogFn, level, ...args) {
         if (args.length === 0) return;
-        let msg
-        if (typeof args[0] !== "string" && args.length === 1) {
-            if (typeof args[0] == "error") {
-                msg = sprintf("%s\n%s", args[0].message, args[0].stack)
-            } else {
-                msg = sprintf("%j", args[0])
-            }
+        let msg = '';
+        if (typeof args[0] == "string" && args[0].includes('%')) {
+            // TODO handle the case where there are more arguments than format string entries
+             msg = util.format(args[0], ...(args.slice(1)));
         } else {
-            msg = sprintf(args[0], ...args.slice(1), "\n");
+            for (let i=0; i < args.length; i++) {
+                msg += util.inspect(args[i]);
+            }
         }
         
         this.logEntries.push({message: JSON.stringify({message: msg, level: level, user: this.user}), timestamp: Date.now()});
