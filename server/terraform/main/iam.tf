@@ -672,42 +672,6 @@ resource "aws_iam_role" "cognito-sns" {
   managed_policy_arns = [aws_iam_policy.sns-publish.arn]
 }
 
-# resources for writing console logs to Cloudwatch
-resource "aws_iam_user" "console-log-writer" {
-  name = "${var.project}-${var.env}-console-log-writer"
-}
-
-
-resource "aws_iam_policy" "console-log-write" {
-  name = "${var.project}-${var.env}-cloudwatch-console-write"
-  path = "/policy/cloudwatch/console/"
-  description = "Allows writing to specific CloudWatch log group"
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-          "logs:DescribeLogStreams"
-        ]
-        Resource = [ "${aws_cloudwatch_log_group.console-log-group.arn}:*:*" ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_user_policy_attachment" "console-log-writer-policy" {
-  user = aws_iam_user.console-log-writer.name
-  policy_arn = aws_iam_policy.console-log-write.arn
-}
-
-
-resource "aws_iam_access_key" "console-log-writer-key" {
-  user = aws_iam_user.console-log-writer.name
-}
-
 # Policy to allow writing/reading to/from the experiment data table
 resource "aws_iam_policy" "dynamodb-experiment-read-write" {
   name = "${var.project}-${var.env}-dynamodb-experiment-read-write"
