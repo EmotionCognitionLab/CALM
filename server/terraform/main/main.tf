@@ -84,10 +84,6 @@ resource "aws_cloudwatch_log_group" "console-log-group" {
   retention_in_days = 30
 }
 
-output "console_log_writer_id" {
-  value = aws_iam_access_key.console-log-writer-key.id
-}
-
 resource "aws_cloudwatch_log_metric_filter" "console-error" {
   name = "${var.project}-${var.env}-console-error"
   pattern = "error"

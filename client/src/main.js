@@ -399,12 +399,39 @@ let lumosityView = null;
 
 // handles login page, returns true if login successfully attempted
 function lumosityLogin(email, password) {
-  const emailInput = document.getElementById("user_login");
-  const passwordInput = document.getElementById("user_password");
-  const formSubmit = document.querySelector('input[type="submit"][value="Log In"]');
+
+  // lumosity seems to blank out the username (aka email) and password fields on submit
+  // if we just set the value, so we have to actually pretend to type in the values.
+  const typeIntoField = (field, text) => {
+    const proto = Object.getPrototypeOf(field);
+    const setValue = Object.getOwnPropertyDescriptor(proto, "value").set;
+
+    field.focus();
+
+    for (const char of text) {
+      const opts = { key: char, bubbles: true, cancelable: true };
+
+      // If a page handler calls preventDefault() on keydown, skip this character
+      if (!field.dispatchEvent(new KeyboardEvent("keydown", opts))) continue;
+      field.dispatchEvent(new KeyboardEvent("keypress", opts));
+
+      setValue.call(field, field.value + char);
+      field.dispatchEvent(
+        new InputEvent("input", { data: char, inputType: "insertText", bubbles: true })
+      );
+
+      field.dispatchEvent(new KeyboardEvent("keyup", opts));
+    }
+
+    field.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  const emailInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+  const formSubmit = document.querySelector('button[type="submit"]');
   if (emailInput && passwordInput && formSubmit) {
-      emailInput.value = email;
-      passwordInput.value = password;
+      typeIntoField(emailInput, email);
+      typeIntoField(passwordInput, password);
       formSubmit.click();
       return true;
   } else {
@@ -413,7 +440,7 @@ function lumosityLogin(email, password) {
 }
 
 function lumosityLoginJS(email, password) {
-  return `(${lumosityLogin})("${email}@${awsSettings.LumosDomain}", "${password}")`;
+  return `(${lumosityLogin})("${email}", "${password}")`;
 }
 
 ipcMain.on('create-lumosity-view', async (_event, email, password, userAgent) => {
